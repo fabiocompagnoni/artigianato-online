@@ -64,3 +64,29 @@
     border-radius:none;
     padding:0;
 }
+
+/*footer*/
+
+.customFooter{
+    padding-top:2rem;
+    padding-bottom:2rem;
+    border-top:5px solid #2E5A39;
+}
+.customFooter a{
+    color:var(--second-color);
+    text-decoration:none;
+}
+.customFooter a:hover{
+    color:#2E5A39;
+}
+
+.socialIcon{
+    text-decoration: none;
+    font-size:1.5rem;
+    color:var(--first-color) !important;
+    transition:all 300ms ease-in-out;
+}
+.socialIcon:hover{
+    color:#2E5A39;
+}
+
