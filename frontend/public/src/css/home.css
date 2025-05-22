@@ -1,0 +1,43 @@
+.heroSection{
+    min-height:60dvh;
+    padding-top:83px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    position:relative;
+}
+.bgPattern{
+    background-color: var(--bs-secondary-bg);
+    opacity: 0.3;
+    background-image: linear-gradient(-45deg, var(--bs-secondary-bg), var(--bs-secondary-bg) 50%, #A8BBA2 50%, #A8BBA2);
+    background-size: 12px 12px;
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+}
+.cta{
+    padding:0.25rem;
+    padding-left:0.5rem;
+    padding-right:0.5rem;
+    font-size:1.25rem;
+    border-radius:var(--bs-border-radius-xl);
+    text-decoration: none;
+    background-image: linear-gradient(to right, transparent 0%, transparent 100%);
+    transition: background-image 0.3s ease;
+}
+.cta:hover {
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+.cta-primary{
+    background:var(--cta-color);
+    color:white;
+}
+.cta-secondary{
+    background:var(--second-color);
+    color:white;
+}
