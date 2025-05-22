@@ -1,0 +1,16 @@
+{
+  "name": "microservice_images",
+  "version": "1.0.0",
+  "description": "Microservizio per le immagini",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm test",
+    "start":"node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "artigianato-online"
+  },
+  "author": "Fabio Compagnoni, Loris Biavetti",
+  "license": "ISC"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "microservice_users",
+  "version": "1.0.0",
+  "description": "Microservizio per la gestione delle utenze",
+  "main": "server.js",
+  "scripts": {
+    "test": "",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "artigianato-online"
+  },
+  "author": "Fabio Compagnoni, Loris Biavetti",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {}
+}

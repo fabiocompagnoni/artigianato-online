@@ -1,0 +1,8 @@
+ARG SERVICE_NAME
+FROM node:23-alpine
+WORKDIR /app
+COPY ${SERVICE_NAME}/package*.json ./
+RUN npm install
+COPY ${SERVICE_NAME}/. .
+EXPOSE 4000
+CMD ["npm", "start"]
