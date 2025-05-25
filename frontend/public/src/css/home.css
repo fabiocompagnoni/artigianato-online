@@ -99,3 +99,23 @@
     line-clamp: 4; 
     -webkit-box-orient: vertical;
 }
+
+.theySaidAboutUsContainer{
+    background:var(--second-color);
+    color:white;
+    padding-top:2rem;
+    padding-bottom:2rem;
+}
+.theySaidAboutUsContainer .itm{
+    flex:1;
+    padding:60px;
+    border-radius: 35% 65% 49% 51% / 73% 28% 72% 27%;
+    background:var(--bs-body-bg);
+    color:var(--bs-body-color);
+}
+.ctaArtigianiCont{
+    background:var(--first-color);
+    color:white;
+    padding-top:2rem;
+    padding-bottom:2rem;
+}
