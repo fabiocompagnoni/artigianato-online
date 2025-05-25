@@ -2,9 +2,6 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-const sql_file_path = path.join(__dirname, 'init.sql');
-const sql_code = fs.readFileSync(sql_file_path, 'utf-8');
-
 const pool = new Pool({connectionString: process.env.DATABASE_URL});
 
 async function waitDBOnline(retries) {
@@ -35,16 +32,15 @@ async function initiateDB() {
             if(await isDBInitialized())
                 console.log('Database already initialized');
             else {
-                const client = await pool.connect();
-
                 try {
-                    await client.query(sql_code);
+                    const sql_file_path = path.join(__dirname, 'init.sql');
+                    const sql_code = fs.readFileSync(sql_file_path, 'utf-8');
+
+                    await pool.query(sql_code);
                     console.log('Database initialized successfully');
                 } catch(err) {
                     console.error('Error in the initialization of the database, details: ' + err);
                     process.exit(1);
-                } finally {
-                    client.release();
                 }
             }
         } else {
