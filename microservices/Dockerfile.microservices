@@ -1,5 +1,5 @@
-ARG SERVICE_NAME
 FROM node:23-alpine
+ARG SERVICE_NAME
 WORKDIR /app
 COPY ${SERVICE_NAME}/package*.json ./
 RUN npm install
