@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artigianato Online</title>
-    <meta name="description" content="<?php echo $desc;?>" id="descrizione"/>
+    <meta name="description" content="" id="descrizione"/>
     <meta name="" content=""/>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="src/css/root.css"/>
     <link rel="stylesheet" href="src/css/home.css"/>
     <script type="module" src="src/components/index.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -24,7 +23,119 @@
         </div>
         <div class="bgPattern"></div>
     </div>
-    <div class="aboutSection"></div>
+    <div class="aboutSection">
+        <div class="container">
+            <h1>Perchè scegliere Artigianato Online?</h1>
+            <h2>Un mondo di vantaggi creato apposta per te</h2>
+            <div class="d-flex flex-row flex-wrap align-items-stretch justify-content-center gap-4">
+                <div class="option shadow-sm">
+                    <h4>Esclusività dell'artigianato autentico</h4>
+                    <p>Dimentica la produzione di massa. Ogni pezzo che trovi qui è unico, realizzato con cura e passione da artigiani italiani.</p>
+                </div>
+                <div class="option shadow-sm">
+                    <h4>Sostieni la Creatività locale</h4>
+                    <p> Il tuo acquisto fa la differenza, supportando direttamente i talenti del nostro territorio e preservando antichi saperi.</p>
+                </div>
+                <div class="option shadow-sm">
+                    <h4>Qualità che dura nel tempo</h4>
+                    <p>I nostri artigiani utilizzano materiali di pregio e tecniche tradizionali, creando oggetti destinati a durare e a raccontare una storia.</p>
+                </div>
+                <div class="option shadow-sm">
+                    <h4>Un'Esperienza di Shopping Sicura e Semplice</h4>
+                    <p>Naviga facilmente tra le categorie, scopri nuovi talenti e completa i tuoi acquisti in pochi clic, con pagamenti sicuri e tracciabili.</p>
+                </div>
+                <div class="option shadow-sm">
+                    <h4>Trova il Regalo Perfetto</h4>
+                    <p>Stupisci con un dono originale e ricco di significato, espressione di unicità e attenzione al dettaglio.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="artigianiContainer">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between gap-1">
+                <h1>I nostri artigiani</h1>
+                <a href="/artigiani" class="cta cta-primary">Scoprili tutti</a>
+            </div>
+            <!--TODO: fare caricamento con API-->
+            <div class="artigianiContainer" id="listArtigiani">
+                <div class="artigiano shadow-sm">
+                    <img alt="foto dell'artigiano" src="https://picsum.photos/200/200" loading="lazy"/>
+                    <div class="bodyArtigiano">
+                        <div class="nomeArtigiano">Aldo Baglio</div>
+                        <p class="bioArtigiano">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. Duis vulputate commodo lectus, ac blandit elit tincidunt id. Sed rhoncus, tortor sed eleifend tristique, tortor mauris molestie elit, et lacinia ipsum quam nec dui. Quisque nec mauris sit amet elit iaculis pretium sit amet quis magna. Aenean velit odio, elementum in tempus ut, vehicula eu diam. Pellentesque rhoncus aliquam mattis. Ut vulputate eros sed felis sodales nec vulputate justo hendrerit. Vivamus varius pretium ligula, a aliquam odio euismod sit amet. Quisque laoreet sem sit amet orci ullamcorper at ultricies metus viverra. Pellentesque arcu mauris, malesuada quis ornare accumsan, blandit sed diam.
+                        </p>
+                        <div class="text-end">
+                            <a href="/artigiano/nome-artigiano" class="cta cta-secondary">Visita le sue opere</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="artigiano shadow-sm">
+                    <img alt="foto dell'artigiano" src="https://picsum.photos/200/200" loading="lazy"/>
+                    <div class="bodyArtigiano">
+                        <div class="nomeArtigiano">Giovanni Storti</div>
+                        <p class="bioArtigiano">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. Duis vulputate commodo lectus, ac blandit elit tincidunt id. Sed rhoncus, tortor sed eleifend tristique, tortor mauris molestie elit, et lacinia ipsum quam nec dui. Quisque nec mauris sit amet elit iaculis pretium sit amet quis magna. Aenean velit odio, elementum in tempus ut, vehicula eu diam. Pellentesque rhoncus aliquam mattis. Ut vulputate eros sed felis sodales nec vulputate justo hendrerit. Vivamus varius pretium ligula, a aliquam odio euismod sit amet. Quisque laoreet sem sit amet orci ullamcorper at ultricies metus viverra. Pellentesque arcu mauris, malesuada quis ornare accumsan, blandit sed diam.
+                        </p>
+                        <div class="text-end">
+                            <a href="/artigiano/nome-artigiano" class="cta cta-secondary">Visita le sue opere</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="artigiano shadow-sm">
+                    <img alt="foto dell'artigiano" src="https://picsum.photos/200/200" loading="lazy"/>
+                    <div class="bodyArtigiano">
+                        <div class="nomeArtigiano">Giacomo Poretti</div>
+                        <p class="bioArtigiano">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. Duis vulputate commodo lectus, ac blandit elit tincidunt id. Sed rhoncus, tortor sed eleifend tristique, tortor mauris molestie elit, et lacinia ipsum quam nec dui. Quisque nec mauris sit amet elit iaculis pretium sit amet quis magna. Aenean velit odio, elementum in tempus ut, vehicula eu diam. Pellentesque rhoncus aliquam mattis. Ut vulputate eros sed felis sodales nec vulputate justo hendrerit. Vivamus varius pretium ligula, a aliquam odio euismod sit amet. Quisque laoreet sem sit amet orci ullamcorper at ultricies metus viverra. Pellentesque arcu mauris, malesuada quis ornare accumsan, blandit sed diam.
+                        </p>
+                        <div class="text-end">
+                            <a href="/artigiano/nome-artigiano" class="cta cta-secondary">Visita le sue opere</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="artigiano shadow-sm">
+                    <img alt="foto dell'artigiano" src="https://picsum.photos/200/200" loading="lazy"/>
+                    <div class="bodyArtigiano">
+                        <div class="nomeArtigiano">Riccardo Nikolassy</div>
+                        <p class="bioArtigiano">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla quam velit, vulputate eu pharetra nec, mattis ac neque. Duis vulputate commodo lectus, ac blandit elit tincidunt id. Sed rhoncus, tortor sed eleifend tristique, tortor mauris molestie elit, et lacinia ipsum quam nec dui. Quisque nec mauris sit amet elit iaculis pretium sit amet quis magna. Aenean velit odio, elementum in tempus ut, vehicula eu diam. Pellentesque rhoncus aliquam mattis. Ut vulputate eros sed felis sodales nec vulputate justo hendrerit. Vivamus varius pretium ligula, a aliquam odio euismod sit amet. Quisque laoreet sem sit amet orci ullamcorper at ultricies metus viverra. Pellentesque arcu mauris, malesuada quis ornare accumsan, blandit sed diam.
+                        </p>
+                        <div class="text-end">
+                            <a href="/artigiano/nome-artigiano" class="cta cta-secondary">Visita le sue opere</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="theySaidAboutUsContainer">
+        <div class="container">
+            <h1>Cosa dicono di noi</h1>
+            <div class="d-flex flex-row gap-4 flex-row align-items-stretch justify-content-center my-2">
+                <div class="itm shadow-sm">
+                    "Ho trovato un regalo unico e meraviglioso! La cura dei dettagli e la passione dell'artigiano si percepiscono chiaramente. Spedizione veloce e imballaggio accurato." - [Nome del Cliente]
+                </div>
+                <div class="itm shadow-sm">
+                    "Ho trovato un regalo unico e meraviglioso! La cura dei dettagli e la passione dell'artigiano si percepiscono chiaramente. Spedizione veloce e imballaggio accurato." - [Nome del Cliente]
+                </div>
+                <div class="itm shadow-sm">
+                    "Ho trovato un regalo unico e meraviglioso! La cura dei dettagli e la passione dell'artigiano si percepiscono chiaramente. Spedizione veloce e imballaggio accurato." - [Nome del Cliente]
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ctaArtigianiCont">
+        <div class="container">
+            <h1>Sei un artigiano appassionato?</h1>
+            <h2>Dai vita alla tua arte. Unisciti alla nostra community</h2>
+            <p> Hai talento e passione? Artigianato Online è la vetrina ideale per far conoscere le tue creazioni a un pubblico desideroso di autenticità. Gestisci facilmente il tuo negozio, raggiungi nuovi clienti e fai crescere la tua attività.</p>
+            <div class="text-center my-2">
+                <a href="/vendi" class="cta cta-primary">Vendi le tue creazioni ora!</a>
+            </div>
+        </div>
+    </div>
     <footer-component></footer-component>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>

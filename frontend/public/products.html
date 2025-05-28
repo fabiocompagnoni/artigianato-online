@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I prodotti dei nostri artigiani &middot; Artigianato Online</title>
+    <meta name="description" content="Esplora la nostra esclusiva collezione di prodotti artigianali online, realizzati con passione e maestria dai più talentuosi artigiani italiani. Scopri pezzi unici fatti a mano, perfetti per aggiungere un tocco di originalità alla tua vita o per trovare idee regalo originali e significative. Dalle eleganti ceramiche ai raffinati gioielli, dall'arredamento unico alla moda sostenibile, ogni creazione racconta una storia di tradizione e innovazione. Immergiti nel mondo dell'artigianato locale e lasciati conquistare dalla bellezza e dall'autenticità."/>
+    <meta name="keywords" content=""/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/prodotti.css"/>
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <header>
+        <div class="container">
+            <h1 id="pageTitle">I prodotti dei nostri artigiani</h1>
+            <p id="pageDesc">Esplora la nostra esclusiva collezione di <b>prodotti artigianali online</b>, realizzati con passione e maestria dai più <b>talentuosi artigiani italiani</b>. Scopri <b>pezzi unici fatti a mano</b>, perfetti per aggiungere un tocco di originalità alla tua vita o per trovare <b>idee regalo originali</b> e significativi. Dalle eleganti ceramiche ai raffinati gioielli, dall'arredamento unico alla moda sostenibile, ogni creazione racconta una storia di tradizione e innovazione. Immergiti nel mondo dell'artigianato locale e lasciati conquistare dalla <b>bellezza e dall'autenticità</b>.</p>
+        </div>
+    </header>
+    <div class="container-xxl">
+        <div class="mainContainer row">
+            <div class="col-2 d-none d-md-flex flex-column gap-2">
+                <div id="categoryCont" class="mb-3">
+                    <h3>Categorie</h3>
+                    <div id="categoryList"></div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex flex-row align-items-center gap-1">
+                        <input type="text" id="textQuery" class="form-control" placeholder="Cerca prodotti">
+                        <button class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <input type="number" id="priceMin" class="form-control" placeholder="Prezzo minimo">
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="number" id="priceMax" class="form-control" placeholder="Prezzo massimo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-10" id="productList">
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+                <div class="prodotto placeholder"></div>
+            </div>
+        </div>
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/products.js" type="module"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
