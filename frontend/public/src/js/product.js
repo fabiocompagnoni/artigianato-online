@@ -12,3 +12,24 @@ import {initProductQuantitySelectors} from "/src/js/modules/productQuantitySelec
 
 /*actions for custom product selectors*/
 document.addEventListener("DOMContentLoaded",initProductQuantitySelectors);
+
+/*add to cart listener*/
+const initAddToCart=()=>{
+    document.getElementById("addToCartBtn").addEventListener("click",(e)=>{
+        e.preventDefault();
+        let quantity=parseInt(document.querySelector(".customQuantitySelector input").value);
+        addToCart(window.productId, quantity);;
+    });
+}
+
+const loadProductInfo=async()=>{
+    try{
+        //loading product info from api
+
+        initAddToCart();
+    }catch(err){
+        console.error(err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded",loadProductInfo);
