@@ -11,9 +11,9 @@ let orderBy={};
 
 let mockupResponse=[
   {
-    "id":1,
+    "id": 101,
     "name": "Vaso in Ceramica Dipinto a Mano - Motivi Floreali",
-    "link": "/prodotti/vaso-ceramica-floreale",
+    "link": "/prodotti/elena-rossi/vaso-ceramica-dipinto-a-mano-motivi-floreali",
     "thumbnail": "https://via.placeholder.com/150/f0f0f0/000000?Text=Vaso+Ceramica",
     "description": "Elegante vaso in ceramica realizzato a mano con delicati motivi floreali. Perfetto per decorare la tua casa o come regalo speciale.",
     "price": 35.00,
@@ -35,9 +35,9 @@ let mockupResponse=[
     }
   },
   {
-    "id":2,
+    "id": 102,
     "name": "Collana in Argento 925 con Pietra Ametista",
-    "link": "/prodotti/collana-argento-ametista",
+    "link": "/prodotti/marco-bianchi/collana-argento-925-pietra-ametista",
     "thumbnail": "https://via.placeholder.com/150/e0e0e0/000000?Text=Collana+Argento",
     "description": "Raffinata collana in argento sterling 925 con una splendida pietra di ametista. Un gioiello unico per ogni occasione.",
     "price": 55.00,
@@ -59,9 +59,9 @@ let mockupResponse=[
     }
   },
   {
-    "id":3,
+    "id": 103,
     "name": "Tagliere in Legno d'Olivo Fatto a Mano",
-    "link": "/prodotti/tagliere-legno-olivo",
+    "link": "/prodotti/giulia-verdi/tagliere-legno-olivo-fatto-a-mano",
     "thumbnail": "https://via.placeholder.com/150/d0d0d0/000000?Text=Tagliere+Legno",
     "description": "Tagliere unico in legno d'olivo massello, ideale per servire formaggi, salumi o come elemento decorativo in cucina.",
     "price": 40.00,
@@ -83,9 +83,9 @@ let mockupResponse=[
     }
   },
   {
-    "id":4,
+    "id": 104,
     "name": "Sciarpa in Lana Merinos Lavorata a Maglia",
-    "link": "/prodotti/sciarpa-lana-merinos",
+    "link": "/prodotti/luca-neri/sciarpa-lana-merinos-lavorata-a-maglia",
     "thumbnail": "https://via.placeholder.com/150/c0c0c0/000000?Text=Sciarpa+Lana",
     "description": "Calda e morbida sciarpa in pura lana merinos, lavorata a mano con una delicata trama. Perfetta per le giornate fredde.",
     "price": 60.00,
@@ -107,9 +107,9 @@ let mockupResponse=[
     }
   },
   {
-    "id":5,
+    "id": 105,
     "name": "Candela Profumata Artigianale alla Lavanda",
-    "link": "/prodotti/candela-lavanda",
+    "link": "/prodotti/sofia-gialli/candela-profumata-artigianale-alla-lavanda",
     "thumbnail": "https://via.placeholder.com/150/b0b0b0/000000?Text=Candela+Lavanda",
     "description": "Candela profumata realizzata a mano con cera naturale e olio essenziale di lavanda. Ideale per creare un'atmosfera rilassante.",
     "price": 18.50,
@@ -130,7 +130,7 @@ let mockupResponse=[
       "link": "/artigiani/sofia-gialli"
     }
   }
-]
+];
 
 const makeProductDiv=(prodotto)=>{
     let linkProd=document.createElement("a");
