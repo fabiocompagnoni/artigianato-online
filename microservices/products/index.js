@@ -1,12 +1,10 @@
-
-
 /**
  * @version 1.0
  * @author Fabio Compagnoni
  */
 import {express} from "express";
 import {Pool} from "pg";
-const PORT = 4002;
+const PORT = 4000;
 
 const app = express();
 

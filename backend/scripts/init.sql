@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS users (
 	id_role INTEGER NOT NULL REFERENCES roles("ID"),
 	timestamp_registration TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	id_profile_picture INTEGER REFERENCES images("ID"),
-	bio VARCHAR(255)
+	bio VARCHAR(255),
+	slug VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS artisan_reviews (

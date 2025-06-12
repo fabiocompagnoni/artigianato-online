@@ -77,6 +77,21 @@ services:
       - db
     networks:
       - artigianato-network
+  
+  microservice_products:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        SERVICE_NAME: products
+    ports:
+      - "4002:4000" #microservice port
+    environment:
+      DATABASE_URL: postgres://admin:%40MkpArt25FL%23@db:5432/marketplace-artigiani
+    depends_on:
+      - db
+    networks:
+      - artigianato-network
 volumes:
   db_data:
 
