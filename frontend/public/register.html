@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrati &middot; Artigianato Online</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/login.css">
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <div class="mainCont">
+        <div class="loginCont">
+            <h1>Registrati</h1>
+            <div id="bodyCont">
+                <div id="step1">
+                    <p>Registrati al nostro marketplace per artigiani utilizzando la tua email oppure tramite il tuo account Google.<br/>Registrati come artigiano se vuoi iniziare a vendere oppure come privato se vuoi acquistare degli artigiani presenti su "Artigianato Online".</p>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="emailLogin">
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <div class="position-relative">
+                            <input type="password" class="form-control" id="password" name="password" required/>
+                            <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Nome</label>
+                        <input type="text" class="form-control" id="name">
+                    </div>
+                    <div class="mb-3">
+                        <label>Cognome</label>
+                        <input type="text" class="form-control" id="surname">
+                    </div>
+                    <div class="mb-3">
+                        <label>Chi sei?</label>
+                        <select class="form-select" id="userType">
+                            <option value="1">Sono un privato</option>
+                            <option value="2">Sono un artigiano</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <button class="loginButton" id="loginButton">Registrati</button>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col"><hr/></div>
+                        <div class="col-auto">Oppure</div>
+                        <div class="col"><hr/></div>
+                    </div>
+                    <!--TODO: mettere endpoint api login google-->
+                    <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Registrati con Google</div></a>
+                    <p class="text-center my-2">
+                        Creando l'account accetti i Termini di Servizio e la Privacy Policy.
+                    </p>
+                </div>
+                <div id="step2">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/login.js" type="module"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,1 +1,121 @@
-Ciao prodotto
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="titleProductPage"></title>
+    <meta name="description" content="" id="seoDescription"/>
+    <meta name="keywords" content="" id="seoKeywords"/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/prodotto.css">
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <div class="container-xl mainContainer">
+        <div class="row">
+            <div class="col-md-5">
+                <div class="contProductCarouselImage">
+                    <div class="lateralPreviews">
+                        <button id="scrollTopBtn"><i class="fa-solid fa-angle-up"></i></button>
+                        <img class="lazyImages">
+                        <img class="lazyImages">
+                        <img class="lazyImages">
+                        <img class="lazyImages">
+                        <img class="lazyImages">
+                        <button id="scrollBottonBtn"><i class="fa-solid fa-angle-down"></i></button>
+                    </div>
+                    <img class="primaryImage lazyImages">
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="productInfo">
+                    <h1 id="productName" class="productTitle placeholder-glow">
+                        <div class="placeholder col-8"></div>
+                    </h1>
+                    <div id="productCategoryList" class="categoriesProduct placeholder-glow">
+                        <div class="placeholder col-2"></div>
+                        <div class="placeholder col-2"></div>
+                        <div class="placeholder col-2"></div>
+                    </div>
+                    <div id="productDescShort" class="productShortDescription placeholder-glow">
+                        <span class="placeholder col-7"></span>
+                        <span class="placeholder col-4"></span>
+                        <span class="placeholder col-4"></span>
+                        <span class="placeholder col-6"></span>
+                        <span class="placeholder col-8"></span>
+                    </div>
+                    <a id="contArtisanCont">
+                        <img class="artisanProfilePicture lazyImages">
+                        <div class="artisanName placeholder-glow">
+                            <div class="placeholder col-4"></div>
+                        </div>
+                    </a>
+                    <div id="priceProduct" class="priceProduct placeholder-glow">
+                        <div class="placeholder col-4"></div>
+                    </div>
+
+                    <div id="productDisponibity" class="productDispponibility placeholder-glow">
+                        <div class="placeholder col-4"></div>
+                    </div>
+                    <div class="productActions">
+                        <div class="customQuantitySelector">
+                            <button class="removeOne" title="Rimuovi uno"><i class="fa-solid fa-minus"></i></button>
+                            <input class="quantityShow" value="1" type="number">
+                            <button class="addOne" title="Aggiungi uno"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="addToCartBtn" id="addToCartBtn"><i class="fa-solid fa-cart-plus"></i><div>Aggiungi al carrello</div></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="productDescriptionCont">
+            <h2>Descrizione del prodotto</h2>
+            <p id="productDescription" class="productLongDescription placeholder-glow">
+                <span class="placeholder col-7"></span>
+                <span class="placeholder col-4"></span>
+                <span class="placeholder col-4"></span>
+                <span class="placeholder col-6"></span>
+                <span class="placeholder col-8"></span>
+            </p>
+            <div class="mb-3">
+                <div class="productDate">Data caricamento del prodotto <span id="dateUploadProduct" class="placeholder-glow"><div class="placeholder col-2"></div></span></div>
+                <button class="secondaryButton">Segnala un problema</button>
+            </div>
+        </div>
+        <div class="artisanReviewsCont">
+            <h2>Cosa dicono di <div class='artisanName'></div></h2>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="resumeReviewCont">
+                        <div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                            <div class="starReviewResume"></div>
+                            <div id="averageReviews"></div>
+                        </div>
+                        <div>Basato su <div id='numReviews'></div></div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div id="reviewsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="otherProductCont">
+        <div class="container-xl">
+            <div class="otherProductArtisanCont">
+                <h3>Altri prodotti di <div class='artisanName'></div></h3>
+            </div>
+            <div class="similarProductsCont">
+                <h3>Prodotti simili</h3>
+                <div id="similarProductsList"></div>
+            </div>
+        </div>
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/product.js" type="module"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

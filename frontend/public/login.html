@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accedi &middot; Artigianato Online</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/login.css">
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <div class="mainCont">
+        <div class="loginCont">
+            <h1>Accedi</h1>
+            <div id="bodyCont">
+                <div id="inputPart">
+                    <p>Accedi utilizzando la tua email oppure tramite il tuo account Google.</p>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="emailLogin">
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <div class="position-relative">
+                            <input type="password" class="form-control" id="password" name="password" required/>
+                            <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <a href="/recupera-password" class="mb-3">Hai dimenticato la password?</a>
+                    <div class="d-flex mb-3">
+                        <button class="loginButton" id="loginButton">Accedi</button>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col"><hr/></div>
+                        <div class="col-auto">Oppure</div>
+                        <div class="col"><hr/></div>
+                    </div>
+                    <!--TODO: mettere endpoint api login google-->
+                    <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Accedi con Google</div></a>
+                </div>
+                <div id="loadingPart">
+                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                    <div>Accesso in corso...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/login.js" type="module"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

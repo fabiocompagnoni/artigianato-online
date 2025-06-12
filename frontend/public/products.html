@@ -25,15 +25,23 @@
             <div class="col-2 d-none d-md-flex flex-column gap-2">
                 <div id="categoryCont" class="mb-3">
                     <h3>Categorie</h3>
-                    <div id="categoryList"></div>
+                    <div id="categoryList">
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                    </div>
                 </div>
                 <div class="mb-3">
+                    <h3>Cerca</h3>
                     <div class="d-flex flex-row align-items-center gap-1">
                         <input type="text" id="textQuery" class="form-control" placeholder="Cerca prodotti">
                         <button class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
                     </div>
                 </div>
                 <div class="mb-3">
+                    <h3>Prezzi</h3>
                     <div class="row">
                         <div class="col-sm-6">
                             <input type="number" id="priceMin" class="form-control" placeholder="Prezzo minimo">
@@ -43,28 +51,52 @@
                         </div>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <h3>Disponibilità</h3>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="prodDispDesktop">
+                            <label class="form-check-label" for="prodDispDesktop">Disponibili</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="0" id="prodNonDispDesktop">
+                            <label class="form-check-label" for="prodDispDesktop">Non disponibili</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h3>Ordinamento</h3>
+                    <select class="form-select" id="selectOrdinamentoMobile">
+                        <option value="0">Più recenti</option>
+                        <option value="1">Meno recenti</option>
+                        <option value="2">Prezzo crescente</option>
+                        <option value="3">Prezzo decrescente</option>
+                        <option value="4">Nome crescente</option>
+                        <option value="5">Nome decrescente</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-10" id="productList">
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
-                <div class="prodotto placeholder"></div>
+            <div class="col-10 listaProdotti" id="productList">
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
+                <div class="products placeholder"></div>
             </div>
         </div>
     </div>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrello &middot; Artigianato Online</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/carrello.css">
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <div class="container-xl mainCont">
+        <div class="row">
+            <div class="col-md-8">
+                <h1>Carrello</h1>
+                <div class="cartContent placeholder-glow" id="productList">
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h2>Il tuo ordine</h2>
+                <div id="resumeNumProducts"></div>
+                <table class="table table-striped tableTotali">
+                    <tr>
+                        <td>IMPONIBILE</td><td id="imponibile">€ 0,00</td>
+                    </tr>
+                    <tr>
+                        <td>SPEDIZIONE</td><td id="spedizione">€ 0,00</td>
+                    </tr>
+                    <tr>
+                        <td>IVA</td><td id="iva">€ 0,00</td>
+                    </tr>
+                    <tr id="rowTotale">
+                        <td>TOTALE</td><td id="totale">€ 0,00</td>
+                    </tr>
+                    
+                </table>
+                <div class="my-3">
+                    <button class="buyButton w-100 shadow">Acquista ora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/cartFrontend.js" type="module"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@ class NavBar extends HTMLElement {
         <link rel="stylesheet" href="/src/css/navbar.css">
         <div class="customNavbar">
             <div class="container d-flex align-items-center justify-content-between">
-                <div class="logo"><img src="/src/img/logo_orizzontale.png" alt="Logo" height="50"></div>
+                <a class="logo" href="/"><img src="/src/img/logo_orizzontale.png" alt="Logo" height="50"></a>
                 <div class="linkDesktop d-none d-md-flex ">
                     <a href='/prodotti'>Tutti i prodotti</a>
                     <a href='/artigiani'>I nostri artigiani</a>

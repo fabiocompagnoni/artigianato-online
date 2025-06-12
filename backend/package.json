@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend per il marketplace Artigianato Online",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "test": "npm test",
     "init-db": "node scripts/init-db.js",
@@ -15,7 +16,10 @@
   "author": "Fabio Compagnoni, Loris Biavetti",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0",
+    "http-proxy": "^1.18.1",
+    "http-proxy-middleware": "^3.0.5",
     "pg": "^8.16.0"
   }
 }
