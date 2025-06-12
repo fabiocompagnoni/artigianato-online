@@ -5,7 +5,7 @@
 
 export const loadImage=async (imgElement) =>{
     return new Promise((resolve, reject)=>{
-        const worker=new Worker("/src/js/mediaServiceWorker.js");
+        const worker=new Worker("/src/js/worker/mediaServiceWorker.js");
         worker.postMessage([imgElement.dataset.src]);
         worker.addEventListener("message",(e)=>{
             imgElement.src=e.data[0];

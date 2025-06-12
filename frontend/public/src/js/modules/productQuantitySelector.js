@@ -9,7 +9,7 @@ export const initProductQuantitySelectors=()=>{
             let v=input.value;
             if(v>1){
                 v--;
-                input.value=v;
+                input.setAttribute("value",v);
             }else{
                 btnMinus.disabled=true;
             }
@@ -17,7 +17,7 @@ export const initProductQuantitySelectors=()=>{
         btnPlus.addEventListener("click",()=>{
             let v=input.value;
             v++;
-            input.value=v;
+            input.setAttribute("value",v);
             if(btnMinus.hasAttribute("disabled")){
                 btnMinus.removeAttribute("disabled");
             }
