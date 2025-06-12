@@ -3,7 +3,7 @@
     padding: 1rem;
     position: fixed;
     width: 100%;
-    z-index: 1000;
+    z-index: 1001;
     background: rgba(168, 187, 162, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -49,6 +49,7 @@
     width:100dvw;
     padding-left:1rem;
     padding-right:1rem;
+    z-index:1000;
 }
 .mobileNavMenu a, .mobileNavMenu button{
     color:#2E5A39;

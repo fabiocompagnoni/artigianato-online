@@ -3,9 +3,9 @@
  * @author Fabio Compagnoni
  */
 
-import {loadImage} from "/src/js/loadImageModule.js";
-import {ajax} from "/src/js/fetchWorkerModule.js";
-import { addToCart } from "/src/js/cart.js";
+import {loadImage} from "/src/js/modules/loadImageModule.js";
+import {ajax} from "/src/js/modules/fetchWorkerModule.js";
+import { addToCart } from "/src/js/modules/cart.js";
 let filter={};
 let orderBy={};
 
@@ -228,4 +228,28 @@ const loadCategory=async()=>{
 
 document.addEventListener("DOMContentLoaded",()=>{
     loadProducts();
+});
+
+document.getElementById("openSearchMobile").addEventListener("click",()=>{
+  document.getElementById("searchComponentMobile").classList.toggle("showed");
+});
+
+document.getElementById("btnCloseSearchMobile").addEventListener("click",()=>{
+    document.getElementById("searchComponentMobile").classList.toggle("showed");
+});
+
+document.getElementById("openFilterMobile").addEventListener("click",()=>{
+  document.getElementById("filterPart").style.display="flex";
+  document.getElementById("orderPart").style.display="none";
+  document.getElementById("filterComponentMobile").classList.add("showed");
+});
+
+document.getElementById("openOrderMobile").addEventListener("click",()=>{
+  document.getElementById("filterPart").style.display="none";
+  document.getElementById("orderPart").style.display="flex";
+  document.getElementById("filterComponentMobile").classList.add("showed");
+});
+
+document.getElementById("btnCloseFilterMobile").addEventListener("click",()=>{
+  document.getElementById("filterComponentMobile").classList.remove("showed");
 });
