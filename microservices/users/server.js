@@ -274,7 +274,7 @@ app.post('/login', async (req, res) => {
     const user_info = sql_res.rows[0];
 
     if (bcrypt.compareSync(password, user_info.password))
-      sendUserData(res, user_data);
+      sendUserData(res, user_info);
     else
       sendError(res, 514);
   } catch (err) {
@@ -283,7 +283,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get("/logout", async (req, res) => {
+app.post("/logout", async (req, res) => {
   // Cancellazione token jwt dai cookie httpOnly
   res.clearCookie('jwt', {
     httpOnly: true,
