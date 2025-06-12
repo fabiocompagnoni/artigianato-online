@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
 const pool = new Pool({connectionString: process.env.DATABASE_URL});
 
