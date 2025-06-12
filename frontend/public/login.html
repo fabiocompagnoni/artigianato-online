@@ -16,29 +16,35 @@
         <div class="loginCont">
             <h1>Accedi</h1>
             <div id="bodyCont">
-                <p>Accedi utilizzando la tua email oppure tramite il tuo account Google.</p>
-                <div class="mb-3">
-                    <label>Email</label>
-                    <input type="email" class="form-control" id="emailLogin">
-                </div>
-                <div class="mb-3">
-                    <label>Password</label>
-                    <div class="position-relative">
-                        <input type="password" class="form-control" id="password" name="password" required/>
-                        <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                <div id="inputPart">
+                    <p>Accedi utilizzando la tua email oppure tramite il tuo account Google.</p>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="emailLogin">
                     </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <div class="position-relative">
+                            <input type="password" class="form-control" id="password" name="password" required/>
+                            <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <a href="/recupera-password" class="mb-3">Hai dimenticato la password?</a>
+                    <div class="d-flex mb-3">
+                        <button class="loginButton" id="loginButton">Accedi</button>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col"><hr/></div>
+                        <div class="col-auto">Oppure</div>
+                        <div class="col"><hr/></div>
+                    </div>
+                    <!--TODO: mettere endpoint api login google-->
+                    <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Accedi con Google</div></a>
                 </div>
-                <a href="/recupera-password" class="mb-3">Hai dimenticato la password?</a>
-                <div class="d-flex mb-3">
-                    <button class="loginButton" id="loginButton">Accedi</button>
+                <div id="loadingPart">
+                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                    <div>Accesso in corso...</div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col"><hr/></div>
-                    <div class="col-auto">Oppure</div>
-                    <div class="col"><hr/></div>
-                </div>
-                <!--TODO: mettere endpoint api login google-->
-                <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Accedi con Google</div></a>
             </div>
         </div>
     </div>

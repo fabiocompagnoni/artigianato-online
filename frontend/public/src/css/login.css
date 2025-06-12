@@ -40,3 +40,11 @@
     padding:0.25rem;
     border-radius: var(--bs-border-radius-xl);
 }   
+
+#loadingPart{
+    min-height:20rem;
+    justify-content: center;
+    align-items: center;
+    gap:0.5rem;
+    display:none;
+}
