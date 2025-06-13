@@ -55,11 +55,11 @@
                     <h3>Disponibilità</h3>
                     <div class="d-flex flex-column gap-1">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="prodDispDesktop">
+                            <input class="form-check-input" type="checkbox" value="1" id="prodDispDesktop" name="dispDesktop">
                             <label class="form-check-label" for="prodDispDesktop">Disponibili</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="0" id="prodNonDispDesktop">
+                            <input class="form-check-input" type="checkbox" value="0" id="prodNonDispDesktop" name="dispDesktop">
                             <label class="form-check-label" for="prodDispDesktop">Non disponibili</label>
                         </div>
                     </div>
@@ -76,31 +76,146 @@
                     </select>
                 </div>
             </div>
-            <div class="col-10 listaProdotti" id="productList">
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-                <div class="products placeholder"></div>
-            </div>
+            <div class="col-md-10">
+                <div class="barMobileActions d-flex d-lg-none flex-row align-items-start gap-2">
+                    <button id="openSearchMobile" class="mobileNavBtn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <div>Cerca prodotti</div>
+                    </button>
+                    <button id="openFilterMobile" class="mobileNavBtn">
+                        <i class="fa-solid fa-sliders"></i>
+                        <div>Filtri</div>
+                    </button>
+                    <button id="openOrderMobile" class="mobileNavBtn">
+                        <svg fill="#000000" height="1rem" width="1rem" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 30.587 30.587" xml:space="preserve"><g><g><path d="M16.331 20.381c-0.519 -0.456 -1.363 -0.388 -1.819 0.131l-4.813 5.425v-21.681c0 -0.713 -0.588 -1.3 -1.3 -1.3s-1.3 0.588 -1.3 1.3v21.681l-4.813 -5.425c-0.519 -0.519 -1.3 -0.588 -1.819 -0.131 -0.519 0.519 -0.588 1.3 -0.131 1.819l7.088 7.931c0.531 0.656 1.469 0.556 1.887 0l7.15 -7.931c0.456 -0.512 0.394 -1.363 -0.131 -1.819"></path><path d="m30.25 8.419 -7.025 -7.931c-0.625 -0.631 -1.406 -0.669 -1.95 0l-7.15 7.931c-0.456 0.519 -0.388 1.363 0.131 1.819 0.8 0.637 1.606 0.2 1.819 -0.131l4.813 -5.425v21.619c0 0.713 0.588 1.3 1.3 1.3s1.3 -0.519 1.3 -1.238v-21.675l4.813 5.425c0.519 0.519 1.3 0.588 1.819 0.131 0.519 -0.525 0.588 -1.306 0.131 -1.825"></path></g></g></svg>
+                        <div>Ordina</div>
+                    </button>
+                </div>
+                <div class="listaProdotti" id="productList">
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                    <div class="products placeholder"></div>
+                </div>
+            </div>  
+            
         </div>
     </div>
     <footer-component></footer-component>
+
+    <div id="searchComponentMobile" class="searchComponent">
+        <h2>Cerca</h2>
+        <label>Cerca nel nostro marketplace</label>
+        <input type="text" class="form-control" id="textSearchMobile" placeholder="Cerca prodotti"/>
+        <button class="btnCloseSearchMobile" id="btnCloseSearchMobile"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="filterComponent" id="filterComponentMobile">
+        <div id="filterPart" style="display: none;" class="flex-column gap-2">
+            <h2>Filtri</h2>
+            <div class="mb-3">
+                <h3>Categorie</h3>
+                <div id="categoryListMobile">
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h3>Prezzi</h3>
+                <div>
+                    <label>Da</label>
+                    <div class="input-group">
+                        <span class="input-group-text">&euro;</span>
+                        <input type="number" class="form-control" id="priceMinMobile" placeholder="Prezzo minimo">
+                    </div>
+                </div>
+                <div>
+                    <label>A</label>
+                    <div class="input-group">
+                        <span class="input-group-text">&euro;</span>
+                        <input type="number" class="form-control" id="priceMaxMobile" placeholder="Prezzo massimo">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h3>Disponibilità</h3>
+                <div class="d-flex flex-column gap-1">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="prodDispMobile">
+                        <label class="form-check-label" for="prodDispMobile">Disponibili</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="prodNonDispMobile">
+                        <label class="form-check-label" for="prodNonDispMobile">Non disponibili</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="orderPart" style="display: none;" class="flex-column gap-2">
+            <h2>Ordina</h2>
+            <div class="d-flex flex-column gap-1">
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order1" autocomplete="off" value="0" checked>
+                    <label class="selectorOrder checked" for="order1">Più recenti</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order2" autocomplete="off" value="1">
+                    <label class="selectorOrder" for="order2">Meno recenti</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order3" autocomplete="off" value="2">
+                    <label class="selectorOrder" for="order3">Prezzo cresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order4" autocomplete="off" value="3">
+                    <label class="selectorOrder" for="order4">Prezzo decresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order5" autocomplete="off" value="4">
+                    <label class="selectorOrder" for="order5">Nome cresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order6" autocomplete="off" value="5">
+                    <label class="selectorOrder" for="order6">Nome decresente</label>
+                </div>
+            </div>
+        </div>
+        <button class="btnCloseSearchMobile" id="btnCloseFilterMobile"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <script>
+        //check if its artisan page or products page
+        const url = window.location.pathname;
+        const artisanSlugRegex = /^\/artigiani\/([a-z0-9-]+)$/;
+        const match = url.match(artisanSlugRegex);
+
+        window.artisanSlug = null;
+        if (match) {
+            window.artisanPage=true;
+            window.artisanSlug = match[1];
+        } else {
+            window.artisanPage=false;
+        }
+
+    </script>
     <script src="/src/js/products.js" type="module"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>

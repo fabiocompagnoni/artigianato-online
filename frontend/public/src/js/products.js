@@ -3,11 +3,26 @@
  * @author Fabio Compagnoni
  */
 
-import {loadImage} from "/src/js/loadImageModule.js";
-import {ajax} from "/src/js/fetchWorkerModule.js";
-import { addToCart } from "/src/js/cart.js";
+import {loadImage} from "/src/js/modules/loadImageModule.js";
+import {ajax} from "/src/js/modules/fetchWorkerModule.js";
+import { addToCart } from "/src/js/modules/cart.js";
 let filter={};
 let orderBy={};
+
+const initPage=async()=>{
+  if(window.artisanPage){
+    filter.artisan=window.artisanSlug;
+    //show artisan info
+    //make request to get artisan info
+    //const request=await ajax(`https://localhost:4000/users/${window.artisanSlug}`,"GET");
+    
+    document.getElementById("pageTitle").innerHTML="";
+    document.getElementById("pageDesc").innerHTML="";
+  }
+  loadProducts();
+}
+
+document.addEventListener("DOMContentLoaded",initPage);
 
 let mockupResponse=[
   {
@@ -197,6 +212,8 @@ const makeProductDiv=(prodotto)=>{
 const loadProducts=async()=>{
     const containerProducts=document.getElementById("productList");
     try{
+        //aggiungere anche filtri e ordinamento
+        //aggiungere filtro artigiano
         //const products=await ajax("https://localhost:4000/products","GET");
         const products=mockupResponse;
         if(products.length==0){
@@ -225,7 +242,109 @@ const loadCategory=async()=>{
     }
 }
 
+const mapOrder=(value)=>{
+  switch(value){
+    case 0:"timestamp_creation DESC"; break;
+    case 1:"timestamp_creation ASC"; break;
+    case 2:"price DESC"; break;
+    case 3:"price ASC"; break;
+    case 4:"name ASC"; break;
+    case 5:"name DESC"; break;
+    default:
+  }
+}
 
-document.addEventListener("DOMContentLoaded",()=>{
-    loadProducts();
+document.getElementById("openSearchMobile").addEventListener("click",()=>{
+  document.getElementById("searchComponentMobile").classList.toggle("showed");
 });
+
+document.getElementById("btnCloseSearchMobile").addEventListener("click",()=>{
+    document.getElementById("searchComponentMobile").classList.toggle("showed");
+});
+
+document.getElementById("openFilterMobile").addEventListener("click",()=>{
+  document.getElementById("filterPart").style.display="flex";
+  document.getElementById("orderPart").style.display="none";
+  document.getElementById("filterComponentMobile").classList.add("showed");
+});
+
+document.getElementById("openOrderMobile").addEventListener("click",()=>{
+  document.getElementById("filterPart").style.display="none";
+  document.getElementById("orderPart").style.display="flex";
+  document.getElementById("filterComponentMobile").classList.add("showed");
+});
+
+document.getElementById("btnCloseFilterMobile").addEventListener("click",()=>{
+  document.getElementById("filterComponentMobile").classList.remove("showed");
+});
+
+//ordinamento mobile
+document.querySelectorAll("[name='orderMobile']").forEach((radio) => {
+  radio.addEventListener("change", (event) => {
+    let label=event.target.labels[0];
+    document.querySelectorAll(".selectorOrder").forEach((r)=>{
+      r.classList.remove("checked");
+    });
+    label.classList.toggle("checked");
+    orderBy=mapOrder(event.target.value);
+    loadProducts();
+  });
+});
+
+//ordinamento desktop
+document.getElementById("selectOrdinamentoMobile").addEventListener("change",(event)=>{
+  filter=mapOrder(event.target.value);
+});
+
+//disponibilità desktop
+document.querySelectorAll("[dispDesktop]").forEach((check)=>{
+  check.addEventListener("change",(event)=>{
+    console.log(event.target.value);
+    if(!filter.disponibilita){
+      filter.disponibilita=[];
+    }
+    if(event.target.checked){
+      if(!(filter.disponibilita && filter.disponibilita.includes(event.target.value))){
+        filter.disponibilita.push(event.target.value);
+      }
+    }else{
+      filter.disponibilita=filter.disponibilita.filter(item=>item!=event.target.value);
+    }
+    console.log(filter);
+  });
+});
+
+//prezzi desktop
+document.getElementById("priceMin").addEventListener("change",(event)=>{
+  if(!filter.prezzi){
+    filter.prezzi={};
+  }
+  filter.prezzi.min=event.target.value;
+});
+
+document.getElementById("priceMax").addEventListener("change",(event)=>{
+  if(!filter.prezzi){
+    filter.prezzi={};
+  }
+  filter.prezzi.max=event.target.value;
+});
+
+//ricerca
+let timerRicerca;
+const handleRicerca=(queryString)=>{
+
+}
+document.getElementById("textQuery").addEventListener("keyup",(event)=>{
+  timerRicerca=setTimeout(()=>{
+    clearTimeout(timerRicerca);
+    handleRicerca(event.target.value);
+  },500);
+});
+
+document.getElementById("textSearchMobile").addEventListener("keyup",(event)=>{
+  timerRicerca=setTimeout(()=>{
+    clearTimeout(timerRicerca);
+    handleRicerca(event.target.value);
+  },500);
+});
+
