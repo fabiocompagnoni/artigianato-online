@@ -13,3 +13,64 @@ header{
     text-decoration: none;
     color:var(--bs-body-color);
 }
+.order{
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+}
+.listOrders{
+    display: flex;
+    flex-direction: column;
+    gap:1rem;
+}
+.pillStatus{
+    padding:0.5rem;
+    border-radius: var(--bs-border-radius-xl);
+    text-transform: uppercase;
+    width:fit-content;
+}
+/*impostare colori pill e altri dettagli ordine*/
+.orderImg{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+    min-height:10rem;
+}
+
+.totalOrder{
+    font-weight: 600;
+    font-size:1.3rem;
+}
+.btnDetailOrder{
+    background:var(--first-color);
+    color:white;
+    border:none;
+    border-radius:var(--bs-border-radius-xl);
+    padding:0.5rem;
+    transition:all 300ms ease-in-out;
+    text-decoration: none;
+    flex:1;
+}
+.btnDetailOrder:hover{
+    background:var(--second-color);
+}
+.pillStatus.pagato{
+    background:green;
+    color:white;
+}
+.pillStatus.spedito{
+    background:blue;
+    color:white;
+}
+.pillStatus.in-preparazione{
+    background:orange;
+    color:white;
+}
+.pillStatus.annullato{
+    background:red;
+    color:white;
+}
+.pillStatus.rimborsato{
+    background:gray;
+    color:white;
+}

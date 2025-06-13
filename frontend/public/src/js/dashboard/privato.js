@@ -87,7 +87,7 @@ const mockOrders = [
 
 const makeDivOrder=(order)=>{
     let cont=document.createElement("div");
-    cont.classList.add("order", "row");
+    cont.classList.add("order", "row", "shadow");
     let img=document.createElement("img");
     img.dataset.src=order.thumbnail;
     img.classList.add("lazyImages", "orderImg");
@@ -98,7 +98,7 @@ const makeDivOrder=(order)=>{
     resumeOrder.innerHTML=`Ordine del ${order.timestamp}`;
 
     let pTot=document.createElement("div");
-    pTot.innerHTML=`Totale ${order.total}`;
+    pTot.innerHTML=`Totale ${parseFloat(order.total).toLocaleString("it-IT", { style: 'currency', currency: 'EUR' })}`;
     pTot.classList.add("totalOrder");
     let listProduct=document.createElement("div");
     listProduct.classList.add("listProduct", "text-truncate");
@@ -109,7 +109,7 @@ const makeDivOrder=(order)=>{
     pillStatus.innerHTML=`${order.status}`;
 
     let btnDetailOrder=document.createElement("a");
-    btnDetailOrder.href="/clienti/area-riservata/"+order.id;
+    btnDetailOrder.href="/clienti/area-riservata/ordini/"+order.id;
     btnDetailOrder.classList.add("btnDetailOrder");
     btnDetailOrder.innerHTML=`Vai all'ordine`;
 
@@ -117,7 +117,7 @@ const makeDivOrder=(order)=>{
     col1.classList.add("col-md-4");
     col1.appendChild(img);
     let col2=document.createElement("div");
-    col2.classList.add("col-md-6");
+    col2.classList.add("col-md-6", "my-2","my-lg-0");
     col2.appendChild(resumeOrder);
     col2.appendChild(pTot);
     col2.appendChild(listProduct);
