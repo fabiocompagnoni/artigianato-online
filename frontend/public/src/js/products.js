@@ -9,6 +9,21 @@ import { addToCart } from "/src/js/modules/cart.js";
 let filter={};
 let orderBy={};
 
+const initPage=async()=>{
+  if(window.artisanPage){
+    filter.artisan=window.artisanSlug;
+    //show artisan info
+    //make request to get artisan info
+    //const request=await ajax(`https://localhost:4000/users/${window.artisanSlug}`,"GET");
+    
+    document.getElementById("pageTitle").innerHTML="";
+    document.getElementById("pageDesc").innerHTML="";
+  }
+  loadProducts();
+}
+
+document.addEventListener("DOMContentLoaded",initPage);
+
 let mockupResponse=[
   {
     "id": 101,
@@ -198,6 +213,7 @@ const loadProducts=async()=>{
     const containerProducts=document.getElementById("productList");
     try{
         //aggiungere anche filtri e ordinamento
+        //aggiungere filtro artigiano
         //const products=await ajax("https://localhost:4000/products","GET");
         const products=mockupResponse;
         if(products.length==0){
@@ -237,11 +253,6 @@ const mapOrder=(value)=>{
     default:
   }
 }
-
-
-document.addEventListener("DOMContentLoaded",()=>{
-    loadProducts();
-});
 
 document.getElementById("openSearchMobile").addEventListener("click",()=>{
   document.getElementById("searchComponentMobile").classList.toggle("showed");

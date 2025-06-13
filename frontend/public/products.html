@@ -201,6 +201,21 @@
         </div>
         <button class="btnCloseSearchMobile" id="btnCloseFilterMobile"><i class="fa-solid fa-xmark"></i></button>
     </div>
+    <script>
+        //check if its artisan page or products page
+        const url = window.location.pathname;
+        const artisanSlugRegex = /^\/artigiani\/([a-z0-9-]+)$/;
+        const match = url.match(artisanSlugRegex);
+
+        window.artisanSlug = null;
+        if (match) {
+            window.artisanPage=true;
+            window.artisanSlug = match[1];
+        } else {
+            window.artisanPage=false;
+        }
+
+    </script>
     <script src="/src/js/products.js" type="module"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>

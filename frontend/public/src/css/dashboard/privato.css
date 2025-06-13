@@ -1,0 +1,15 @@
+header{
+    padding-top:calc(2rem + 83px);
+}
+.cardResume{
+    display: flex;
+    flex-direction: row;
+    gap:1rem;
+    align-items:center;
+    justify-content: space-between;
+    padding:1rem;
+    border-radius: var(--bs-border-radius-xl);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    text-decoration: none;
+    color:var(--bs-body-color);
+}

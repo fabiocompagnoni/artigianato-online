@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area riservata &middot; Artigianato online</title>
+    <meta name="description" content="Area riservata per i clienti di Artigianato Online. Qui potrai vedere i tuoi ordini, gestirli e modificare tutto ciò che riguarda il tuo account" id="descrizione"/>
+    <meta name="keywords" content=""/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/dashboard/privato.css"/>
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <div id="home">
+        <header>
+            <div class="container-xl">
+                <h1>Area riservata</h1>
+                <div class="saluto">Ciao <span id="nomeUtente"></span></div>
+                <div class="d-flex flex-row flex-wrap gap-2 my-2">
+                    <a href="/clienti/area-riservata/ordini" class="cardResume">
+                        <div class="stat-icon me-3">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Ordini</h6>
+                            <h3 class="mb-0" id="numOrdini">0</h3>
+                        </div>
+                    </a>
+                    <div class="cardResume">
+                        <div class="stat-icon me-3">
+                            <i class="fa-solid fa-shop"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Artigiani da cui hai acquistato</h6>
+                            <h3 class="mb-0" id="numOrdini">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </header>
+        <div class="container-xl my-2">
+            <div class="d-flex flex-row flex-wrap gap-2 align-items-center justify-content-between">
+                <h1>I tuoi ordini</h1>
+                <a href="/clienti/area-riservata/ordini" class="cta cta-primary">Mostra tutti</a>
+            </div>
+            <div class="listOrders" id="previewOrders">
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+            </div>
+        </div>
+    </div>
+    <div id="orders"></div>
+    <div id="order"></div>
+    <div id="profile"></div>
+
+    <footer-component></footer-component>
+    <script>
+        //manage view page by url
+        const url = window.location.pathname;
+        const home = document.getElementById('home');
+        const orders = document.getElementById('orders');
+        const order = document.getElementById('order');
+        const profile = document.getElementById('profile');
+
+        home.style.display = 'none';
+        orders.style.display = 'none';
+        order.style.display = 'none';
+        profile.style.display = 'none';
+
+        if (url === '/clienti/area-riservata') {
+            home.style.display = 'block';
+        } else if (url.startsWith('/clienti/area-riservata/ordini/')) {
+            order.style.display = 'block';
+        } else if (url === '/clienti/area-riservata/ordini') {
+            orders.style.display = 'block';
+        } else if (url === '/clienti/area-riservata/profilo') {
+            profile.style.display = 'block';
+        } else {
+            home.style.display = 'block';
+        }
+    </script>
+    <script src="/src/js/dashboard/privato.js" type="module"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

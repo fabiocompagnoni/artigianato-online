@@ -31,3 +31,25 @@ body{
     background:var(--first-color);
     color:white;
 }
+
+.cta{
+    padding:0.25rem;
+    padding-left:0.5rem;
+    padding-right:0.5rem;
+    font-size:1.25rem;
+    border-radius:var(--bs-border-radius-xl);
+    text-decoration: none;
+    background-image: linear-gradient(to right, transparent 0%, transparent 100%);
+    transition: background-image 0.3s ease;
+}
+.cta:hover {
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+.cta-primary{
+    background:var(--cta-color);
+    color:white;
+}
+.cta-secondary{
+    background:var(--second-color);
+    color:white;
+}
