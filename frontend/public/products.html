@@ -55,11 +55,11 @@
                     <h3>Disponibilità</h3>
                     <div class="d-flex flex-column gap-1">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="prodDispDesktop">
+                            <input class="form-check-input" type="checkbox" value="1" id="prodDispDesktop" name="dispDesktop">
                             <label class="form-check-label" for="prodDispDesktop">Disponibili</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="0" id="prodNonDispDesktop">
+                            <input class="form-check-input" type="checkbox" value="0" id="prodNonDispDesktop" name="dispDesktop">
                             <label class="form-check-label" for="prodDispDesktop">Non disponibili</label>
                         </div>
                     </div>
@@ -120,16 +120,85 @@
     <footer-component></footer-component>
 
     <div id="searchComponentMobile" class="searchComponent">
+        <h2>Cerca</h2>
         <label>Cerca nel nostro marketplace</label>
         <input type="text" class="form-control" id="textSearchMobile" placeholder="Cerca prodotti"/>
         <button class="btnCloseSearchMobile" id="btnCloseSearchMobile"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
     <div class="filterComponent" id="filterComponentMobile">
-        <div id="filterPart" style="display: none;">
-
+        <div id="filterPart" style="display: none;" class="flex-column gap-2">
+            <h2>Filtri</h2>
+            <div class="mb-3">
+                <h3>Categorie</h3>
+                <div id="categoryListMobile">
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                    <div class="placeholder placeholder-glow w-100"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h3>Prezzi</h3>
+                <div>
+                    <label>Da</label>
+                    <div class="input-group">
+                        <span class="input-group-text">&euro;</span>
+                        <input type="number" class="form-control" id="priceMinMobile" placeholder="Prezzo minimo">
+                    </div>
+                </div>
+                <div>
+                    <label>A</label>
+                    <div class="input-group">
+                        <span class="input-group-text">&euro;</span>
+                        <input type="number" class="form-control" id="priceMaxMobile" placeholder="Prezzo massimo">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <h3>Disponibilità</h3>
+                <div class="d-flex flex-column gap-1">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="prodDispMobile">
+                        <label class="form-check-label" for="prodDispMobile">Disponibili</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="prodNonDispMobile">
+                        <label class="form-check-label" for="prodNonDispMobile">Non disponibili</label>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="orderPart" style="display: none;"></div>
+        <div id="orderPart" style="display: none;" class="flex-column gap-2">
+            <h2>Ordina</h2>
+            <div class="d-flex flex-column gap-1">
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order1" autocomplete="off" value="0" checked>
+                    <label class="selectorOrder checked" for="order1">Più recenti</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order2" autocomplete="off" value="1">
+                    <label class="selectorOrder" for="order2">Meno recenti</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order3" autocomplete="off" value="2">
+                    <label class="selectorOrder" for="order3">Prezzo cresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order4" autocomplete="off" value="3">
+                    <label class="selectorOrder" for="order4">Prezzo decresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order5" autocomplete="off" value="4">
+                    <label class="selectorOrder" for="order5">Nome cresente</label>
+                </div>
+                <div>
+                    <input type="radio" class="btn-check" name="orderMobile" id="order6" autocomplete="off" value="5">
+                    <label class="selectorOrder" for="order6">Nome decresente</label>
+                </div>
+            </div>
+        </div>
         <button class="btnCloseSearchMobile" id="btnCloseFilterMobile"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <script src="/src/js/products.js" type="module"></script>

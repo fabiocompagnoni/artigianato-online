@@ -197,6 +197,7 @@ const makeProductDiv=(prodotto)=>{
 const loadProducts=async()=>{
     const containerProducts=document.getElementById("productList");
     try{
+        //aggiungere anche filtri e ordinamento
         //const products=await ajax("https://localhost:4000/products","GET");
         const products=mockupResponse;
         if(products.length==0){
@@ -223,6 +224,18 @@ const loadCategory=async()=>{
     }catch(err){
         console.error(err);
     }
+}
+
+const mapOrder=(value)=>{
+  switch(value){
+    case 0:"timestamp_creation DESC"; break;
+    case 1:"timestamp_creation ASC"; break;
+    case 2:"price DESC"; break;
+    case 3:"price ASC"; break;
+    case 4:"name ASC"; break;
+    case 5:"name DESC"; break;
+    default:
+  }
 }
 
 
@@ -253,3 +266,74 @@ document.getElementById("openOrderMobile").addEventListener("click",()=>{
 document.getElementById("btnCloseFilterMobile").addEventListener("click",()=>{
   document.getElementById("filterComponentMobile").classList.remove("showed");
 });
+
+//ordinamento mobile
+document.querySelectorAll("[name='orderMobile']").forEach((radio) => {
+  radio.addEventListener("change", (event) => {
+    let label=event.target.labels[0];
+    document.querySelectorAll(".selectorOrder").forEach((r)=>{
+      r.classList.remove("checked");
+    });
+    label.classList.toggle("checked");
+    orderBy=mapOrder(event.target.value);
+    loadProducts();
+  });
+});
+
+//ordinamento desktop
+document.getElementById("selectOrdinamentoMobile").addEventListener("change",(event)=>{
+  filter=mapOrder(event.target.value);
+});
+
+//disponibilità desktop
+document.querySelectorAll("[dispDesktop]").forEach((check)=>{
+  check.addEventListener("change",(event)=>{
+    console.log(event.target.value);
+    if(!filter.disponibilita){
+      filter.disponibilita=[];
+    }
+    if(event.target.checked){
+      if(!(filter.disponibilita && filter.disponibilita.includes(event.target.value))){
+        filter.disponibilita.push(event.target.value);
+      }
+    }else{
+      filter.disponibilita=filter.disponibilita.filter(item=>item!=event.target.value);
+    }
+    console.log(filter);
+  });
+});
+
+//prezzi desktop
+document.getElementById("priceMin").addEventListener("change",(event)=>{
+  if(!filter.prezzi){
+    filter.prezzi={};
+  }
+  filter.prezzi.min=event.target.value;
+});
+
+document.getElementById("priceMax").addEventListener("change",(event)=>{
+  if(!filter.prezzi){
+    filter.prezzi={};
+  }
+  filter.prezzi.max=event.target.value;
+});
+
+//ricerca
+let timerRicerca;
+const handleRicerca=(queryString)=>{
+
+}
+document.getElementById("textQuery").addEventListener("keyup",(event)=>{
+  timerRicerca=setTimeout(()=>{
+    clearTimeout(timerRicerca);
+    handleRicerca(event.target.value);
+  },500);
+});
+
+document.getElementById("textSearchMobile").addEventListener("keyup",(event)=>{
+  timerRicerca=setTimeout(()=>{
+    clearTimeout(timerRicerca);
+    handleRicerca(event.target.value);
+  },500);
+});
+

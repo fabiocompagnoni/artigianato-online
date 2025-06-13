@@ -110,6 +110,7 @@ header{
     border: 1px solid rgba( 255, 255, 255, 0.18 );
     position:sticky;
     top:calc(83px + 0.5rem);
+    z-index:999;
 }
 .barMobileActions .mobileNavBtn{
     display: flex;
@@ -123,28 +124,10 @@ header{
     color:var(--bs-gray-900);
 }
 
-.searchComponent{
-    border-radius:var(--bs-border-radius-xl);
-    background: rgba( 168, 187, 162, 0.4 );
-    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-    backdrop-filter: blur( 6px );
-    -webkit-backdrop-filter: blur( 6px );
-    border: 1px solid rgba( 255, 255, 255, 0.18 );
-    position:fixed;
-    top:1000%;
-    left:calc(1.5rem * .5);
-    right:calc(1.5rem * .5);
-    width:calc(100% - 1.5rem);
-    z-index:101;
-    transition:all 300ms ease-in-out;
-    min-height:10rem;
-    padding:1rem;
-    color:var(--bs-gray-900);
-}
 .searchComponent input{
     background:none;
 }
-.searchComponent .btnCloseSearchMobile{
+.btnCloseSearchMobile{
     position:absolute;
     right:0.25rem;
     top:0.25rem;
@@ -154,10 +137,12 @@ header{
     font-size:1.5rem;
 }
 .searchComponent.showed{
-    top:calc(100dvh /2 - 5rem);
+    /*top:calc(100dvh /2 - 5rem);*/
+    bottom:0;
+    top:auto;
 }
 
-.filterComponent{
+.filterComponent, .searchComponent{
     background: rgba( 168, 187, 162, 0.4 );
     box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
     backdrop-filter: blur( 6px );
@@ -174,9 +159,23 @@ header{
     color:var(--bs-gray-900);
     border-top-left-radius: var(--bs-border-radius-xl);
     border-top-right-radius: var(--bs-border-radius-xl);
-
 }
 .filterComponent.showed{
     top:auto;
     bottom:0;
+}
+#filterPart, #orderPart{
+    max-height:60dvh;
+    overflow-y:scroll;
+}
+.selectorOrder{
+    width:100%;
+    background:rgba(46, 90, 57, 0.2);
+    border-radius:var(--bs-border-radius-xl);
+    padding:0.5rem;
+    display:flex;
+    transition:all 300ms ease-in-out;
+}
+.selectorOrder.checked{
+    background:rgba(46, 90, 57, 0.6);
 }

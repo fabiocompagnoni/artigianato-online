@@ -25,4 +25,9 @@ body{
     to {
       background-position-x: -200%;
     }
-  }
+}
+
+::selection{
+    background:var(--first-color);
+    color:white;
+}
