@@ -54,8 +54,52 @@
             </div>
         </div>
     </div>
-    <div id="orders"></div>
-    <div id="order"></div>
+    <div id="orders">
+        <header>
+            <div class="container-xl">
+                <div class="d-flex flex-row gap-1 align-items-center">
+                    <h1>Tutti i tuoi ordini</h1>
+                    <div id="countOrders"></div>
+                </div>
+            </div>
+        </header>
+        <div class="container-xl my-3">
+            <div class="listOrders" id="previewOrdersAll">
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+                <div class="order placeholder"></div>
+            </div>
+        </div>
+        
+    </div>
+    <div id="order">
+        <header>
+            <div class="container-xl">
+                <h1>Ordine del <span id="orderTimestamp" class="placeholder-glow"><div class="placeholder col-2"></div></span></h1>
+                <h2>Totale dell'ordine <span id="orderTotale" class="placeholder-glow"><div class="placeholder col-2"></div></span></h2>
+                <div id="numProducts" class="placeholder-glow mb-3">
+                    <div class="placeholder col-2"></div>
+                </div>
+                <button class="btn btn-outline-warning rounded-4">Segnala un problema</button>
+            </div>
+        </header>
+        <div class="container-xl my-3">
+            <h1>Prodotti</h1>
+            <div class="listProducts" id="listProducts">
+                <div class="product placeholder"></div>
+                <div class="product placeholder"></div>
+                <div class="product placeholder"></div>
+                <div class="product placeholder"></div>
+            </div>
+        </div>
+    </div>
     <div id="profile"></div>
 
     <footer-component></footer-component>
