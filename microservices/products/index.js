@@ -2,9 +2,16 @@
  * @version 1.0
  * @author Fabio Compagnoni
  */
-import {express} from "express";
+import express from "express";
 import {Pool} from "pg";
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 const PORT = 4000;
+
+import authJWT from "./common_scripts/authJWT.js";
+import sendError from "./common_scripts/sendError.js";
+import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
+import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
 
@@ -12,304 +19,149 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL
 });
 
+// Configurazione CORS più robusta per lo sviluppo
+const allowedOrigins = [
+  'http://localhost:3000', // Il tuo backend stesso, se ti serve fare richieste a se stesso
+  'http://localhost',      // Per casi in cui il browser non specifichi la porta
+  'https://localhost',     // Per HTTPS (anche se in dev è meno comune)
+  'http://127.0.0.1',
+  'http://localhost:8000'  // Server di debug
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permetti le richieste senza origine (es. da Postman o curl)
+    // E permetti le origini nella lista consentita
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin === 'null') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true // Necessario per l'invio di cookie (es. httpOnly)
+}));
+
 app.use(express.json());
+app.use(cookieParser());
 
 
 app.listen(PORT, () => {
-    console.log(`Products service running on port ${PORT}`);
+    console.log('Products service online');
 });
 
-app.get('/products', async (req, res) => {
+app.get('/status', (req, res) => {
+    res.send(JSON.stringify({ service: 'products', status: 'ok' }));
+});
+
+app.get('/', async (req, res) => {
     try {
-        
-        res.json({
-            products: [
-                {
-                    id: 1,
-                    name: "Vaso in Ceramica",
-                    description: "Vaso artigianale decorato a mano",
-                    price: 89.99,
-                    category: ["Ceramica", "Arredamento", "Casa"],
-                    artisan: {
-                        name: "Aldo",
-                        surname: "Baglio",
-                        photoProfile: "https://localhost:4003/aldo-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/vaso-ceramica.jpg",
-                    link: "/prodotti/aldo-baglio/vaso-ceramica"
+        const sql_res = await pool.query('SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false ORDER BY timestamp_creation DESC LIMIT 20');
+
+        const recent_products = [];
+        for(const row of sql_res.rows) {
+            const {id, pname, pslug, short_description, price, aname, surname, id_profile_picture, aslug} = row;
+            const artisan_propic_link = id_profile_picture ? 'https://localhost:3000/images/' + id_profile_picture : null;
+            const product_link = `https://localhost:3000/products/${aslug}/${pslug}`;
+
+            const product_info = {
+                id: id,
+                name: pname,
+                description: short_description,
+                price: (price / 100),
+                category: [],
+                artisan: {
+                    name: aname,
+                    surname: surname,
+                    photoProfile: artisan_propic_link
                 },
-                {
-                    id: 2,
-                    name: "Collana in Argento",
-                    description: "Collana artigianale in argento 925",
-                    price: 149.99,
-                    category: ["Gioielli", "Accessori", "Argento"],
-                    artisan: {
-                        name: "Maria",
-                        surname: "Rossi",
-                        photoProfile: "https://localhost:4003/maria-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/collana-argento.jpg",
-                    link: "/prodotti/maria-rossi/collana-argento"
-                },
-                {
-                    id: 3,
-                    name: "Tavolo in Legno Massello",
-                    description: "Tavolo artigianale in legno di noce",
-                    price: 899.99,
-                    category: ["Mobili", "Arredamento", "Legno"],
-                    artisan: {
-                        name: "Giovanni",
-                        surname: "Bianchi",
-                        photoProfile: "https://localhost:4003/giovanni-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/tavolo-legno.jpg",
-                    link: "/prodotti/giovanni-bianchi/tavolo-legno"
-                },
-                {
-                    id: 4,
-                    name: "Orecchini in Vetro di Murano",
-                    description: "Orecchini artigianali in vetro soffiato",
-                    price: 79.99,
-                    category: ["Gioielli", "Accessori", "Vetro"],
-                    artisan: {
-                        name: "Laura",
-                        surname: "Neri",
-                        photoProfile: "https://localhost:4003/laura-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/orecchini-vetro.jpg",
-                    link: "/prodotti/laura-neri/orecchini-vetro"
-                },
-                {
-                    id: 5,
-                    name: "Tappeto Intrecciato",
-                    description: "Tappeto fatto a mano con lana naturale",
-                    price: 299.99,
-                    category: ["Tessuti", "Arredamento", "Casa"],
-                    artisan: {
-                        name: "Anna",
-                        surname: "Ferrari",
-                        photoProfile: "https://localhost:4003/anna-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/tappeto-intrecciato.jpg",
-                    link: "/prodotti/anna-ferrari/tappeto-intrecciato"
-                },
-                {
-                    id: 6,
-                    name: "Coltello Artigianale",
-                    description: "Coltello forgiato a mano con manico in legno",
-                    price: 129.99,
-                    category: ["Utensili", "Cucina", "Metallo"],
-                    artisan: {
-                        name: "Roberto",
-                        surname: "Romano",
-                        photoProfile: "https://localhost:4003/roberto-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/coltello-artigianale.jpg",
-                    link: "/prodotti/roberto-romano/coltello-artigianale"
-                },
-                {
-                    id: 7,
-                    name: "Borsa in Pelle",
-                    description: "Borsa artigianale in pelle conciata",
-                    price: 199.99,
-                    category: ["Accessori", "Moda", "Pelle"],
-                    artisan: {
-                        name: "Sofia",
-                        surname: "Marino",
-                        photoProfile: "https://localhost:4003/sofia-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/borsa-pelle.jpg",
-                    link: "/prodotti/sofia-marino/borsa-pelle"
-                },
-                {
-                    id: 8,
-                    name: "Scultura in Bronzo",
-                    description: "Scultura moderna in bronzo fuso",
-                    price: 599.99,
-                    category: ["Arte", "Decorazione", "Metallo"],
-                    artisan: {
-                        name: "Paolo",
-                        surname: "Conti",
-                        photoProfile: "https://localhost:4003/paolo-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/scultura-bronzo.jpg",
-                    link: "/prodotti/paolo-conti/scultura-bronzo"
-                },
-                {
-                    id: 9,
-                    name: "Cappello in Feltro",
-                    description: "Cappello artigianale in feltro di lana",
-                    price: 89.99,
-                    category: ["Accessori", "Moda", "Tessuti"],
-                    artisan: {
-                        name: "Elena",
-                        surname: "Costa",
-                        photoProfile: "https://localhost:4003/elena-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/cappello-feltro.jpg",
-                    link: "/prodotti/elena-costa/cappello-feltro"
-                },
-                {
-                    id: 10,
-                    name: "Set di Bicchieri",
-                    description: "Set di 6 bicchieri soffiati a mano",
-                    price: 169.99,
-                    category: ["Vetro", "Casa", "Cucina"],
-                    artisan: {
-                        name: "Marco",
-                        surname: "Ricci",
-                        photoProfile: "https://localhost:4003/marco-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/set-bicchieri.jpg",
-                    link: "/prodotti/marco-ricci/set-bicchieri"
-                },
-                {
-                    id: 11,
-                    name: "Bracciale in Rame",
-                    description: "Bracciale battuto a mano in rame",
-                    price: 69.99,
-                    category: ["Gioielli", "Accessori", "Metallo"],
-                    artisan: {
-                        name: "Lucia",
-                        surname: "Galli",
-                        photoProfile: "https://localhost:4003/lucia-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/bracciale-rame.jpg",
-                    link: "/prodotti/lucia-galli/bracciale-rame"
-                },
-                {
-                    id: 12,
-                    name: "Specchio Decorato",
-                    description: "Specchio con cornice intagliata a mano",
-                    price: 259.99,
-                    category: ["Arredamento", "Casa", "Legno"],
-                    artisan: {
-                        name: "Fabio",
-                        surname: "Moretti",
-                        photoProfile: "https://localhost:4003/fabio-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/specchio-decorato.jpg",
-                    link: "/prodotti/fabio-moretti/specchio-decorato"
-                },
-                {
-                    id: 13,
-                    name: "Cuscino Ricamato",
-                    description: "Cuscino con ricami tradizionali",
-                    price: 79.99,
-                    category: ["Casa", "Tessuti", "Arredamento"],
-                    artisan: {
-                        name: "Carla",
-                        surname: "Vitale",
-                        photoProfile: "https://localhost:4003/carla-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/cuscino-ricamato.jpg",
-                    link: "/prodotti/carla-vitale/cuscino-ricamato"
-                },
-                {
-                    id: 14,
-                    name: "Portacandele in Ferro Battuto",
-                    description: "Portacandele lavorato a mano",
-                    price: 119.99,
-                    category: ["Casa", "Decorazione", "Metallo"],
-                    artisan: {
-                        name: "Antonio",
-                        surname: "Ferrari",
-                        photoProfile: "https://localhost:4003/antonio-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/portacandele-ferro.jpg",
-                    link: "/prodotti/antonio-ferrari/portacandele-ferro"
-                },
-                {
-                    id: 15,
-                    name: "Set da Tè in Ceramica",
-                    description: "Set da tè dipinto a mano",
-                    price: 159.99,
-                    category: ["Ceramica", "Casa", "Cucina"],
-                    artisan: {
-                        name: "Marina",
-                        surname: "Greco",
-                        photoProfile: "https://localhost:4003/marina-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/set-te.jpg",
-                    link: "/prodotti/marina-greco/set-te"
-                },
-                {
-                    id: 16,
-                    name: "Portachiavi in Cuoio",
-                    description: "Portachiavi fatto a mano in cuoio",
-                    price: 39.99,
-                    category: ["Accessori", "Pelle", "Moda"],
-                    artisan: {
-                        name: "Giuseppe",
-                        surname: "Leone",
-                        photoProfile: "https://localhost:4003/giuseppe-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/portachiavi-cuoio.jpg",
-                    link: "/prodotti/giuseppe-leone/portachiavi-cuoio"
-                },
-                {
-                    id: 17,
-                    name: "Quadro su Tela",
-                    description: "Dipinto originale su tela",
-                    price: 449.99,
-                    category: ["Arte", "Decorazione", "Casa"],
-                    artisan: {
-                        name: "Rosa",
-                        surname: "Martini",
-                        photoProfile: "https://localhost:4003/rosa-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/quadro-tela.jpg",
-                    link: "/prodotti/rosa-martini/quadro-tela"
-                },
-                {
-                    id: 18,
-                    name: "Sciarpa in Seta",
-                    description: "Sciarpa dipinta a mano su seta",
-                    price: 129.99,
-                    category: ["Accessori", "Moda", "Tessuti"],
-                    artisan: {
-                        name: "Lisa",
-                        surname: "Colombo",
-                        photoProfile: "https://localhost:4003/lisa-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/sciarpa-seta.jpg",
-                    link: "/prodotti/lisa-colombo/sciarpa-seta"
-                },
-                {
-                    id: 19,
-                    name: "Orologio da Parete",
-                    description: "Orologio in legno intagliato",
-                    price: 179.99,
-                    category: ["Arredamento", "Casa", "Legno"],
-                    artisan: {
-                        name: "Bruno",
-                        surname: "Fabbri",
-                        photoProfile: "https://localhost:4003/bruno-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/orologio-parete.jpg",
-                    link: "/prodotti/bruno-fabbri/orologio-parete"
-                },
-                {
-                    id: 20,
-                    name: "Lampada in Legno",
-                    description: "Lampada artigianale in legno di ulivo",
-                    price: 199.99,
-                    category: ["Illuminazione", "Arredamento", "Legno"],
-                    artisan: {
-                        name: "Marco",
-                        surname: "Verdi",
-                        photoProfile: "https://localhost:4003/marco-profile.jpg"
-                    },
-                    product_image: "https://localhost:4003/lampada-legno.jpg",
-                    link: "/prodotti/marco-verdi/lampada-legno"
-                }
-            ],
-            pages: 1,
-            numberProducts: 20
-        });
+                product_image: null,
+                link: product_link
+            };
+
+            const product_image_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1 AND position = 0', [id]);
+            if(product_image_res.rowCount > 0)
+                product_info.product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
+
+            const categories_res = await pool.query('SELECT name FROM categories JOIN product_categories ON "ID" = "ID_category" WHERE "ID_product" = $1', [id]);
+            const categories = categories_res.rows.filter(e => e.name);
+
+            product_info.category = categories;
+
+            recent_products.push(product_info);
+        }
+
+        res.json({products: recent_products, pages: 1, numberProducts: sql_res.rowCount});
     } catch (err) {
         console.error('Error fetching products:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        sendError(res, 500);
+    }
+});
+
+app.post('/product', authJWT, async (req, res) => {
+    const user_id = req.user.user_id;
+    const { name, description, short_description, price, categories, images } = req.body;
+
+    //validazione body
+    if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false)) {
+        sendError(res, 400);
+        return;
+    }
+
+    //conversione del prezzo in centesimi
+    const adjusted_price = Math.floor(price * 100);
+
+    if(!Array.isArray(categories) || !Array.isArray(images)) {
+        sendError(res, 400);
+        return;
+    }
+
+    try {
+        //il programma proseguirà solo una volta dopo aver completato tutte le promise
+        const categories_ids = await Promise.all(categories.map(c => getCategoryID(c, pool)));
+
+        const slug = await generateArtisanProductSlug(user_id, name, pool);
+
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const sql_res = await client.query('INSERT INTO products(name, slug, description, short_description, price, artisan) VALUES($1, $2, $3, $4, $5, $6) RETURNING *', [
+                name,
+                slug,
+                description,
+                short_description,
+                adjusted_price,
+                user_id
+            ]);
+
+            const product_info = sql_res.rows[0];
+
+            for(const cat_id of categories_ids)
+                await client.query('INSERT INTO product_categories("ID_category", "ID_product") VALUES ($1, $2)', [cat_id, product_info.ID]);
+
+            for(const [position, image_id] of images.entries())
+                await client.query('INSERT INTO product_images("ID_product", "ID_image", position) VALUES ($1, $2, $3)', [product_info.ID, image_id, position]);
+
+            await client.query('COMMIT');
+
+            res.json({
+                id: product_info.ID,
+                name: product_info.name,
+                description: product_info.short_description,
+                price: (product_info.price / 100),
+                category: categories,
+                product_image: images[0]
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.log('Error creating product: ' + err);
+            sendError(res, 500);
+        } finally {
+            client.release();
+        }
+    } catch(err) {
+        console.log('Error creating product: ' + err);
+        sendError(res, 500);
     }
 });

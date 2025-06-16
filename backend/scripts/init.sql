@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS roles_permissions (
 );
 
 CREATE TABLE IF NOT EXISTS images (
-	"ID" SERIAL PRIMARY KEY,
-	url VARCHAR(255) UNIQUE NOT NULL,
+	"ID" UUID PRIMARY KEY,
 	timestamp_upload TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -31,7 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
 	password CHAR(60) NOT NULL,
 	id_role INTEGER NOT NULL REFERENCES roles("ID"),
 	timestamp_registration TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	id_profile_picture INTEGER REFERENCES images("ID"),
+	id_profile_picture UUID REFERENCES images("ID"),
 	bio VARCHAR(255),
 	slug VARCHAR(255) UNIQUE NOT NULL
 );
@@ -48,14 +47,15 @@ CREATE TABLE IF NOT EXISTS artisan_reviews (
 CREATE TABLE IF NOT EXISTS products (
 	"ID" SERIAL PRIMARY KEY,
 	name VARCHAR(100) NOT NULL,
-	slug VARCHAR(200) UNIQUE NOT NULL,
+	slug VARCHAR(200) NOT NULL,
 	description TEXT NOT NULL,
 	short_description VARCHAR(255) NOT NULL,
 	price INTEGER NOT NULL,
 	timestamp_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	timestamp_last_update TIMESTAMP NOT NULL,
+	timestamp_last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	removed BOOLEAN NOT NULL DEFAULT FALSE,
-	artisan INTEGER NOT NULL REFERENCES users("ID")
+	artisan INTEGER NOT NULL REFERENCES users("ID"),
+	CONSTRAINT unique_productslug_artisan UNIQUE (slug, artisan)
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
 
 CREATE TABLE IF NOT EXISTS product_images (
 	"ID_product" INTEGER REFERENCES products("ID"),
-	"ID_image" INTEGER REFERENCES images("ID"),
+	"ID_image" UUID REFERENCES images("ID"),
 	position INTEGER,
 	PRIMARY KEY ("ID_product", "ID_image", position)
 );
