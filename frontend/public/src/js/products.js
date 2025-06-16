@@ -215,6 +215,7 @@ const loadProducts=async()=>{
         //aggiungere anche filtri e ordinamento
         //aggiungere filtro artigiano
         //const products=await ajax("https://localhost:4000/products","GET");
+        //TODO: fare pagination
         const products=mockupResponse;
         if(products.length==0){
             containerProducts.innerHTML="Nessun prodotto disponibile. Contatta il tuo artigiano di fiducia e fagli inserire i suoi prodotti!";
