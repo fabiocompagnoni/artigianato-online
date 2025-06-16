@@ -2,6 +2,7 @@ FROM node:23-alpine
 ARG SERVICE_NAME
 WORKDIR /app
 COPY ${SERVICE_NAME}/package*.json ./
+COPY common_scripts/ ./common_scripts/
 RUN npm install
 COPY ${SERVICE_NAME}/. .
 EXPOSE 4000

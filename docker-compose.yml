@@ -26,9 +26,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://admin:%40MkpArt25FL%23@db:5432/marketplace-artigiani
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - db
+      - microservice_users
+      - microservice_images
+      - microservice_products
     networks:
       - artigianato-network
 
@@ -53,11 +56,9 @@ services:
     dockerfile: Dockerfile.microservices
     args:
       - SERVICE_NAME=users
-   ports:
-     - "4000:4000" #microservice port
    environment:
-     DATABASE_URL: postgres://admin:%40MkpArt25FL%23@db:5432/marketplace-artigiani
-     JWT_SECRET: your-secret
+     DATABASE_URL: ${DATABASE_URL}
+     JWT_SECRET: ${JWT_SECRET}
    depends_on:
      - db
    networks:
@@ -69,10 +70,10 @@ services:
       dockerfile: Dockerfile.microservices
       args:
         - SERVICE_NAME=images
-    ports:
-      - "4001:4000" #microservice port
+    volumes:
+      - images_uploads:/app/uploads
     environment:
-      DATABASE_URL: postgres://admin:%40MkpArt25FL%23@db:5432/marketplace-artigiani
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - db
     networks:
@@ -84,16 +85,17 @@ services:
       dockerfile: Dockerfile.microservices
       args:
         SERVICE_NAME: products
-    ports:
-      - "4002:4000" #microservice port
     environment:
-      DATABASE_URL: postgres://admin:%40MkpArt25FL%23@db:5432/marketplace-artigiani
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+
     depends_on:
       - db
     networks:
       - artigianato-network
 volumes:
   db_data:
+  images_uploads:
 
 networks:
   artigianato-network:
