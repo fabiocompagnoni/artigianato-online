@@ -6,4 +6,4 @@ COPY common_scripts/ ./common_scripts/
 RUN npm install
 COPY ${SERVICE_NAME}/. .
 EXPOSE 4000
-CMD ["npm", "start"]
+CMD npm test && npm start
