@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I nostri artigiani &middot; Artigianato Online</title>
+    <meta name="description" content="Incontra i talentuosi artigiani italiani di Artigianato Online. Scopri le loro storie, le specializzazioni e le creazioni uniche fatte a mano. Supporta l'eccellenza artigiana Made in Italy e trova il tuo prossimo tesoro.."/>
+    <meta name="keywords" content="artigiani italiani, creatori italiani, fatto a mano Italia, artigianato autentico, maestri artigiani, artisti italiani, shop artigiani, produttori locali, handmade Italia, galleria artigiani, trova artigiano"/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/artigiani.css"/>
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <header>
+        <div class="container">
+            <h1 id="pageTitle">I Nostri Artigiani: Le Mani Che Danno Vita all'Eccellenza Italiana</h1>
+            <p id="pageDesc">Entra nel cuore del nostro marketplace e incontra i talentuosi artigiani italiani che, con passione e maestria, creano le opere uniche che ami. Ogni pezzo è il frutto di dedizione, tradizione e un tocco personale. Esplora i loro profili, scopri le loro storie e connettiti con i creatori dietro il vero fatto a mano Made in Italy.</p>
+        </div>
+    </header>
+    <div class="container-xxl">
+        <div class="row my-4">
+            <div class="filters col-lg-3 d-none d-lg-flex flex-column gap-2">
+                <div>
+                    <h2>Categorie dei prodotti</h2>
+                    <div id="categoryList">
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                        <div class="placeholder placeholder-glow w-100"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <div class="artisanLists  placeholder-glow" id="listArtisans">
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                    <div class="artisan placeholder"></div>
+                </div>
+                <div id="paginationContainer" class="paginationCont"></div>
+            </div>
+            
+        </div>  
+        
+    </div>
+    <footer-component></footer-component>
+    <script src="/src/js/artisans.js" type="module"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
