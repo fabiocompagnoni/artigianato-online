@@ -34,6 +34,8 @@ services:
       - microservice_products
     networks:
       - artigianato-network
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
 
   #database container (PostgreSQL)
   db:
@@ -51,19 +53,22 @@ services:
 
   #microservices
   microservice_users:
-   build:
-    context: ./microservices
-    dockerfile: Dockerfile.microservices
-    args:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
       - SERVICE_NAME=users
-   environment:
-     DATABASE_URL: ${DATABASE_URL}
-     JWT_SECRET: ${JWT_SECRET}
-   depends_on:
-     - db
-   networks:
-     - artigianato-network
-
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+  
+    depends_on:
+      - db
+    networks:
+      - artigianato-network
+    
   microservice_images:
     build:
       context: ./microservices
@@ -72,12 +77,14 @@ services:
         - SERVICE_NAME=images
     volumes:
       - images_uploads:/app/uploads
+      - ./certs:/etc/nginx/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - db
     networks:
       - artigianato-network
+      
   
   microservice_products:
     build:
@@ -85,6 +92,8 @@ services:
       dockerfile: Dockerfile.microservices
       args:
         SERVICE_NAME: products
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -93,6 +102,7 @@ services:
       - db
     networks:
       - artigianato-network
+
 volumes:
   db_data:
   images_uploads:

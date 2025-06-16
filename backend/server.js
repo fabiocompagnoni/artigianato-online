@@ -7,8 +7,8 @@ import https from 'https';
 const app = express();
 const port = 3000;
 
-const privateKey = fs.readFileSync('./certs/server.key', 'utf8');
-const certificate = fs.readFileSync('./certs/server.crt', 'utf8');
+const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
+const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
 
 const credentials = {
   key: privateKey,
@@ -38,7 +38,7 @@ app.use(cors({
 }));
 
 // Gestione delle richieste OPTIONS preflight
-//app.options('*', cors());
+app.options('*', cors());
 
 app.use((req, res, next) => {
   console.log(`[PROXY DEBUG] Richiesta ricevuta: ${req.method} ${req.originalUrl} da ${req.headers.origin || 'Nessuna origine'}`);
@@ -86,6 +86,7 @@ app.use('/images', createProxyMiddleware({
     }
   }
 }));
+
 
 /*microservizio products*/
 app.use('/products', createProxyMiddleware({

@@ -6,6 +6,8 @@ import express from "express";
 import {Pool} from "pg";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
+import https from 'https';
 const PORT = 4000;
 
 import authJWT from "./common_scripts/authJWT.js";
@@ -13,7 +15,16 @@ import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
+const port=4000;
 const app = express();
+
+const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
+const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
+
+const credentials = {
+  key: privateKey,
+  cert: certificate
+};
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL
@@ -55,7 +66,9 @@ app.get('/status', (req, res) => {
 
 app.get('/', async (req, res) => {
     try {
-        const sql_res = await pool.query('SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false ORDER BY timestamp_creation DESC LIMIT 20');
+        let query=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false `;
+
+        const sql_res = await pool.query(query);
 
         const recent_products = [];
         for(const row of sql_res.rows) {
@@ -164,4 +177,8 @@ app.post('/product', authJWT, async (req, res) => {
         console.log('Error creating product: ' + err);
         sendError(res, 500);
     }
+});
+
+https.createServer(credentials, app).listen(port, () => {
+  console.log("Microservice products listening on port "+port);
 });

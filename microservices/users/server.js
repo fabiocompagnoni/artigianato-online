@@ -2,11 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
+import https from 'https';
 
 import sendError from './common_scripts/sendError.js';
 import { getRoleID, generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
 import authJWT from './common_scripts/authJWT.js';
 import { sendUserData } from './scripts/userScripts.js';
+
+const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
+const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
+const credentials = {
+  key: privateKey,
+  cert: certificate
+};
 
 const app = express();
 const port = 4000;
@@ -294,4 +303,8 @@ app.put('/user', authJWT, async (req, res) => {
 
 app.listen(port, () => {
     console.log('Users microservice online');
+});
+
+https.createServer(credentials, app).listen(port, () => {
+  console.log("Microservice users listening on port "+port);
 });
