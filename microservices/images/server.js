@@ -1,13 +1,11 @@
 import express from 'express';
 import {Pool} from 'pg';
 import cors from 'cors';
-import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import sharp from 'sharp';
 import fs from 'fs';
-import https from 'https';
 
 import sendError from './common_scripts/sendError.js';
 
@@ -15,13 +13,6 @@ const PORT = 4000;
 const DATABASE_URL = process.env.DATABASE_URL;
 const IMAGES_FOLDER = path.join(process.cwd(), 'uploads');
 
-const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
-const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
-
-const credentials = {
-  key: privateKey,
-  cert: certificate
-};
 
 const app = express();
 const pool = new Pool({ connectionString: DATABASE_URL });
@@ -108,8 +99,4 @@ app.get('/:id', (req, res) => {
 
 app.listen(PORT, () => {
     console.log('Images service online');
-});
-
-https.createServer(credentials, app).listen(PORT, () => {
-  console.log("Microservice products listening on port "+PORT);
 });

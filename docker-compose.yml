@@ -35,7 +35,7 @@ services:
     networks:
       - artigianato-network
     volumes:
-      - ./certs:/etc/nginx/certs:ro
+      - ./certs:/certs:ro
 
   #database container (PostgreSQL)
   db:
@@ -62,7 +62,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
     volumes:
-      - ./certs:/etc/nginx/certs:ro
+      - ./certs:/certs:ro
   
     depends_on:
       - db
@@ -77,7 +77,7 @@ services:
         - SERVICE_NAME=images
     volumes:
       - images_uploads:/app/uploads
-      - ./certs:/etc/nginx/certs:ro
+      - ./certs:/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
@@ -93,7 +93,7 @@ services:
       args:
         SERVICE_NAME: products
     volumes:
-      - ./certs:/etc/nginx/certs:ro
+      - ./certs:/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
