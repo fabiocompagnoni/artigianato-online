@@ -10,6 +10,7 @@ const error_messages = {
     518: 'Invalid user name or surname',
     519: 'Missing file in request body',
     520: 'Image processing failed',
+    521: 'Image ID not found',
     400: 'Bad request',
     401: 'Unauthorized',
     403: 'Forbidden',

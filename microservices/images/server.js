@@ -107,5 +107,5 @@ app.get('/:id', (req, res) => {
 });
 
 https.createServer(credentials, app).listen(PORT, () => {
-  console.log("Microservice products listening on port "+PORT);
+  console.log("Microservice products online");
 });

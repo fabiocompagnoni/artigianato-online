@@ -49,8 +49,6 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
-//app.options('*', cors()); // Gestione delle richieste OPTIONS preflight
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -291,9 +289,10 @@ app.put('/user', authJWT, async (req, res) => {
 
         res.status(200).send(JSON.stringify(response));
     } catch (err) {
-        if (err.code === '23505')
-            // unique_violation (email duplicata)
+        if (err.code === '23505') // unique_violation (email duplicata)
             sendError(res, 512);
+        else if (err.code === '23503' || err.code === '22P02') // foreign key violation (id immagine non presente) o id non valido
+            sendError(res, 521);
         else {
             console.error('Error updating user:', err);
             sendError(res, 500);
@@ -305,5 +304,5 @@ app.put('/user', authJWT, async (req, res) => {
 });
 
 https.createServer(credentials, app).listen(port, () => {
-  console.log("Microservice users listening on port "+port);
+  console.log("Microservice users online");
 });
