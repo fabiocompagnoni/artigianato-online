@@ -10,6 +10,7 @@ self.addEventListener(
             const request=e.data;
             let requestFetch={
                 method:request.method,
+                credentials: 'include'
             };
             if(request.body!=null){
                 requestFetch.body=JSON.stringify(request.body);

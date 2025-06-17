@@ -7,6 +7,10 @@ import https from 'https';
 const app = express();
 const port = 3000;
 
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
 const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
 
@@ -38,7 +42,7 @@ app.use(cors({
 }));
 
 // Gestione delle richieste OPTIONS preflight
-app.options('*', cors());
+//app.options('*', cors());
 
 app.use((req, res, next) => {
   console.log(`[PROXY DEBUG] Richiesta ricevuta: ${req.method} ${req.originalUrl} da ${req.headers.origin || 'Nessuna origine'}`);
@@ -47,9 +51,10 @@ app.use((req, res, next) => {
 
 /*microservizio users*/
 app.use('/users', createProxyMiddleware({
-  target: 'http://microservice_users:4000',
+  target: 'https://microservice_users:4000',
   changeOrigin: false,
   pathRewrite: { '^/users': '' },
+  agent:httpsAgent,
   on: {
     error(err, req, res) {
       console.error('Proxy error for /users:', err);
@@ -68,9 +73,10 @@ app.use('/users', createProxyMiddleware({
 
 /*microservizio images*/
 app.use('/images', createProxyMiddleware({
-  target: 'http://microservice_images:4000',
+  target: 'https://microservice_images:4000',
   changeOrigin: false,
   pathRewrite: { '^/images': '' },
+  agent:httpsAgent,
   on: {
     error(err, req, res) {
       console.error('Proxy error for /images:', err);
@@ -90,9 +96,10 @@ app.use('/images', createProxyMiddleware({
 
 /*microservizio products*/
 app.use('/products', createProxyMiddleware({
-  target: 'http://microservice_products:4000',
+  target: 'https://microservice_products:4000',
   changeOrigin: false,
   pathRewrite: { '^/products': '' },
+  agent:httpsAgent,
   on: {
     error(err, req, res) {
       console.error('Proxy error for /products:', err);

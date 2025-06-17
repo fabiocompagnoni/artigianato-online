@@ -301,10 +301,11 @@ app.put('/user', authJWT, async (req, res) => {
     }
 });
 
+/*
 app.listen(port, () => {
     console.log('Users microservice online');
 });
-
+*/
 https.createServer(credentials, app).listen(port, () => {
   console.log("Microservice users listening on port "+port);
 });

@@ -14,8 +14,8 @@ import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
+import { debugPort } from "process";
 
-const port=4000;
 const app = express();
 
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
@@ -55,10 +55,10 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-
+/*
 app.listen(PORT, () => {
     console.log('Products service online');
-});
+});*/
 
 app.get('/status', (req, res) => {
     res.send(JSON.stringify({ service: 'products', status: 'ok' }));
@@ -179,6 +179,6 @@ app.post('/product', authJWT, async (req, res) => {
     }
 });
 
-https.createServer(credentials, app).listen(port, () => {
-  console.log("Microservice products listening on port "+port);
+https.createServer(credentials, app).listen(PORT, () => {
+  console.log("Microservice products listening on port "+debugPort);
 });
