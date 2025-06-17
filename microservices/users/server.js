@@ -16,6 +16,14 @@ const DATABASE_URL = process.env.DATABASE_URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
+const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
+const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
+
+const credentials = {
+  key: privateKey,
+  cert: certificate
+};
+
 // Configurazione CORS più robusta per lo sviluppo
 const allowedOrigins = [
   'http://localhost:3000', // Il tuo backend stesso, se ti serve fare richieste a se stesso
@@ -293,6 +301,6 @@ app.put('/user', authJWT, async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log('Users microservice online');
+https.createServer(credentials, app).listen(port, () => {
+  console.log("Microservice users listening on port "+port);
 });

@@ -7,7 +7,7 @@
   "scripts": {
     "test": "npm test",
     "init-db": "node scripts/init-db.js",
-    "start": "node server.js --trace-deprecation"
+    "start": "node server.js --use-system-ca"
   },
   "repository": {
     "type": "git",
