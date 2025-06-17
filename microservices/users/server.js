@@ -3,6 +3,9 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
 
+import https from 'https';
+import fs from 'fs';
+
 import sendError from './common_scripts/sendError.js';
 import { getRoleID, generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
 import authJWT from './common_scripts/authJWT.js';

@@ -6,6 +6,9 @@ import express from "express";
 import {Pool} from "pg";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import https from 'https';
+import fs from 'fs';
+
 const PORT = 4000;
 
 import authJWT from "./common_scripts/authJWT.js";
