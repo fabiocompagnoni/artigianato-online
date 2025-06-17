@@ -179,3 +179,29 @@ header{
 .selectorOrder.checked{
     background:rgba(46, 90, 57, 0.6);
 }
+
+.paginationCont{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap:0.5rem;
+    margin-top:1.5rem;
+    margin-bottom:1.5rem;
+}
+.paginationCont a{
+    background:var(--second-color);
+    color:white;
+    padding:0.25rem;
+    border-radius:var(--bs-border-radius-xl);
+    transition:all 300ms ease-in-out;
+    text-decoration: none;
+    min-width:2rem;
+    text-align:center;
+}
+.paginationCont a.active{
+    background:var(--first-color);
+}
+.paginationCont a:hover{
+    background:#2E5A39;
+}

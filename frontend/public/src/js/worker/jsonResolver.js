@@ -19,7 +19,7 @@ self.addEventListener(
                 requestFetch.headers=request.headers;
             }
             const respRequest=await fetch(request.url,requestFetch);
-            const response=await request.json();
+            const response=await respRequest.json();
             if(respRequest.status!=200){
                 throw new Error(response.error!=null?response.error:respRequest.statusText);
             }

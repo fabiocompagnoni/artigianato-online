@@ -16,6 +16,7 @@ import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 import { debugPort } from "process";
+import { get } from "http";
 
 const app = express();
 
@@ -64,50 +65,137 @@ app.listen(PORT, () => {
 app.get('/status', (req, res) => {
     res.send(JSON.stringify({ service: 'products', status: 'ok' }));
 });
+/**
+ * API per ottenere tutti i prodotti
+ */
+
+const PER_PAGE=20;
+
+const getProductThumbnail=async(idProduct)=>{
+    let product_image = "https://localhost/src/img/placeholder.png";
+    const product_image_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1 AND position = 0', [idProduct]);
+    if(product_image_res.rowCount > 0)
+        product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
+    return product_image;  
+}
+const getCategories=async(idProduct)=>{
+    let categories=[];
+    const res=await pool.query("SELECT C.'ID', C.name, C.slug FROM product_categories AS PC INNER JOIN categories AS C ON C.'ID' = PC.'ID_category' WHERE PC.'ID_product' = $1 ORDER BY C.name ASC",[idProduct]);
+    for(const row of res.rows){
+        categories.push({
+            id: row.ID,
+            name: row.name,
+            link: `/prodotti/categorie/${row.slug}`
+        });
+    }
+    return categories;
+}
+const outputProduct=async(dbRow)=>{
+    let img=await getProductThumbnail(dbRow.id);
+    let categories=await getCategories(dbRow.id);
+    return {
+        id: dbRow.id,
+        name: dbRow.pname,
+        description: dbRow.short_description,
+        price: (dbRow.price / 100),
+        categories: categories,
+        artisan: {
+            name: dbRow.aname,
+            surname: dbRow.surname,
+            photoProfile: dbRow.artisan_propic_link,
+            link: `/artigiani/${dbRow.aslug}`,
+        },
+        thumbnail:img,
+        link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`
+    }
+}
 
 app.get('/', async (req, res) => {
     try {
-        let query=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false `;
+        let query=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false ORDER BY timestamp_last_update DESC`;
 
         const sql_res = await pool.query(query);
 
-        const recent_products = [];
+        const products = [];
         for(const row of sql_res.rows) {
-            const {id, pname, pslug, short_description, price, aname, surname, id_profile_picture, aslug} = row;
-            const artisan_propic_link = id_profile_picture ? 'https://localhost:3000/images/' + id_profile_picture : null;
-            const product_link = `https://localhost:3000/products/${aslug}/${pslug}`;
-
-            const product_info = {
-                id: id,
-                name: pname,
-                description: short_description,
-                price: (price / 100),
-                category: [],
-                artisan: {
-                    name: aname,
-                    surname: surname,
-                    photoProfile: artisan_propic_link
-                },
-                product_image: null,
-                link: product_link
-            };
-
-            const product_image_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1 AND position = 0', [id]);
-            if(product_image_res.rowCount > 0)
-                product_info.product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
-
-            const categories_res = await pool.query('SELECT name FROM categories JOIN product_categories ON "ID" = "ID_category" WHERE "ID_product" = $1', [id]);
-            const categories = categories_res.rows.filter(e => e.name);
-
-            product_info.category = categories;
-
-            recent_products.push(product_info);
+            products.push(outputProduct(row));
         }
 
-        res.json({products: recent_products, pages: 1, numberProducts: sql_res.rowCount});
+        res.json({products: recent_products, numberProducts: sql_res.rowCount});
     } catch (err) {
         console.error('Error fetching products:', err);
         sendError(res, 500);
+    }
+});
+
+/**
+ * API per ottenere i prodotti divisi per pagina con i filtri
+ */
+app.get("/:page",async(req,res)=>{
+    let queryStandard=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug, COALESCE((
+        SELECT SUM(r.quantity - o.quantity) FROM products_restock AS r
+        INNER JOIN products_order AS o ON r."ID_product" = o."ID_product"
+        WHERE r."ID_product" = p."ID"
+        GROUP BY r."ID_product"
+    ), 0) AS availability FROM products p 
+    JOIN users u ON artisan = u."ID" 
+    WHERE removed = false `;
+    //applicazione dei filti
+    if(req.query.filter){
+        let filter=req.query.filter;
+        if(filter.artisan!=null){
+            //artisan products only
+            queryStandard+=`AND u.slug = '${filter.artisan}' `;
+        }
+        if(filter.disponibilita!=null){
+            if(filter.disponibilita.length==1){
+                    if(filter.disponibilita[0]==0)
+                        queryStandard+=`AND availability = 0 `;
+                    else
+                        queryStandard+=`AND availability > 0 `;
+                }
+                if(filter.prezzi!=null){
+                if(filter.prezzi.min!=null)
+                    queryStandard+=`AND price >= ${filter.prezzi.min} `;
+                if(filter.prezzi.max!=null)
+                    queryStandard+=`AND price <= ${filter.prezzi.max} `;
+
+            }
+            if(filter.queryString!=null){
+                queryStandard+=`AND p.name LIKE '%${filter.queryString}%' `;
+            }
+        }
+        
+    }
+    if(req.query.order){
+        let order=req.query.order;
+        queryStandard+=`ORDER BY ${order} `;
+    }else{
+        queryStandard+=`ORDER BY timestamp_last_update DESC `;
+    }
+
+    //query di copia per ottenere tutti i prodotti con questi filtri
+    let queryCopy=queryStandard;
+    //applicazione delle pagine
+    let page=req.params.page;
+    let offset=(page-1)*PER_PAGE;
+    queryStandard+=`LIMIT ${PER_PAGE} OFFSET ${offset} `;
+    
+    try{
+        console.log("QUERY DA ESEGUIRE "+queryStandard);
+        const sql_res=await pool.query(queryStandard);
+        const products=[];
+        for(const row of sql_res.rows){
+            products.push(outputProduct(row));
+        }
+        //ottengo il numero delle pagine e il numero di prodotti totali
+        const ris2=await pool.query(queryCopy);
+        let pages=Math.ceil(ris2.rowCount/PER_PAGE);
+        let numProducts=ris2.rowCount;
+        res.json({products:products,pages:pages,numProducts:numProducts});
+    }catch(err){
+        console.error('Error fetching products:',err);
+        sendError(res,500);
     }
 });
 
