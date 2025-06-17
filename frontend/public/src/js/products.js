@@ -209,14 +209,36 @@ const makeProductDiv=(prodotto)=>{
     return linkProd;
 }
 
+const mapFilter=()=>{
+  let params=new URLSearchParams();
+  for(const [key,value] of Object.entries(filter)){
+    if(value!=null&&value!=undefined&&value!=""){
+      params.append(key,value.toString());
+    }
+  }
+  return params;
+}
+
 const loadProducts=async()=>{
     const containerProducts=document.getElementById("productList");
     try{
+        let baseURL=`https://localhost:3000/products`;
+        
+        if(Object.keys(filter).length > 0){
+          baseURL+=`?${mapFilter()}`;
+          if(Object.keys(orderBy).length > 0){
+            baseURL+=`&order=${orderBy}`;
+          }
+        }else if(Object.keys(orderBy).length > 0){
+            baseURL+=`?order=${orderBy}`;
+        }
+        const products=await ajax(baseURL,"GET");
+        if(products.error!=null)
+          throw new Error(products.error);
         //aggiungere anche filtri e ordinamento
         //aggiungere filtro artigiano
-        //const products=await ajax("https://localhost:4000/products","GET");
         //TODO: fare pagination
-        const products=mockupResponse;
+        //const products=mockupResponse;
         if(products.length==0){
             containerProducts.innerHTML="Nessun prodotto disponibile. Contatta il tuo artigiano di fiducia e fagli inserire i suoi prodotti!";
             return;
@@ -333,7 +355,8 @@ document.getElementById("priceMax").addEventListener("change",(event)=>{
 //ricerca
 let timerRicerca;
 const handleRicerca=(queryString)=>{
-
+  filter.queryString=queryString;
+  loadProducts();
 }
 document.getElementById("textQuery").addEventListener("keyup",(event)=>{
   timerRicerca=setTimeout(()=>{

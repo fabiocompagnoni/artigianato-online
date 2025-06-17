@@ -3,6 +3,9 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
 
+import https from 'https';
+import fs from 'fs';
+
 import sendError from './common_scripts/sendError.js';
 import { getRoleID, generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
 import authJWT from './common_scripts/authJWT.js';
@@ -15,6 +18,14 @@ const port = 4000;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
+
+const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
+const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
+
+const credentials = {
+  key: privateKey,
+  cert: certificate
+};
 
 // Configurazione CORS più robusta per lo sviluppo
 const allowedOrigins = [
@@ -293,6 +304,6 @@ app.put('/user', authJWT, async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log('Users microservice online');
+https.createServer(credentials, app).listen(port, () => {
+  console.log("Microservice users listening on port "+port);
 });
