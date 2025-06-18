@@ -19,7 +19,7 @@ const initPage=async()=>{
     document.getElementById("pageTitle").innerHTML="";
     document.getElementById("pageDesc").innerHTML="";
   }
-  loadProducts();
+  //loadProducts();
 }
 
 document.addEventListener("DOMContentLoaded",initPage);
@@ -219,11 +219,35 @@ const mapFilter=()=>{
   return params;
 }
 
-const loadProducts=async()=>{
+
+const initPagination=(currentPage, numPages)=>{
+  let cont=document.getElementById("paginationContainer");
+  cont.innerHTML="";
+  for(let i=1;i<=pages;i++){
+      let a=document.createElement("a");
+      a.href="#pagina"+i;
+      if(i==currentPage){
+          a.classList.add("active");
+      }
+      a.innerHTML=i;
+      cont.appendChild(a);
+  }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+    let url=new URL(window.location.href);
+    let page=1;
+    if(url.hash!=""&&url.hash.search("pagina")){
+        page = parseInt(url.hash.substring(url.hash.lastIndexOf("a")+1));
+    }
+    loadProducts(page);
+});
+
+const loadProducts=async(page=1)=>{
     const containerProducts=document.getElementById("productList");
     try{
-        let baseURL=`https://localhost:3000/products`;
-        
+        let baseURL=`https://localhost:3000/products/${page}`;
+        console.log(baseURL);
         if(Object.keys(filter).length > 0){
           baseURL+=`?${mapFilter()}`;
           if(Object.keys(orderBy).length > 0){
@@ -232,21 +256,24 @@ const loadProducts=async()=>{
         }else if(Object.keys(orderBy).length > 0){
             baseURL+=`?order=${orderBy}`;
         }
-        const products=await ajax(baseURL,"GET");
-        if(products.error!=null)
-          throw new Error(products.error);
+        const response=await ajax(baseURL,"GET");
+        if(response.error!=null)
+          throw new Error(response.error);
+
         //aggiungere anche filtri e ordinamento
         //aggiungere filtro artigiano
         //TODO: fare pagination
         //const products=mockupResponse;
-        if(products.length==0){
+        if(response.products.length==0){
             containerProducts.innerHTML="Nessun prodotto disponibile. Contatta il tuo artigiano di fiducia e fagli inserire i suoi prodotti!";
             return;
         }
         containerProducts.innerHTML="";
-        products.forEach((prodotto)=>{
+        response.products.forEach((prodotto)=>{
             containerProducts.appendChild(makeProductDiv(prodotto));
         });
+        initPagination(page, response.pages);
+        
     }catch(err){
         console.error(err);
     }
@@ -316,7 +343,7 @@ document.querySelectorAll("[name='orderMobile']").forEach((radio) => {
 
 //ordinamento desktop
 document.getElementById("selectOrdinamentoMobile").addEventListener("change",(event)=>{
-  filter=mapOrder(event.target.value);
+  orderBy=mapOrder(event.target.value);
 });
 
 //disponibilità desktop
