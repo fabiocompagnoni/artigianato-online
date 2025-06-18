@@ -7,8 +7,9 @@ import https from 'https';
 import fs from 'fs';
 
 import sendError from './common_scripts/sendError.js';
-import { getRoleID, generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
+import { generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
 import authJWT from './common_scripts/authJWT.js';
+import { getRoleID } from './common_scripts/utils.js';
 import { sendUserData } from './scripts/userScripts.js';
 
 
@@ -18,6 +19,11 @@ const port = 4000;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
+
+
+const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
+const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
 
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
 const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
@@ -54,24 +60,25 @@ app.use(cookieParser());
 
 // Health check endpoint (prima definizione)
 app.get('/', (req, res) => {
-    res.send(JSON.stringify({ service: 'users', status: 'ok' }));
+    res.json({ service: 'users', status: 'ok' });
 });
 
 
 // Routes
 app.post('/user', async (req, res) => {
-    if(!req.body) {
-        sendError(res, 400);
-        return;
-    }
-
-    const { email, name, surname, password } = req.body;
-
-    if (!req.body.email || !req.body.name || !req.body.surname || !req.body.password) {
+    if (!req.body || !req.body.email || !req.body.name || !req.body.surname || !req.body.password, !req.body.role) {
         sendError(res, 400); // Bad request se mancano campi
         return;
     }
 
+    const { email, name, surname, password, role } = req.body;
+
+    if(role !== 'customer' && role !== 'artisan') {
+        sendError(res, 522);
+        return;
+    }
+
+    
     let slug = '';
     try {
         slug = await generateUserSlug(name, surname, pool);
@@ -91,15 +98,6 @@ app.post('/user', async (req, res) => {
     }
 
     const password_hash = generatePasswordHash(password);
-    const id_customer = await getRoleID('customer', pool);
-
-    if (id_customer === -1) {
-        console.error(
-            "No id for role 'customer' was found. Check your roles table."
-        );
-        sendError(res, 500);
-        return;
-    }
 
     let slug_error = false;
     do {
@@ -107,7 +105,7 @@ app.post('/user', async (req, res) => {
             slug_error = false;
             const sql_res = await pool.query(
                 'INSERT INTO users(email, name, surname, password, id_role, slug) VALUES ($1, $2, $3, $4, $5, $6) RETURNING "ID", email, name, surname, id_role',
-                [email, name, surname, password_hash, id_customer, slug]
+                [email, name, surname, password_hash, role === 'customer' ? CUSTOMER_ROLE_ID : ARTISAN_ROLE_ID, slug]
             );
 
             const user_info = sql_res.rows[0];
@@ -183,17 +181,15 @@ app.get('/user', authJWT, async (req, res) => {
 
         const user_data = sql_res.rows[0];
 
-        const propic_url = user_data.id_profile_picture ? user_data.id_profile_picture : null;
+        const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
 
-        res.status(200).send(
-            JSON.stringify({
+        res.status(200).json({
                 name: user_data.user_name,
                 surname: user_data.surname,
                 role: user_data.role_name,
                 bio: user_data.bio,
                 url_profile_picture: propic_url,
-            })
-        );
+            });
     } catch (err) {
         console.error('Error getting user data:', err);
         sendError(res, 500);
@@ -215,17 +211,15 @@ app.get('/user/:user_slug', async (req, res) => {
         }
 
         const user_data = sql_res.rows[0];
-        const propic_url = user_data.id_profile_picture ? user_data.id_profile_picture : null;
+        const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
 
-        res.status(200).send(
-            JSON.stringify({
+        res.status(200).send({
                 name: user_data.user_name,
                 surname: user_data.surname,
                 role: user_data.role_name,
                 bio: user_data.bio,
                 url_profile_picture: propic_url,
-            })
-        );
+            });
     } catch (err) {
         console.error('Error getting user data by user slug:', err);
         sendError(res, 500);
@@ -253,6 +247,7 @@ app.put('/user', authJWT, async (req, res) => {
     }
 
 
+
     const allowed_actions = ['email', 'name', 'surname', 'bio', 'id_profile_picture']; // Campi che l'utente può aggiornare
 
     const client = await pool.connect(); // Inizia una transazione con un client dal pool
@@ -273,6 +268,7 @@ app.put('/user', authJWT, async (req, res) => {
             }
         }
 
+
         if (typeof edits.password !== 'undefined') {
             const password_hash = generatePasswordHash(edits.password);
             await client.query(
@@ -287,7 +283,7 @@ app.put('/user', authJWT, async (req, res) => {
 
         await client.query('COMMIT'); // Commette la transazione
 
-        res.status(200).send(JSON.stringify(response));
+        res.status(200).json(response);
     } catch (err) {
         if (err.code === '23505') // unique_violation (email duplicata)
             sendError(res, 512);

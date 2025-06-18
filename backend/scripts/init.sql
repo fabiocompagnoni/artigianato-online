@@ -92,6 +92,17 @@ CREATE TABLE IF NOT EXISTS products_restock (
 	PRIMARY KEY("ID_product", timestamp_restock)
 );
 
+CREATE VIEW IF NOT EXISTS products_view AS
+SELECT p.*, SUM(quantity) AS quantity, (
+	SELECT COUNT(*)
+	FROM product_visits
+	WHERE "ID_product" = p."ID"
+) AS visits
+FROM products p
+JOIN products_restock ON "ID" = "ID_product"
+WHERE removed = false
+GROUP BY "ID";
+
 CREATE TABLE IF NOT EXISTS ticket_status (
 	"ID" SERIAL PRIMARY KEY,
 	name VARCHAR(100) UNIQUE NOT NULL

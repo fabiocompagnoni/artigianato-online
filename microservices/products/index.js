@@ -14,6 +14,7 @@ const PORT = 4000;
 import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
+import { getRoleID } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -29,6 +30,9 @@ const credentials = {
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL
 });
+
+const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
 
 // Configurazione CORS più robusta per lo sviluppo
 const allowedOrigins = [
@@ -106,11 +110,16 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/product', authJWT, async (req, res) => {
+    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+        sendError(403);
+        return;
+    }
+
     const user_id = req.user.user_id;
-    const { name, description, short_description, price, categories, images } = req.body;
+    const { name, description, short_description, price, categories, images, quantity } = req.body;
 
     //validazione body
-    if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false)) {
+    if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false) || !isBodyInt(quantity, true)) {
         sendError(res, 400);
         return;
     }
@@ -151,6 +160,8 @@ app.post('/product', authJWT, async (req, res) => {
             for(const [position, image_id] of images.entries())
                 await client.query('INSERT INTO product_images("ID_product", "ID_image", position) VALUES ($1, $2, $3)', [product_info.ID, image_id, position]);
 
+            await client.query('INSERT INTO products_restock("ID_product", quantity) VALUES ($1, $2)', [product_info.ID, quantity]);
+
             await client.query('COMMIT');
 
             res.json({
@@ -159,7 +170,8 @@ app.post('/product', authJWT, async (req, res) => {
                 description: product_info.short_description,
                 price: (product_info.price / 100),
                 category: categories,
-                product_image: images[0]
+                product_image: images[0],
+                quantity: quantity
             });
         } catch (err) {
             await client.query('ROLLBACK');
@@ -177,6 +189,22 @@ app.post('/product', authJWT, async (req, res) => {
         sendError(res, 500);
     }
 });
+
+/*//edit product
+app.put('/product', authJWT, async (req, res) => {
+    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+        sendError(403);
+        return;
+    }
+});
+
+//delete product (lo marchia come eliminato nel db)
+app.delete('/product', authJWT, async (req, res) => {
+    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+        sendError(403);
+        return;
+    }
+});*/
 
 https.createServer(credentials, app).listen(PORT, () => {
   console.log("Microservice products online");
