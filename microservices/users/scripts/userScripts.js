@@ -8,7 +8,7 @@ function generateUserJWT(user_info) {
         throw new Error('JWT_SECRET is not defined');
     }
     return jwt.sign(
-        { user_id: user_info.ID, user_role_id: user_info.id_role },
+        { user_id: user_info.ID, user_role_id: user_info.id_role, user_role:user_info.roleName },
         JWT_SECRET,
         { expiresIn: '1d' }
     );
@@ -26,6 +26,8 @@ export function sendUserData(res, user_info, response_code = 200) {
             email: user_info.email,
             name: user_info.name,
             surname: user_info.surname,
+            role:user_info.ID,
+            roleName: user_info.roleName,
         })
     );
 }
