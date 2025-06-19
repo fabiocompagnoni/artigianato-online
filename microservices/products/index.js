@@ -224,146 +224,268 @@ app.get("/:page",async(req,res)=>{
 app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
     const query = single_product_query;
 
-    const sql_res = await pool.query(query, [req.params.artisan_slug, req.params.product_slug]);
+    try {
+        const sql_res = await pool.query(query, [req.params.artisan_slug, req.params.product_slug]);
 
-    if(sql_res.rowCount > 0) {
-        const product = await outputProduct(sql_res.rows[0], true);
+        if(sql_res.rowCount > 0) {
+            const product = await outputProduct(sql_res.rows[0], true);
 
-        //aggiungiamo una visita nel db
-        try {
-            const product_id = sql_res.rows[0].id;
-            let viewer = null;
-            const jwt_info = getJWTinfo(req);
-            if(jwt_info)
-                viewer = jwt_info.user_id;
-            const ip_address = req.ip;
+            //aggiungiamo una visita nel db
+            try {
+                const product_id = sql_res.rows[0].id;
+                let viewer = null;
+                const jwt_info = getJWTinfo(req);
+                if(jwt_info)
+                    viewer = jwt_info.user_id;
+                const ip_address = req.ip;
 
-            await pool.query('INSERT INTO product_visits("ID_product", id_user, ip_address) VALUES ($1, $2, $3)', [product_id, viewer, ip_address]);
-        } catch(err) {
-            console.error('Error adding user visit to product: ' + err);
+                await pool.query('INSERT INTO product_visits("ID_product", id_user, ip_address) VALUES ($1, $2, $3)', [product_id, viewer, ip_address]);
+            } catch(err) {
+                console.error('Error adding user visit to product: ' + err);
+            }
+
+            res.json(product);
         }
-
-        res.json(product);
+        else
+            sendError(res, 404);
+    } catch (err) {
+        console.error('Error adding fetching single product info: ' + err);
+        sendError(res, 500);
     }
-    else
-        sendError(res, 404);
 });
 
 app.post('/product', authJWT, async (req, res) => {
-    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-
-    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-        sendError(403);
-        return;
-    }
-
-    const user_id = req.user.user_id;
-    const { name, description, short_description, price, categories, images, quantity } = req.body;
-
-    //validazione body
-    if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false) || !isBodyInt(quantity, true)) {
-        sendError(res, 400);
-        return;
-    }
-
-    //conversione del prezzo in centesimi
-    const adjusted_price = Math.floor(price * 100);
-
-    if(!Array.isArray(categories) || !Array.isArray(images)) {
-        sendError(res, 400);
-        return;
-    }
-
     try {
-        //il programma proseguirà solo una volta dopo aver completato tutte le promise
-        const categories_ids = await Promise.all(categories.map(c => getCategoryID(c, pool)));
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
-        const slug = await generateArtisanProductSlug(user_id, name, pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(403);
+            return;
+        }
 
-        const client = await pool.connect();
+        const user_id = req.user.user_id;
+        const { name, description, short_description, price, categories, images, quantity } = req.body;
+
+        //validazione body
+        if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false) || !isBodyInt(quantity, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        //conversione del prezzo in centesimi
+        const adjusted_price = Math.floor(price * 100);
+
+        if(!Array.isArray(categories) || !Array.isArray(images)) {
+            sendError(res, 400);
+            return;
+        }
 
         try {
-            await client.query('BEGIN');
+            //il programma proseguirà solo una volta dopo aver completato tutte le promise
+            const categories_ids = await Promise.all(categories.map(c => getCategoryID(c, pool)));
 
-            const sql_res = await client.query('INSERT INTO products(name, slug, description, short_description, price, artisan) VALUES($1, $2, $3, $4, $5, $6) RETURNING *', [
-                name,
-                slug,
-                description,
-                short_description,
-                adjusted_price,
-                user_id
-            ]);
+            const slug = await generateArtisanProductSlug(user_id, name, pool);
 
-            const product_info = sql_res.rows[0];
+            const client = await pool.connect();
 
-            for(const cat_id of categories_ids)
-                await client.query('INSERT INTO product_categories("ID_category", "ID_product") VALUES ($1, $2)', [cat_id, product_info.ID]);
+            try {
+                await client.query('BEGIN');
 
-            for(const [position, image_id] of images.entries())
-                await client.query('INSERT INTO product_images("ID_product", "ID_image", position) VALUES ($1, $2, $3)', [product_info.ID, image_id, position]);
+                const sql_res = await client.query('INSERT INTO products(name, slug, description, short_description, price, artisan) VALUES($1, $2, $3, $4, $5, $6) RETURNING *', [
+                    name,
+                    slug,
+                    description,
+                    short_description,
+                    adjusted_price,
+                    user_id
+                ]);
 
-            await client.query('INSERT INTO products_restock("ID_product", quantity) VALUES ($1, $2)', [product_info.ID, quantity]);
+                const product_info = sql_res.rows[0];
 
-            await client.query('COMMIT');
+                for(const cat_id of categories_ids)
+                    await client.query('INSERT INTO product_categories("ID_category", "ID_product") VALUES ($1, $2)', [cat_id, product_info.ID]);
 
-            res.json({
-                id: product_info.ID,
-                name: product_info.name,
-                description: product_info.short_description,
-                price: (product_info.price / 100),
-                category: categories,
-                product_image: images[0],
-                quantity: quantity
-            });
-        } catch (err) {
-            await client.query('ROLLBACK');
-            if (err.code === '23503' || err.code === '22P02') // foreign key violation (id immagine non presente) o id non valido
-                sendError(res, 521);
-            else {
-                console.log('Error creating product: ' + err);
-                sendError(res, 500);
+                for(const [position, image_id] of images.entries())
+                    await client.query('INSERT INTO product_images("ID_product", "ID_image", position) VALUES ($1, $2, $3)', [product_info.ID, image_id, position]);
+
+                await client.query('INSERT INTO products_restock("ID_product", quantity) VALUES ($1, $2)', [product_info.ID, quantity]);
+
+                await client.query('COMMIT');
+
+                res.json({
+                    id: product_info.ID,
+                    name: product_info.name,
+                    description: product_info.short_description,
+                    price: Math.floor(product_info.price / 100),
+                    category: categories,
+                    product_image: images[0],
+                    quantity: quantity
+                });
+            } catch (err) {
+                await client.query('ROLLBACK');
+                if (err.code === '23503' || err.code === '22P02') // foreign key violation (id immagine non presente) o id non valido
+                    sendError(res, 521);
+                else {
+                    console.log('Error creating product: ' + err);
+                    sendError(res, 500);
+                }
+            } finally {
+                client.release();
             }
-        } finally {
-            client.release();
+        } catch(err) {
+            console.error('Error creating product: ' + err);
+            sendError(res, 500);
         }
-    } catch(err) {
-        console.log('Error creating product: ' + err);
+    } catch (err) {
+        console.error('Error creating product: ' + err);
         sendError(res, 500);
     }
 });
 
 //edit product
-/*app.put('/product/:slug', authJWT, async (req, res) => {
-    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-        sendError(res, 403);
-        return;
+app.put('/product/:slug', authJWT, async (req, res) => {
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(!req.params || !req.params.slug) {
+            sendError(res, 400);
+            return;
+        }
+
+        const product_slug = req.params.slug;
+
+        const user_id = req.user.user_id;
+        const edits = req.body;
+
+        if (typeof edits === 'undefined' || Object.keys(edits).length === 0) {
+            sendError(res, 400); // Bad request se non ci sono edits
+            return;
+        }
+
+        //controllo che l'utente abbia accesso al prodotto
+        const check_query_result = await pool.query('SELECT "ID" FROM products WHERE slug = $1 AND artisan = $2', [product_slug, user_id]);
+        if(check_query_result.rowCount === 0) {
+            sendError(res, 403);
+            return;
+        }
+
+        const product_id = check_query_result.rows[0].ID;
+
+        const { name, description, short_description, price, categories, images, quantity } = edits;
+
+        //controlla che, se la categoria è presente, sia conforme
+        if (typeof(name) !== 'undefined' && !isBodyString(name, true) ||
+        typeof(description) !== 'undefined' && !isBodyString(description, false) ||
+        typeof(short_description) !== 'undefined' && !isBodyString(short_description, true) ||
+        typeof(price) !== 'undefined' && !isPrice(price, false) ||
+        typeof(quantity) !== 'undefined' && !isBodyInt(quantity, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const actions = ['name', 'description', 'short_description'];
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN'); // Inizia la transazione
+
+            const response = { password_changed: false };
+            for (const act of actions) {
+                if (typeof edits[act] !== 'undefined') {
+                    const sql_res = await client.query(
+                        `UPDATE products SET ${act} = $1 WHERE "ID" = $2 AND artisan = $3 RETURNING ${act}`,
+                        [edits[act], product_id, user_id]
+                    );
+                    if (sql_res.rowCount > 0) {
+                        response[act] = sql_res.rows[0][act];
+                    }
+                }
+            }
+
+            if (typeof price !== 'undefined') {
+                const adjusted_price = Math.floor(price * 100);
+                await client.query(
+                    'UPDATE products SET price = $1 WHERE "ID" = $2 AND artisan = $3',
+                    [adjusted_price, product_id, user_id]
+                );
+                response.price = price;
+            }
+
+            if (typeof quantity !== 'undefined') {
+                await client.query(
+                    'INSERT INTO products_restock("ID_product", quantity) VALUES ($1, $2)',
+                    [product_id, quantity]
+                );
+                response.quantity = quantity;
+            }
+
+            if (typeof categories !== 'undefined') {
+                await client.query(
+                    'DELETE FROM product_categories WHERE "ID_product" = $1',
+                    [product_id]
+                );
+
+                const categories_ids = await Promise.all(categories.map(c => getCategoryID(c, pool)));
+
+                for(const cat_id of categories_ids)
+                    await client.query(
+                        'INSERT INTO product_categories("ID_category", "ID_product") VALUES ($1, $2)',
+                        [cat_id, product_id]
+                    );
+            }
+
+            if (typeof images !== 'undefined') {
+                await client.query(
+                    'DELETE FROM product_images WHERE "ID_product" = $1',
+                    [product_id]
+                );
+
+                for(const [position, image_id] of images.entries())
+                    await client.query(
+                        'INSERT INTO product_images("ID_product", "ID_image", position) VALUES ($1, $2, $3)',
+                        [product_id, image_id, position]
+                    );
+            }
+
+            await client.query('COMMIT'); // Commette la transazione
+
+            res.status(200).json(response);
+        } catch (err) {
+            console.error('Error updating product: ', err);
+            sendError(res, 500);
+            await client.query('ROLLBACK'); // Fa il rollback in caso di errore
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        console.error('Error updating product: ' + err);
+        sendError(res, 500);
     }
-
-    if(!req.params || !req.params.slug) {
-        sendError(res, 400);
-        return;
-    }
-
-    const product_slug = req.params.slug;
-
-
-});*/
+});
 
 //delete product (lo marchia come eliminato nel db)
 app.delete('/product/:slug', authJWT, async (req, res) => {
-    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-    if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-        sendError(res, 403);
-        return;
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        const sql_res = await pool.query('UPDATE products SET removed = true WHERE slug = $1 AND artisan = $2', [req.params.slug, req.user.user_id]);
+
+        if(sql_res.rowCount > 0) //il prodotto è stato eliminato
+            res.json({status: 'ok'});
+        else //il prodotto non è stato elminato perché non esiste una coppia (slug, utente) che combaci con la richiesta
+            sendError(res, 401);
+    } catch (err) {
+        console.error('Error deleting product: ' + err);
+        sendError(res, 500);
     }
-
-    const sql_res = await pool.query('UPDATE products SET removed = true WHERE slug = $1 AND artisan = $2', [req.params.slug, req.user.user_id]);
-
-    if(sql_res.rowCount > 0) //il prodotto è stato eliminato
-        res.json({status: 'ok'});
-    else //il prodotto non è stato elminato perché non esiste una coppia (slug, utente) che combaci con la richiesta
-        sendError(res, 401)
 });
 
 https.createServer(credentials, app).listen(PORT, () => {
