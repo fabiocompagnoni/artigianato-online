@@ -135,7 +135,7 @@ app.post('/login', async (req, res) => {
 
     try {
         const sql_res = await pool.query(
-            `SELECT "ID", email, name, surname, id_role, roles.name AS roleName password FROM users 
+            `SELECT users."ID", users.email, users.name, users.surname, users.id_role, roles.name AS roleName, password FROM users 
             INNER JOIN roles ON users.id_role = roles."ID"
             WHERE email = $1`,
             [email]
