@@ -32,13 +32,11 @@ const makeLogin=async()=>{
         }else{
             
             let urlDashboard="";
-            if(response.role=="admin"){
-                urlDashboard="/admin/area-riservata";
-            }else if(response.role=="customer"){
-                urlDashboard="/clienti/area-riservata";
-            }else if(response.role=="artisan"){
-                urlDashboard="/artigiani/area-riservata";
-            }
+            let reqLink=await ajax("https://localhost:3000/users/dashboardPage");
+            if(reqLink.dashboardLink!=null)
+                urlDashboard=reqLink.dashboardLink;
+            else
+                throw new Error("Dashboard link not found");
             window.location.href=urlDashboard;
         }
 
