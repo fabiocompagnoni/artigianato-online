@@ -21,10 +21,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString: DATABASE_URL });
 
 
-const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
-const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-
-
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
 const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
 
@@ -103,6 +99,10 @@ app.post('/user', async (req, res) => {
     do {
         try {
             slug_error = false;
+
+            const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
+            const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
             const sql_res = await pool.query(
                 'INSERT INTO users(email, name, surname, password, id_role, slug) VALUES ($1, $2, $3, $4, $5, $6) RETURNING "ID", email, name, surname, id_role',
                 [email, name, surname, password_hash, role === 'customer' ? CUSTOMER_ROLE_ID : ARTISAN_ROLE_ID, slug]

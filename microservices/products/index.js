@@ -31,8 +31,6 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL
 });
 
-const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-
 
 // Configurazione CORS più robusta per lo sviluppo
 const allowedOrigins = [
@@ -197,6 +195,8 @@ app.get("/:page",async(req,res)=>{
 });
 
 app.post('/product', authJWT, async (req, res) => {
+    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
     if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
         sendError(403);
         return;
@@ -279,6 +279,7 @@ app.post('/product', authJWT, async (req, res) => {
 
 /*//edit product
 app.put('/product', authJWT, async (req, res) => {
+    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
     if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
         sendError(403);
         return;
@@ -287,6 +288,7 @@ app.put('/product', authJWT, async (req, res) => {
 
 //delete product (lo marchia come eliminato nel db)
 app.delete('/product', authJWT, async (req, res) => {
+    const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
     if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
         sendError(403);
         return;

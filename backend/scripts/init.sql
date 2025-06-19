@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS products_restock (
 	PRIMARY KEY("ID_product", timestamp_restock)
 );
 
-CREATE VIEW IF NOT EXISTS products_view AS
+CREATE VIEW products_view AS
 SELECT p.*, SUM(quantity) AS quantity, (
 	SELECT COUNT(*)
 	FROM product_visits
