@@ -111,7 +111,7 @@ app.post('/user', async (req, res) => {
 
             const user_info = sql_res.rows[0];
 
-            sendUserData(res, user_info, 201);
+            sendUserData(res, user_info, 200);
         } catch (err) {
             if (err.detail.startsWith('Key (email)')) //unique violation on email
                 sendError(res, 512);

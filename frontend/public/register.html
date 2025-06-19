@@ -20,15 +20,23 @@
                     <p>Registrati al nostro marketplace per artigiani utilizzando la tua email oppure tramite il tuo account Google.<br/>Registrati come artigiano se vuoi iniziare a vendere oppure come privato se vuoi acquistare degli artigiani presenti su "Artigianato Online".</p>
                     <div class="mb-3">
                         <label>Email</label>
-                        <input type="email" class="form-control" id="emailLogin">
+                        <input type="email" class="form-control" id="emailRegister">
                     </div>
                     <div class="mb-3">
                         <label>Password</label>
                         <div class="position-relative">
-                            <input type="password" class="form-control" id="password" name="password" required/>
-                            <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                            <input type="password" class="form-control" id="passwordRegister" name="password" required/>
+                            <button id="showPsw1" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label>Conferma Password</label>
+                        <div class="position-relative">
+                            <input type="password" class="form-control" id="passwordConfirm" name="password" required/>
+                            <button id="showPsw2" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label>Nome</label>
                         <input type="text" class="form-control" id="name">
@@ -44,9 +52,11 @@
                             <option value="2">Sono un artigiano</option>
                         </select>
                     </div>
-                    
+
+                    <div class="mb-3" id="errorPart" style="display:none;"></div>
+
                     <div class="d-flex mb-3">
-                        <button class="loginButton" id="loginButton">Registrati</button>
+                        <button class="loginButton" id="registerButton">Registrati</button>
                     </div>
                     <div class="row mb-3">
                         <div class="col"><hr/></div>
@@ -55,11 +65,17 @@
                     </div>
                     <!--TODO: mettere endpoint api login google-->
                     <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Registrati con Google</div></a>
+                    <hr/>
                     <p class="text-center my-2">
                         Creando l'account accetti i Termini di Servizio e la Privacy Policy.
                     </p>
+                    <hr/>
+                    <div class="my-2 text-center">
+                        Hai già un account? <a href="/login">Accedi</a>
+                    </div>
                 </div>
-                <div id="step2">
+                
+                <div id="step2" class="flex-column gap-2">
                     
                 </div>
             </div>

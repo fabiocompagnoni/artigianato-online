@@ -29,7 +29,9 @@
                             <button id="showPsw" type="button" class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2 px-1 py-0 border-0 bg-transparent"><i class="fa-solid fa-eye"></i></button>
                         </div>
                     </div>
-                    <a href="/recupera-password" class="mb-3">Hai dimenticato la password?</a>
+                    <div class="mb-3">
+                        <a href="/recupera-password">Hai dimenticato la password?</a>
+                    </div>
                     <div class="d-flex mb-3">
                         <button class="loginButton" id="loginButton">Accedi</button>
                     </div>
@@ -40,6 +42,9 @@
                     </div>
                     <!--TODO: mettere endpoint api login google-->
                     <a href="" class="googleLoginButton"><i class="fa-brands fa-google"></i> <div>Accedi con Google</div></a>
+                    <div class="my-2 text-center">
+                        Non hai un account? <a href="/registrati">Registrati</a>
+                    </div>
                 </div>
                 <div id="loadingPart">
                     <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
