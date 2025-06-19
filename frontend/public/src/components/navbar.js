@@ -121,6 +121,44 @@ class NavBar extends HTMLElement {
                 });
         });
 
+        document.addEventListener("DOMContentLoaded", async() => {
+            let btnDesktop=document.getElementById("btnUserProfileDesktop");
+            let btnMobile=document.getElementById("btnUserProfile");
+
+            let isLoggedin=false;
+            let req=await fetch("https://localhost:3000/users/isLoggedIn");
+            let respJson=await req.json();
+            if(req.status!=200){
+                console.error("Error fetching login status:", respJson.error);
+                return;
+            }
+            if(respJson.isLoggedin!=null)
+                isLoggedin=respJson.isLoggedin;
+            if(isLoggedin){
+                let reqLinkDashboard=await fetch("https://localhost:3000/users/dashboardPage");
+                let linkDashboard=await reqLinkDashboard.json();
+                if(reqLinkDashboard.status!=200){
+                    console.error("Error fetching dashboard link:", linkDashboard.error);
+                    return;
+                }
+                if(reqLinkDashboard.dashboardLink!=null){
+                    btnDesktop.onclick=()=>{
+                        window.location.href=reqLinkDashboard.dashboardLink;
+                    }
+                    btnMobile.onclick=()=>{
+                        window.location.href=reqLinkDashboard.dashboardLink;
+                    }
+                }
+            }else{
+                btnDesktop.onclick=()=>{
+                    window.location.href="/accedi";
+                }
+                btnMobile.onclick=()=>{
+                    window.location.href="/accedi";
+                }
+            }
+        });
+
     }
 }
 customElements.define("nav-bar", NavBar);
