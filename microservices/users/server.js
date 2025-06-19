@@ -114,7 +114,7 @@ app.post('/user', async (req, res) => {
 
             const user_info = sql_res.rows[0];
 
-            sendUserData(res, user_info, 201);
+            sendUserData(res, user_info, 200);
         } catch (err) {
             if (err.detail.startsWith('Key (email)')) //unique violation on email
                 sendError(res, 512);
@@ -138,7 +138,9 @@ app.post('/login', async (req, res) => {
 
     try {
         const sql_res = await pool.query(
-            'SELECT "ID", email, name, surname, id_role, password FROM users WHERE email = $1',
+            `SELECT users."ID", users.email, users.name, users.surname, users.id_role, roles.name AS roleName, password FROM users 
+            INNER JOIN roles ON users.id_role = roles."ID"
+            WHERE email = $1`,
             [email]
         );
 
@@ -302,6 +304,60 @@ app.put('/user', authJWT, async (req, res) => {
     } finally {
         client.release();
     }
+});
+
+/**
+ * API per ottenere il link della dashboard in base al ruolo dell'utente
+ */
+app.get("/dashboardPage", authJWT, (req, res) => {
+    let role=req.user.user_role;
+    let dashboardLink="";
+    switch(role){
+        case 'admin': dashboardLink="/admin/area-riservata"; break;
+        case 'customer': dashboardLink="/clienti/area-riservata"; break;
+        case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
+        default: dashboardLink="/clienti/area-riservata"; break;
+    }
+    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+});
+
+/**
+ * API per verificare se l'utente è loggato (token JWT valido)
+ */
+app.get('/isLoggedIn', (req, res) => {
+    // Verifica manuale della presenza del token JWT nel cookie
+    const token = req.cookies && req.cookies.jwt;
+    if (!token) {
+        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+    }
+    res.status(200).send(JSON.stringify({ loggedIn: true }));
+});
+
+/**
+ * API per ottenere il link della dashboard in base al ruolo dell'utente
+ */
+app.get("/dashboardPage", authJWT, (req, res) => {
+    let role=req.user.user_role;
+    let dashboardLink="";
+    switch(role){
+        case 'admin': dashboardLink="/admin/area-riservata"; break;
+        case 'customer': dashboardLink="/clienti/area-riservata"; break;
+        case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
+        default: dashboardLink="/clienti/area-riservata"; break;
+    }
+    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+});
+
+/**
+ * API per verificare se l'utente è loggato (token JWT valido)
+ */
+app.get('/isLoggedIn', (req, res) => {
+    // Verifica manuale della presenza del token JWT nel cookie
+    const token = req.cookies && req.cookies.jwt;
+    if (!token) {
+        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+    }
+    res.status(200).send(JSON.stringify({ loggedIn: true }));
 });
 
 https.createServer(credentials, app).listen(port, () => {
