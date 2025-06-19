@@ -11,9 +11,9 @@ import fs from 'fs';
 
 const PORT = 4000;
 
-import authJWT from "./common_scripts/authJWT.js";
+import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
-import { isBodyString, isPrice } from "./common_scripts/bodyTypeChecker.js";
+import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 import { getRoleID } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
@@ -54,6 +54,8 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
+app.enable('trust proxy');
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -73,9 +75,16 @@ const getProductThumbnail=async(idProduct)=>{
         product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
     return product_image;  
 }
+const getProductImages=async(idProduct)=>{
+    const product_images = [];
+    const product_images_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1', [idProduct]);
+    for(const image of product_images_res.rows)
+        product_images.push('https://localhost:3000/images/' + image.ID_image);
+    return product_images;
+}
 const getCategories=async(idProduct)=>{
     let categories=[];
-    const res=await pool.query("SELECT C.'ID', C.name, C.slug FROM product_categories AS PC INNER JOIN categories AS C ON C.'ID' = PC.'ID_category' WHERE PC.'ID_product' = $1 ORDER BY C.name ASC",[idProduct]);
+    const res=await pool.query('SELECT C."ID", C.name, C.slug FROM product_categories AS PC INNER JOIN categories AS C ON C."ID" = PC."ID_category" WHERE PC."ID_product" = $1 ORDER BY C.name ASC',[idProduct]);
     for(const row of res.rows){
         categories.push({
             id: row.ID,
@@ -85,10 +94,9 @@ const getCategories=async(idProduct)=>{
     }
     return categories;
 }
-const outputProduct=async(dbRow)=>{
-    let img=await getProductThumbnail(dbRow.id);
+const outputProduct=async(dbRow, single_product=false)=>{
     let categories=await getCategories(dbRow.id);
-    return {
+    const obj = {
         id: dbRow.id,
         name: dbRow.pname,
         description: dbRow.short_description,
@@ -100,23 +108,36 @@ const outputProduct=async(dbRow)=>{
             photoProfile: dbRow.artisan_propic_link,
             link: `/artigiani/${dbRow.aslug}`,
         },
-        thumbnail:img,
-        link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`
+        link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`,
+        quantity: parseInt(dbRow.availability),
+        visits: parseInt(dbRow.visits)
     }
+
+    if(single_product) {
+        obj.images = await getProductImages(dbRow.id);
+        obj.short_description = dbRow.short_description;
+        obj.description = dbRow.description;
+    }
+    else {
+        obj.thumbnail = await getProductThumbnail(dbRow.id);
+        obj.description = dbRow.short_description;
+    }
+
+    return obj;
 }
+
+const base_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE 1 = 1 ';
+
+//come la query sopra ma con l'aggiunta di "description"
+const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
 
 app.get('/', async (req, res) => {
     try {
-        let query=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products p JOIN users u ON artisan = u."ID" WHERE removed = false ORDER BY timestamp_last_update DESC`;
+        const sql_res = await pool.query(base_query);
 
-        const sql_res = await pool.query(query);
+        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
 
-        const products = [];
-        for(const row of sql_res.rows) {
-            products.push(outputProduct(row));
-        }
-
-        res.json({products: recent_products, numberProducts: sql_res.rowCount});
+        res.json({products: products, numberProducts: sql_res.rowCount});
     } catch (err) {
         console.error('Error fetching products:', err);
         sendError(res, 500);
@@ -127,17 +148,15 @@ app.get('/', async (req, res) => {
  * API per ottenere i prodotti divisi per pagina con i filtri
  */
 app.get("/:page",async(req,res)=>{
-    let queryStandard=`SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, u.name AS aname, surname, id_profile_picture, u.slug AS aslug, COALESCE((
-        SELECT SUM(r.quantity - o.quantity) FROM products_restock AS r
-        INNER JOIN products_order AS o ON r."ID_product" = o."ID_product"
-        WHERE r."ID_product" = p."ID"
-        GROUP BY r."ID_product"
-    ), 0) AS availability FROM products p 
-    JOIN users u ON artisan = u."ID" 
-    WHERE removed = false `;
+    let queryStandard=base_query;
+
+    let query_placeholder_num = 1;
+    let query_placeholder_values = [];
+
     //applicazione dei filti
-    if(req.query.filter){
-        let filter=req.query.filter;
+    if(req.query){
+        let filter = req.query;
+        
         if(filter.artisan!=null){
             //artisan products only
             queryStandard+=`AND u.slug = '${filter.artisan}' `;
@@ -149,22 +168,27 @@ app.get("/:page",async(req,res)=>{
                     else
                         queryStandard+=`AND availability > 0 `;
                 }
-                if(filter.prezzi!=null){
-                if(filter.prezzi.min!=null)
-                    queryStandard+=`AND price >= ${filter.prezzi.min} `;
-                if(filter.prezzi.max!=null)
-                    queryStandard+=`AND price <= ${filter.prezzi.max} `;
+            }
+        if(filter.prezzi!=null){
+            if(filter.prezzi.min!=null) {
+                queryStandard+=`AND price >= $${query_placeholder_num++} `;
+                query_placeholder_values.push(filter.prezzi.min);
+            }
+            if(filter.prezzi.max!=null) {
+                queryStandard+=`AND price <= $${query_placeholder_num++} `;
+                query_placeholder_values.push(filter.prezzi.max);
+            }
 
-            }
-            if(filter.queryString!=null){
-                queryStandard+=`AND p.name LIKE '%${filter.queryString}%' `;
-            }
+        }
+        if(filter.queryString!=null){
+            queryStandard+=`AND p.name LIKE $${query_placeholder_num++} `;
+            query_placeholder_values.push('%' + filter.queryString + '%');
         }
         
     }
     if(req.query.order){
-        let order=req.query.order;
-        queryStandard+=`ORDER BY ${order} `;
+        queryStandard+=`ORDER BY $${query_placeholder_num++} `;
+        query_placeholder_values.push(req.query.order);
     }else{
         queryStandard+=`ORDER BY timestamp_last_update DESC `;
     }
@@ -173,18 +197,21 @@ app.get("/:page",async(req,res)=>{
     let queryCopy=queryStandard;
     //applicazione delle pagine
     let page=req.params.page;
+    if(!isBodyInt(page)) {
+        sendError(res, 404);
+        return;
+    }
     let offset=(page-1)*PER_PAGE;
     queryStandard+=`LIMIT ${PER_PAGE} OFFSET ${offset} `;
     
     try{
         console.log("QUERY DA ESEGUIRE "+queryStandard);
-        const sql_res=await pool.query(queryStandard);
-        const products=[];
-        for(const row of sql_res.rows){
-            products.push(outputProduct(row));
-        }
+        console.log("PLACEHOLDER UTILIZZATI "+query_placeholder_values);
+        const sql_res=await pool.query(queryStandard, query_placeholder_values);
+        
+        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
         //ottengo il numero delle pagine e il numero di prodotti totali
-        const ris2=await pool.query(queryCopy);
+        const ris2=await pool.query(queryCopy, query_placeholder_values);
         let pages=Math.ceil(ris2.rowCount/PER_PAGE);
         let numProducts=ris2.rowCount;
         res.json({products:products,pages:pages,numProducts:numProducts});
@@ -192,6 +219,34 @@ app.get("/:page",async(req,res)=>{
         console.error('Error fetching products:',err);
         sendError(res,500);
     }
+});
+
+app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
+    const query = single_product_query;
+
+    const sql_res = await pool.query(query, [req.params.artisan_slug, req.params.product_slug]);
+
+    if(sql_res.rowCount > 0) {
+        const product = await outputProduct(sql_res.rows[0], true);
+
+        //aggiungiamo una visita nel db
+        try {
+            const product_id = sql_res.rows[0].id;
+            let viewer = null;
+            const jwt_info = getJWTinfo(req);
+            if(jwt_info)
+                viewer = jwt_info.user_id;
+            const ip_address = req.ip;
+
+            await pool.query('INSERT INTO product_visits("ID_product", id_user, ip_address) VALUES ($1, $2, $3)', [product_id, viewer, ip_address]);
+        } catch(err) {
+            console.error('Error adding user visit to product: ' + err);
+        }
+
+        res.json(product);
+    }
+    else
+        sendError(res, 404);
 });
 
 app.post('/product', authJWT, async (req, res) => {
@@ -277,23 +332,39 @@ app.post('/product', authJWT, async (req, res) => {
     }
 });
 
-/*//edit product
-app.put('/product', authJWT, async (req, res) => {
+//edit product
+/*app.put('/product/:slug', authJWT, async (req, res) => {
     const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
     if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-        sendError(403);
+        sendError(res, 403);
         return;
     }
-});
+
+    if(!req.params || !req.params.slug) {
+        sendError(res, 400);
+        return;
+    }
+
+    const product_slug = req.params.slug;
+
+
+});*/
 
 //delete product (lo marchia come eliminato nel db)
-app.delete('/product', authJWT, async (req, res) => {
+app.delete('/product/:slug', authJWT, async (req, res) => {
     const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
     if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-        sendError(403);
+        sendError(res, 403);
         return;
     }
-});*/
+
+    const sql_res = await pool.query('UPDATE products SET removed = true WHERE slug = $1 AND artisan = $2', [req.params.slug, req.user.user_id]);
+
+    if(sql_res.rowCount > 0) //il prodotto è stato eliminato
+        res.json({status: 'ok'});
+    else //il prodotto non è stato elminato perché non esiste una coppia (slug, utente) che combaci con la richiesta
+        sendError(res, 401)
+});
 
 https.createServer(credentials, app).listen(PORT, () => {
   console.log("Microservice products online");

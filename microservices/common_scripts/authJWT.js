@@ -33,3 +33,31 @@ export default function authJWT(req, res, next) {
         sendError(res, 500);
     }
 }
+
+export function getJWTinfo(req) {
+    try {
+        if(!req.cookies) {
+            sendError(res, 401);
+            return;
+        }
+
+        const token = req.cookies.jwt;
+
+        if (typeof token === 'undefined' || !token) {
+            // Controlla anche che il token non sia stringa vuota, null o undefined
+            sendError(res, 401);
+            return;
+        }
+
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                console.error('JWT verification error:', err); // Logga l'errore di verifica
+                return undefined;
+            }
+            return user;
+        });
+    } catch (err) {
+        console.error('AuthJWT catch error:', err);
+        return undefined;
+    }
+}
