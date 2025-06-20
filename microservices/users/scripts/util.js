@@ -1,19 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { getTrimmedName } from '../common_scripts/utils.js';
 
-export async function getRoleID(role_name, pool) {
-    try {
-        const res = await pool.query('SELECT "ID" FROM roles WHERE name = $1', [
-            role_name,
-        ]);
-        if (res.rowCount < 1) return -1;
-        return res.rows[0].ID;
-    } catch (err) {
-        console.error('Error in getRoleID:', err);
-        return -1;
-    }
-}
-
 export function generatePasswordHash(password) {
     return bcrypt.hashSync(password, 12);
 }

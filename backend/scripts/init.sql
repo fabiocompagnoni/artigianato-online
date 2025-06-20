@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS product_images (
 CREATE TABLE IF NOT EXISTS product_visits (
 	"ID_product" INTEGER REFERENCES products("ID"),
 	timestamp_visit TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	id_user INTEGER NOT NULL REFERENCES users("ID"),
+	id_user INTEGER REFERENCES users("ID"),
 	ip_address INET NOT NULL,
 	PRIMARY KEY("ID_product", timestamp_visit)
 );
@@ -142,6 +142,23 @@ CREATE TABLE IF NOT EXISTS products_order (
 	single_product_price INTEGER NOT NULL,
 	refunded_import INTEGER
 );
+
+CREATE VIEW products_view AS
+SELECT p.*, COALESCE((
+	SELECT SUM (r.quantity) FROM products_restock AS r
+	WHERE "ID_product" = p."ID"
+), 0) - COALESCE((
+	SELECT SUM (o.quantity) FROM products_order AS o
+	WHERE "ID_product" = p."ID"
+), 0) AS quantity, (
+	SELECT COUNT(*)
+	FROM product_visits
+	WHERE "ID_product" = p."ID"
+) AS visits
+FROM products p
+WHERE removed = false
+GROUP BY "ID"
+ORDER BY timestamp_last_update DESC;
 
 CREATE TABLE IF NOT EXISTS ticket_orders (
 	"ID" SERIAL PRIMARY KEY,

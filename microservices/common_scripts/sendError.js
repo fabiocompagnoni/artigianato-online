@@ -10,6 +10,8 @@ const error_messages = {
     518: 'Invalid user name or surname',
     519: 'Missing file in request body',
     520: 'Image processing failed',
+    521: 'Image ID not found',
+    522: 'Invalid role option (only \'customer\' and \'artisan\' are allowed)',
     400: 'Bad request',
     401: 'Unauthorized',
     403: 'Forbidden',
@@ -17,9 +19,7 @@ const error_messages = {
 };
 
 export default function sendError(res, status) {
-    res.status(status).send(
-        JSON.stringify({
-            error: error_messages[status] || 'Unknown server error',
-        })
-    );
+    res.status(status).json({
+        error: error_messages[status] || 'Unknown server error',
+    });
 }

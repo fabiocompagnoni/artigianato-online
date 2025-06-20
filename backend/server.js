@@ -41,9 +41,6 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
-// Gestione delle richieste OPTIONS preflight
-//app.options('*', cors());
-
 app.use((req, res, next) => {
   console.log(`[PROXY DEBUG] Richiesta ricevuta: ${req.method} ${req.originalUrl} da ${req.headers.origin || 'Nessuna origine'}`);
   next();

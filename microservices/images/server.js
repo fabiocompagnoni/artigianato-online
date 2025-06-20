@@ -1,12 +1,13 @@
 import express from 'express';
 import {Pool} from 'pg';
 import cors from 'cors';
-import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import sharp from 'sharp';
+
 import https from 'https';
+import fs from 'fs';
 
 import sendError from './common_scripts/sendError.js';
 
@@ -105,12 +106,6 @@ app.get('/:id', (req, res) => {
         sendError(res, 404);
 });
 
-/*
-app.listen(PORT, () => {
-    console.log('Images service online');
-});
-*/
-
 https.createServer(credentials, app).listen(PORT, () => {
-  console.log("Microservice products listening on port "+PORT);
+  console.log("Microservice products online");
 });
