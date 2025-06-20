@@ -15,7 +15,8 @@ function generateUserJWT(user_info) {
 }
 
 export function sendUserData(res, user_info, response_code = 200) {
-    res.cookie('jwt', generateUserJWT(user_info), {
+    let token=generateUserJWT(user_info);
+    res.cookie('jwt', token, {
         httpOnly: true,
         sameSite: 'None',
         secure: true,
@@ -27,7 +28,7 @@ export function sendUserData(res, user_info, response_code = 200) {
             name: user_info.name,
             surname: user_info.surname,
             role:user_info.ID,
-            roleName: user_info.roleName,
+            roleName: user_info.roleName
         })
     );
 }

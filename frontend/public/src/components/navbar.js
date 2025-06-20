@@ -138,6 +138,9 @@ class NavBar extends HTMLElement {
             if(respJson.loggedIn!=null)
                 isLoggedin=respJson.loggedIn;
             if(isLoggedin){
+                let dropdown=document.createElement("div");
+                dropdown.classList.add("dropdownNavActions");
+                
                 let reqLinkDashboard=await fetch("https://localhost:3000/users/dashboardPage",{
                     method:"GET",
                     credentials: 'include'
@@ -148,12 +151,21 @@ class NavBar extends HTMLElement {
                     return;
                 }
                 if(linkDashboard.dashboardLink!=null){
-                    btnDesktop.onclick=()=>{
+                    let linkDashboardElement=document.createElement("a");
+                    linkDashboardElement.href=linkDashboard.dashboardLink;
+                    linkDashboardElement.innerHTML=`Area riservata`;
+                    dropdown.appendChild(linkDashboardElement);
+                }
+                let linkLogout=document.createElement("a");
+                linkLogout.href="/logout";
+                linkLogout.innerHTML=`Logout`;
+                
+                dropdown.appendChild(linkLogout);
+                btnDesktop.onclick=()=>{
                         window.location.href=linkDashboard.dashboardLink;
-                    }
-                    btnMobile.onclick=()=>{
-                        window.location.href=linkDashboard.dashboardLink;
-                    }
+                }
+                btnMobile.onclick=()=>{
+                    window.location.href=linkDashboard.dashboardLink;
                 }
             }else{
                 btnDesktop.onclick=()=>{

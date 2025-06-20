@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
 import fs from 'fs';
 import https from 'https';
+import jwt from 'jsonwebtoken';
 
 import sendError from './common_scripts/sendError.js';
 import { getRoleID, generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
@@ -20,6 +21,7 @@ const credentials = {
 const app = express();
 const port = 4000;
 
+const JWT_SECRET = process.env.JWT_SECRET;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
@@ -323,11 +325,21 @@ app.get("/dashboardPage", authJWT, (req, res) => {
  */
 app.get('/isLoggedIn', (req, res) => {
     // Verifica manuale della presenza del token JWT nel cookie
-    const token = req.cookies && req.cookies.jwt;
-    if (!token) {
-        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+    let loggedin=false;
+    const token = req.cookies.jwt;
+    if (typeof token === 'undefined' || !token) {
+        // Controlla anche che il token non sia stringa vuota, null o undefined
+        res.status(200).send(JSON.stringify({ loggedIn: false, otherInfo:"token non presente" }))
+        return;
     }
-    res.status(200).send(JSON.stringify({ loggedIn: true }));
+    let role=null;
+    jwt.verify(token, JWT_SECRET, (err, user)=>{
+        loggedin=true;
+        role=user.user_role;
+        console.log(user);
+    });
+    
+    res.status(200).send(JSON.stringify({ loggedIn: loggedin, role:role }));
 });
 
 /*
