@@ -10,6 +10,7 @@ services:
     volumes:
       #https certificates
       - ./certs:/etc/nginx/certs:ro
+      - ./frontend/public:/usr/share/nginx/html:ro
     depends_on:
       - backend
     networks:

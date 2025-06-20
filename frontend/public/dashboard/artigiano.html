@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area riservata artigiano &middot; Fabio Compagnoni</title>
+    <meta name="description" content="Area riservata per i clienti di Artigianato Online. Qui potrai vedere i tuoi ordini, gestirli e modificare tutto ciò che riguarda il tuo account" id="descrizione"/>
+    <meta name="keywords" content=""/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/dashboard/artigiano.css"/>
+
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="navbarDesktop d-none d-md-flex flex-column gap-4 justify-content-between">
+            <div class="d-flex flex-column">
+                <div class="navbarLogo">
+                    <a href="/"><img src="/src/img/logo_orizzontale.png" alt="Logo Artigiano Online"/></a>
+                </div>
+                <div class="navbarActions">
+                    <button class="btnHome selected"><i class="fa-solid fa-house"></i> Dashboard</button>
+                    <button class="btnProducts"><i class="fa-solid fa-bag-shopping"></i> Prodotti</button>
+                    <button class="btnOrders"><i class="fa-solid fa-receipt"></i> Ordini</button>
+                    <button class="btnCustomers"><i class="fa-solid fa-users"></i> Clienti</button>
+                </div>
+            </div>
+            <button class="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+        <div class="navbarMobile d-flex d-md-none"></div>
+        <div class="pageContent">
+            <div class="fixedPart">
+                <h1 class="pageTitle">Bentornato, Nome Artigiano</h1>
+                <div class="dropdown">
+                    <button class="customDropdownBtn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="" alt="Immagine profilo"/>
+                        <div class="nomeArtigiano">Nome artigiano</div>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <!-- TODO: mettere link aggiornati-->
+                        <li><a class="dropdown-item" href="">Cambia password</a></li>
+                        <li><a class="dropdown-item" href="">Modifica profilo</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="" id="home">
+            </div>
+            <div class="" id="orders"></div>
+            <div class="" id="products"></div>
+            <div class="" id="product"></div>
+            <div class="" id="orders"></div>
+        </div>
+    </div>
+    <script type="module" src="/src/components/index.js"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
