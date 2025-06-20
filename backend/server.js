@@ -90,7 +90,6 @@ app.use('/images', createProxyMiddleware({
   }
 }));
 
-
 /*microservizio products*/
 app.use('/products', createProxyMiddleware({
   target: 'https://microservice_products:4000',
@@ -100,6 +99,28 @@ app.use('/products', createProxyMiddleware({
   on: {
     error(err, req, res) {
       console.error('Proxy error for /products:', err);
+      res.status(500).send('Proxy error');
+    },
+    proxyReq(proxyReq, req, res) {
+      // Puoi ispezionare o modificare la richiesta prima che venga inviata al target
+      console.log('Proxying request to:', proxyReq.path);
+    },
+    proxyRes(proxyRes, req, res) {
+      // Puoi ispezionare o modificare la risposta prima che venga inviata al client
+      console.log('Received response from target:', proxyRes.statusCode);
+    }
+  }
+}));
+
+/*microservizio purchases*/
+app.use('/purchases', createProxyMiddleware({
+  target: 'https://microservice_purchases:4000',
+  changeOrigin: false,
+  pathRewrite: { '^/purchases': '' },
+  agent:httpsAgent,
+  on: {
+    error(err, req, res) {
+      console.error('Proxy error for /purchases:', err);
       res.status(500).send('Proxy error');
     },
     proxyReq(proxyReq, req, res) {

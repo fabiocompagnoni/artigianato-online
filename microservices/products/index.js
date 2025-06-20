@@ -259,7 +259,7 @@ app.post('/product', authJWT, async (req, res) => {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
         if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-            sendError(403);
+            sendError(res, 403);
             return;
         }
 

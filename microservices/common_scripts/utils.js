@@ -11,6 +11,19 @@ export async function getRoleID(role_name, pool) {
     }
 }
 
+export async function getOrderStatusID(status_name, pool) {
+    try {
+        const res = await pool.query('SELECT "ID" FROM order_status WHERE name = $1', [
+            status_name,
+        ]);
+        if (res.rowCount < 1) return -1;
+        return res.rows[0].ID;
+    } catch (err) {
+        console.error('Error in getOrderStatusID:', err);
+        return -1;
+    }
+}
+
 export function getTrimmedName(name) {
     let trim = '';
     for (const c of name) {
