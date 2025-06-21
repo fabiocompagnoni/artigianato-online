@@ -134,6 +134,28 @@ app.use('/purchases', createProxyMiddleware({
   }
 }));
 
+/*microservizio tickets*/
+app.use('/tickets', createProxyMiddleware({
+  target: 'https://microservice_tickets:4000',
+  changeOrigin: false,
+  pathRewrite: { '^/tickets': '' },
+  agent:httpsAgent,
+  on: {
+    error(err, req, res) {
+      console.error('Proxy error for /tickets:', err);
+      res.status(500).send('Proxy error');
+    },
+    proxyReq(proxyReq, req, res) {
+      // Puoi ispezionare o modificare la richiesta prima che venga inviata al target
+      console.log('Proxying request to:', proxyReq.path);
+    },
+    proxyRes(proxyRes, req, res) {
+      // Puoi ispezionare o modificare la risposta prima che venga inviata al client
+      console.log('Received response from target:', proxyRes.statusCode);
+    }
+  }
+}));
+
 
 app.get('/', (req, res) => {
   res.send(JSON.stringify({status: 'ok', message: 'Backend proxy is running'}));

@@ -186,8 +186,8 @@ app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
 app.post('/report/:artisan_slug/:product_slug', authJWT, async (req, res) => {
     try {
         if(!req.body || !req.body.note || !isBodyString(req.body.note, true) ||
-            !isBodyInt(req.params.artisan_slug, true) || !isBodyInt(req.params.product_slug, true)) {
-            sendError(400);
+            !isBodyString(req.params.artisan_slug, true) || !isBodyString(req.params.product_slug, true)) {
+            sendError(res, 400);
             return;
         }
 
@@ -207,7 +207,7 @@ app.post('/report/:artisan_slug/:product_slug', authJWT, async (req, res) => {
         else
             sendError(res, 404);
     } catch (err) {
-        console.error('Error adding fetching single product info: ' + err);
+        console.error('Error reporting product: ' + err);
         sendError(res, 500);
     }
 });
@@ -284,7 +284,7 @@ app.post('/product', authJWT, async (req, res) => {
                 if (err.code === '23503' || err.code === '22P02') // foreign key violation (id immagine non presente) o id non valido
                     sendError(res, 521);
                 else {
-                    console.log('Error creating product: ' + err);
+                    console.error('Error creating product: ' + err);
                     sendError(res, 500);
                 }
             } finally {
@@ -411,7 +411,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 
             await client.query('COMMIT'); // Commette la transazione
 
-            res.status(200).json(response);
+            res.json(response);
         } catch (err) {
             console.error('Error updating product: ', err);
             sendError(res, 500);
