@@ -34,7 +34,7 @@
                 <h1 class="pageTitle">Bentornato, Nome Artigiano</h1>
                 <div class="dropdown">
                     <button class="customDropdownBtn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="" alt="Immagine profilo"/>
+                        <img alt="Immagine profilo" id="artisanPhotoNav"/>
                         <div class="nomeArtigiano">Nome artigiano</div>
                     </button>
                     <ul class="dropdown-menu">
@@ -45,6 +45,96 @@
                 </div>
             </div>
             <div class="" id="home">
+                <div class="d-flex flex-row gap-4 flex-wrap align-items-stretch justify-content-center">
+                    <div class="card cardPrimary cardResume">
+                        <a href="/artigiani/area-riservata/ordini" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-basket-shopping"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Vendite</h2>
+                                <div class="statValue">
+                                    <span class="ordersNum">0</span> Ordini
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </a>
+                        <div class="secondRow" id="ordersValue">
+                            € 0,00
+                        </div>
+                        <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="statInfo">
+                                <i class="fa-solid fa-arrow-trend-up" id="trendOrders"></i>
+                                <span class="trendOrdersText">+0,00 %</span>
+                            </div>
+                            <div class="statInfo">
+                                <span id="ordersWeek">+0</span> questa settimana
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardResume">
+                        <div href="/artigiani/area-riservata/ordini" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Visite</h2>
+                            </div>
+                        </div>
+                        <div class="secondRow" id="visualsValue">
+                            0
+                        </div>
+                    </div>
+                    <div class="card cardPrimary cardResume">
+                        <a href="/artigiani/area-riservata/rimborsi" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-money-bill"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Rimborsi</h2>
+                                <div class="statValue">
+                                    <span class="ordersNum">0</span> Ordini
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </a>
+                        <div class="secondRow" id="refoundsValue">
+                            0
+                        </div>
+                        <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="statInfo">
+                                <i class="fa-solid fa-arrow-trend-up" id="trendRefound"></i>
+                                <span class="trendRefoundText">+0,00 %</span>
+                            </div>
+                            <div class="statInfo">
+                                <span id="ordersWeek">+0</span> questa settimana
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardResume" style="flex-basis:50rem;">
+                        <div class="d-flex flex-row gap-2 align-items-center justify-content-between flex-wrap">
+                            <h3>Performance delle vendite</h3>
+                            <div class="col-sm-4">
+                                <select class="form-select rounded-4" id="selectTimePerformace">
+                                    <option value="0">Oggi</option>
+                                    <option value="1">Ieri</option>
+                                    <option value="7">Ultima settinana</option>
+                                    <option value="30">Ultimo mese</otion>
+                                    <option value="90">Ultimo trimestre</option>
+                                    <option value="365">Ultimo anno</option>
+                                    <option value="-1">Tutto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="chartContainer">
+                            <canvas id="salesChart" class="chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card cardResume">
+                        <h3>Top categorie</h3>
+                    </div>
+
+                </div>
             </div>
             <div class="" id="orders"></div>
             <div class="" id="products"></div>
