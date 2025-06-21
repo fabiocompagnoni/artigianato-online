@@ -55,7 +55,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-    res.send(JSON.stringify({ service: 'tickets', status: 'ok' }));
+    res.json({ service: 'tickets', status: 'ok' });
 });
 
 function makeTicket(row, type) {

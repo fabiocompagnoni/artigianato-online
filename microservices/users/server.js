@@ -313,7 +313,7 @@ app.get("/dashboardPage", authJWT, (req, res) => {
         case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
         default: dashboardLink="/clienti/area-riservata"; break;
     }
-    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+    res.status(200).json({dashboardLink: dashboardLink});
 });
 
 /**
@@ -323,9 +323,9 @@ app.get('/isLoggedIn', (req, res) => {
     // Verifica manuale della presenza del token JWT nel cookie
     const token = req.cookies && req.cookies.jwt;
     if (!token) {
-        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+        return res.status(200).json({ loggedIn: false });
     }
-    res.status(200).send(JSON.stringify({ loggedIn: true }));
+    res.status(200).json({ loggedIn: true });
 });
 
 /**
@@ -340,7 +340,7 @@ app.get("/dashboardPage", authJWT, (req, res) => {
         case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
         default: dashboardLink="/clienti/area-riservata"; break;
     }
-    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+    res.status(200).json({dashboardLink: dashboardLink});
 });
 
 /**
@@ -350,9 +350,9 @@ app.get('/isLoggedIn', (req, res) => {
     // Verifica manuale della presenza del token JWT nel cookie
     const token = req.cookies && req.cookies.jwt;
     if (!token) {
-        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+        return res.status(200).json({ loggedIn: false });
     }
-    res.status(200).send(JSON.stringify({ loggedIn: true }));
+    res.status(200).json({ loggedIn: true });
 });
 
 https.createServer(credentials, app).listen(port, () => {

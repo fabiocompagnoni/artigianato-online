@@ -60,7 +60,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/status', (req, res) => {
-    res.send(JSON.stringify({ service: 'products', status: 'ok' }));
+    res.json({ service: 'products', status: 'ok' });
 });
 /**
  * API per ottenere tutti i prodotti
@@ -429,12 +429,21 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 app.delete('/product/:slug', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+        const ADMIN_ROLE_ID = await getRoleID('admin', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID || req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
-        const sql_res = await pool.query('UPDATE products SET removed = true WHERE slug = $1 AND artisan = $2', [req.params.slug, req.user.user_id]);
+        let query = 'UPDATE products SET removed = true WHERE slug = $1';
+        const params = [req.params.slug];
+
+        if(req.user.user_role_id === ARTISAN_ROLE_ID) {
+            query += ' AND artisan = $2';
+            params.push(req.user.user_id);
+        }
+
+        const sql_res = await pool.query(query, params);
 
         if(sql_res.rowCount > 0) //il prodotto è stato eliminato
             res.json({status: 'ok'});

@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "npm test",
+    "test": "npm run init-db && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
     "init-db": "node scripts/init-db.js",
     "start": "node server.js --use-system-ca"
   },
@@ -21,6 +21,8 @@
     "express": "^5.1.0",
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^3.0.5",
-    "pg": "^8.16.0"
+    "jest": "^30.0.2",
+    "pg": "^8.16.0",
+    "supertest": "^7.1.1"
   }
 }

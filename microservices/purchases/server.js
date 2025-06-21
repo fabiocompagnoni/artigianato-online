@@ -55,7 +55,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-    res.send(JSON.stringify({ service: 'purchases', status: 'ok' }));
+    res.json({ service: 'purchases', status: 'ok' });
 });
 
 //per aggiungere/aggiornare quantità/rimuovere qualcosa al carrello
