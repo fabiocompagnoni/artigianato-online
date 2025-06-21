@@ -462,7 +462,7 @@ app.get('/dashboard', authJWT, async (req, res) => {
         let total_gain_l2w = 0;
 
         for(const row of sql_res.rows) {
-            const total_price = row.quantity * row.single_product_price;
+            const total_price = row.quantity * row.single_product_price / 100;
             total_gain += total_price;
             if(new Date(row.timestamp_order) >= date_2wago) {
                 performance_sales[getMonthDay(row.timestamp_order)] += total_price;
