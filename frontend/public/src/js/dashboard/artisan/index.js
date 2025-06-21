@@ -1,3 +1,4 @@
+let chart;
 const initChartSell = async () => {
     const {  Chart, 
         LinearScale,      
@@ -26,8 +27,9 @@ const initChartSell = async () => {
     let data = [];
     let labels = [];
     let values = [];
-
-    let chart = new Chart(document.getElementById("salesChart"), {
+    if(chart)
+        chart.destroy();
+    chart = new Chart(document.getElementById("salesChart"), {
         type: 'line',
         data: {
             labels,
@@ -103,24 +105,44 @@ export const handlePageUrl=(pages)=>{
     let page=window.location.href.split('/').pop();
     let currentPage=page;
     let pageTitle=document.querySelector(".pageTitle");
+
     if(page=="area-riservata"){
         initDashboard();
         currentPage="home";
+        document.querySelectorAll(".btnHome").forEach(btn=>{
+            btn.classList.add("selected");
+        });
         //TODO: mettere il nome dell'artigiano nel titolo della pagina
     }else if(page=="ordini"){
         initOrders();
         pageTitle.innerText="I tuoi ordini";
+        document.querySelectorAll(".btnOrders").forEach(btn=>{
+            btn.classList.add("selected");
+        });
     }else if(page=="rimborsi"){
         initRefounds();
         pageTitle.innerText="I tuoi rimborsi";
+        /*document.querySelectorAll(".btnRefounds").forEach(btn=>{
+            btn.classList.add("selected");
+        });*/
     }else if(page=="clienti"){
         initCustomers();
         pageTitle.innerText="I tuoi clienti";
+        document.querySelectorAll(".btnCustomers").forEach(btn=>{
+            btn.classList.add("selected");
+        });
     }else if(page=="prodotti"){
         initProducts();
         pageTitle.innerText="I tuoi prodotti";
+        document.querySelectorAll(".btnProducts").forEach(btn=>{
+            btn.classList.add("selected");
+        });
     }else if(page=="prodotto"){
         initProduct();
+        document.querySelectorAll(".btnProducts").forEach(btn=>{
+            btn.classList.add("selected");
+        });
+
     }
     showHidePage(currentPage, pages);
 }
@@ -132,6 +154,9 @@ export const handleNavigation = (pages) => {
     };
     const resetSelected=()=>{
         document.querySelectorAll(".navbarActions button").forEach(btn=>{
+            btn.classList.remove("selected");
+        });
+        document.querySelectorAll(".navbarMobile button").forEach(btn=>{
             btn.classList.remove("selected");
         });
     }
