@@ -109,6 +109,7 @@ app.post('/user', async (req, res) => {
             );
 
             const user_info = sql_res.rows[0];
+            user_info.roleName = role;
 
             sendUserData(res, user_info, 200);
         } catch (err) {

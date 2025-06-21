@@ -67,3 +67,74 @@ test('Registering user with incorrect role', async () => {
         .set('Content-Type', 'application/json');
     expect(res.statusCode).toBe(522);
 });
+
+test('Registering and logging in user', async () => {
+    const new_data = {...user_data};
+    new_data.email = 'mauriziorulli@gmail.com';
+    new_data.name = 'Maurizio';
+
+    let res = await request(app)
+        .post('/users/user')
+        .send(new_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe(new_data.name);
+    expect(res.body.email).toBe(new_data.email);
+    expect(res.body.surname).toBe(new_data.surname);
+    expect(res.body.roleName).toBe(new_data.role);
+
+    const login_data = {email: new_data.email, password: new_data.password};
+
+    res = await request(app)
+        .post('/users/login')
+        .send(login_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe(new_data.name);
+    expect(res.body.email).toBe(new_data.email);
+    expect(res.body.surname).toBe(new_data.surname);
+    expect(res.body.roleName).toBe(new_data.role);
+});
+
+test('Registering and fetching user data', async () => {
+    const new_data = {...user_data};
+    new_data.email = 'paolorulli@gmail.com';
+    new_data.name = 'Paolo';
+
+    let res = await request(app)
+        .post('/users/user')
+        .send(new_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+
+    const cookies = res.headers['set-cookie'];
+    const jwtCookie = cookies.find(cookie => cookie.startsWith('jwt='));
+
+    res = await request(app)
+        .get('/users/user')
+        .set('Cookie', jwtCookie);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe(new_data.name);
+    expect(res.body.surname).toBe(new_data.surname);
+    expect(res.body.role).toBe(new_data.role);
+    expect(res.body.bio).toBe(null);
+    expect(res.body.url_profile_picture).toBe(null);
+});
+
+test('Registering two users with same email', async () => {
+    const new_data = {...user_data};
+    new_data.email = 'massimorulli@gmail.com';
+    new_data.name = 'Massimo';
+
+    let res = await request(app)
+        .post('/users/user')
+        .send(new_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+
+    res = await request(app)
+        .post('/users/user')
+        .send(new_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(512);
+});
