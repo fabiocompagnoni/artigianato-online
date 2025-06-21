@@ -1,0 +1,25 @@
+{
+  "name": "purchases",
+  "version": "1.0.0",
+  "description": "Microservice for purchases in Artigianato Online",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "artigianato-online"
+  },
+  "author": "Fabio Compagnoni, Loris Biavetti",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jest": "^30.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.2"
+  }
+}

@@ -14,7 +14,7 @@ const PORT = 4000;
 import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
-import { getRoleID } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -144,87 +144,15 @@ app.get('/', async (req, res) => {
     }
 });
 
-/**
- * API per ottenere i prodotti divisi per pagina con i filtri
- */
-app.get("/:page",async(req,res)=>{
-    let queryStandard=base_query;
-
-    let query_placeholder_num = 1;
-    let query_placeholder_values = [];
-
-    //applicazione dei filti
-    if(req.query){
-        let filter = req.query;
-        
-        if(filter.artisan!=null){
-            //artisan products only
-            queryStandard+=`AND u.slug = '${filter.artisan}' `;
-        }
-        if(filter.disponibilita!=null){
-            if(filter.disponibilita.length==1){
-                    if(filter.disponibilita[0]==0)
-                        queryStandard+=`AND availability = 0 `;
-                    else
-                        queryStandard+=`AND availability > 0 `;
-                }
-            }
-        if(filter.prezzi!=null){
-            if(filter.prezzi.min!=null) {
-                queryStandard+=`AND price >= $${query_placeholder_num++} `;
-                query_placeholder_values.push(filter.prezzi.min);
-            }
-            if(filter.prezzi.max!=null) {
-                queryStandard+=`AND price <= $${query_placeholder_num++} `;
-                query_placeholder_values.push(filter.prezzi.max);
-            }
-
-        }
-        if(filter.queryString!=null){
-            queryStandard+=`AND p.name LIKE $${query_placeholder_num++} `;
-            query_placeholder_values.push('%' + filter.queryString + '%');
-        }
-        
-    }
-    if(req.query.order){
-        queryStandard+=`ORDER BY $${query_placeholder_num++} `;
-        query_placeholder_values.push(req.query.order);
-    }else{
-        queryStandard+=`ORDER BY timestamp_last_update DESC `;
-    }
-
-    //query di copia per ottenere tutti i prodotti con questi filtri
-    let queryCopy=queryStandard;
-    //applicazione delle pagine
-    let page=req.params.page;
-    if(!isBodyInt(page)) {
-        sendError(res, 404);
-        return;
-    }
-    let offset=(page-1)*PER_PAGE;
-    queryStandard+=`LIMIT ${PER_PAGE} OFFSET ${offset} `;
-    
-    try{
-        console.log("QUERY DA ESEGUIRE "+queryStandard);
-        console.log("PLACEHOLDER UTILIZZATI "+query_placeholder_values);
-        const sql_res=await pool.query(queryStandard, query_placeholder_values);
-        
-        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
-        //ottengo il numero delle pagine e il numero di prodotti totali
-        const ris2=await pool.query(queryCopy, query_placeholder_values);
-        let pages=Math.ceil(ris2.rowCount/PER_PAGE);
-        let numProducts=ris2.rowCount;
-        res.json({products:products,pages:pages,numProducts:numProducts});
-    }catch(err){
-        console.error('Error fetching products:',err);
-        sendError(res,500);
-    }
-});
-
 app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
     const query = single_product_query;
 
     try {
+        if(!isBodyInt(req.params.artisan_slug, true) || !isBodyInt(req.params.product_slug, true)) {
+            sendError(res, 400);
+            return;
+        }
+
         const sql_res = await pool.query(query, [req.params.artisan_slug, req.params.product_slug]);
 
         if(sql_res.rowCount > 0) {
@@ -254,12 +182,42 @@ app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
     }
 });
 
+//per segnalare un oggetto
+app.post('/report/:artisan_slug/:product_slug', authJWT, async (req, res) => {
+    try {
+        if(!req.body || !req.body.note || !isBodyString(req.body.note, true) ||
+            !isBodyString(req.params.artisan_slug, true) || !isBodyString(req.params.product_slug, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const sql_res = await pool.query(single_product_query, [req.params.artisan_slug, req.params.product_slug]);
+
+        if(sql_res.rowCount > 0) {
+            const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
+            const product_id = sql_res.rows[0].id;
+
+            await pool.query(
+                'INSERT INTO ticket_products(id_product, id_user, status, note) VALUES($1, $2, $3, $4)',
+                [product_id, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
+            );
+
+            res.json({status: 'ok'});
+        }
+        else
+            sendError(res, 404);
+    } catch (err) {
+        console.error('Error reporting product: ' + err);
+        sendError(res, 500);
+    }
+});
+
 app.post('/product', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
         if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-            sendError(403);
+            sendError(res, 403);
             return;
         }
 
@@ -326,7 +284,7 @@ app.post('/product', authJWT, async (req, res) => {
                 if (err.code === '23503' || err.code === '22P02') // foreign key violation (id immagine non presente) o id non valido
                     sendError(res, 521);
                 else {
-                    console.log('Error creating product: ' + err);
+                    console.error('Error creating product: ' + err);
                     sendError(res, 500);
                 }
             } finally {
@@ -453,7 +411,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 
             await client.query('COMMIT'); // Commette la transazione
 
-            res.status(200).json(response);
+            res.json(response);
         } catch (err) {
             console.error('Error updating product: ', err);
             sendError(res, 500);
@@ -485,6 +443,232 @@ app.delete('/product/:slug', authJWT, async (req, res) => {
     } catch (err) {
         console.error('Error deleting product: ' + err);
         sendError(res, 500);
+    }
+});
+
+function getPercentage(total, last2w) {
+    if(total === 0)
+        return 0;
+    return Math.round(last2w / total * 1000) / 10;
+}
+
+function getMonthDay(date) {
+	date = new Date(date)
+	return date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+}
+
+function getLXDObject(days) {
+	const today = new Date();
+	const obj = {};
+	for(let i = 0; i <= days; i++) {
+		const prev_day = new Date().setDate(today.getDate() - i);
+		obj[getMonthDay(prev_day)] = 0;
+	}
+
+	return obj;
+}
+
+//per ottenere le informazioni per la dashboard artigiani
+app.get('/dashboard/:days', authJWT, async (req, res) => {
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(!req.params || !req.params.days || !isBodyInt(req.params.days, false)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const ANNULLATO_STATUS_ID = await getOrderStatusID('Annullato', pool);
+        const RIMBORSATO_STATUS_ID = await getOrderStatusID('Rimborsato', pool);
+
+        let days = req.params.days;
+
+        //se days è negativo, calcoliamo la data più lontana
+        if(days < 0) {
+            let sql_res = await pool.query(
+                'SELECT timestamp_creation FROM products WHERE artisan = $1 ORDER BY timestamp_creation ASC LIMIT 1',
+                [req.user.user_id]
+            );
+
+            if(sql_res.rowCount > 0) {
+                const old_date = new Date(getMonthDay(sql_res.rows[0].timestamp_creation));
+                const diff = Math.round((new Date(getMonthDay(new Date())) - old_date) / (1000 * 60 * 60 * 24));
+                days = diff;
+            }
+            else
+                days = 0;
+        }
+
+        //timestamp di x giorni fa
+        const date_x_days_ago = new Date(getMonthDay(new Date().setDate(new Date().getDate() - days)));
+        const performance_sales = getLXDObject(days);
+        const performance_visits = getLXDObject(days);
+        const performance_refunds = getLXDObject(days);
+
+        //info vendite
+        let sql_res = await pool.query(
+            'SELECT quantity, single_product_price, timestamp_order FROM products_order JOIN orders o ON o."ID" = "ID_order" JOIN products p ON p."ID" = "ID_product" WHERE status <> $1 AND status <> $2 AND artisan = $3',
+            [ANNULLATO_STATUS_ID, RIMBORSATO_STATUS_ID, req.user.user_id]
+        );
+
+        const total_orders = sql_res.rowCount;
+        let total_gain = 0;
+        let total_gain_lxd = 0;
+
+        for(const row of sql_res.rows) {
+            const total_price = row.quantity * row.single_product_price / 100;
+            total_gain += total_price;
+            if(new Date(getMonthDay(row.timestamp_order)) >= date_x_days_ago) {
+                performance_sales[getMonthDay(row.timestamp_order)] += total_price;
+                total_gain_lxd += total_price;
+            }
+        }
+
+        const sales = {
+            total_orders,
+            total_gain,
+            total_gain_last_days: total_gain_lxd,
+            total_gain_last_days_percent: getPercentage(total_gain, total_gain_lxd)
+        };
+
+        //info visite
+        sql_res = await pool.query(
+            'SELECT timestamp_visit FROM product_visits JOIN products ON "ID" = "ID_product" WHERE artisan = $1',
+            [req.user.user_id]
+        );
+
+        const total_visits = sql_res.rowCount;
+        let total_visits_lxd = 0;
+
+        for(const row of sql_res.rows) {
+            if(new Date(getMonthDay(row.timestamp_visit)) >= date_x_days_ago) {
+                performance_visits[getMonthDay(row.timestamp_visit)]++;
+                total_visits_lxd++;
+            }
+        }
+
+        const visits = {
+            total_visits,
+            total_visits_last_days: total_visits_lxd,
+            total_visits_last_days_percent: getPercentage(total_visits, total_visits_lxd)
+        }
+
+        //info rimborsi
+        sql_res = await pool.query(
+            'SELECT quantity, timestamp_order FROM products_order JOIN orders o ON o."ID" = "ID_order" JOIN products p ON p."ID" = "ID_product" WHERE status = $1 AND artisan = $2',
+            [RIMBORSATO_STATUS_ID, req.user.user_id]
+        );
+
+        const total_refunds = sql_res.rowCount;
+        let total_refunds_lxd = 0;
+
+        for(const row of sql_res.rows) {
+            if(new Date(getMonthDay(row.timestamp_order)) >= date_x_days_ago) {
+                performance_refunds[getMonthDay(row.timestamp_order)] += row.quantity;
+                total_refunds_lxd += row.quantity;
+            }
+        }
+
+        const refunds = {
+            total_refunds,
+            total_refunds_last_days: total_refunds_lxd,
+            total_refunds_last_days_percent: getPercentage(total_refunds, total_refunds_lxd)
+        };
+        
+        res.json({
+            sales,
+            visits,
+            refunds,
+            performance: {
+                sales: performance_sales,
+                visits: performance_visits,
+                refunds: performance_refunds
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching dashboard data: ' + err);
+        sendError(res, 500);
+    }
+});
+
+/**
+ * API per ottenere i prodotti divisi per pagina con i filtri
+ */
+app.get("/:page",async(req,res)=>{
+    let queryStandard=base_query;
+
+    let query_placeholder_num = 1;
+    let query_placeholder_values = [];
+
+    //applicazione dei filti
+    if(req.query){
+        let filter = req.query;
+        
+        if(filter.artisan!=null){
+            //artisan products only
+            queryStandard+=`AND u.slug = '${filter.artisan}' `;
+        }
+        if(filter.disponibilita!=null){
+            if(filter.disponibilita.length==1){
+                    if(filter.disponibilita[0]==0)
+                        queryStandard+=`AND availability = 0 `;
+                    else
+                        queryStandard+=`AND availability > 0 `;
+                }
+            }
+        if(filter.prezzi!=null){
+            if(filter.prezzi.min!=null) {
+                queryStandard+=`AND price >= $${query_placeholder_num++} `;
+                query_placeholder_values.push(filter.prezzi.min);
+            }
+            if(filter.prezzi.max!=null) {
+                queryStandard+=`AND price <= $${query_placeholder_num++} `;
+                query_placeholder_values.push(filter.prezzi.max);
+            }
+
+        }
+        if(filter.queryString!=null){
+            queryStandard+=`AND p.name LIKE $${query_placeholder_num++} `;
+            query_placeholder_values.push('%' + filter.queryString + '%');
+        }
+        
+    }
+    if(req.query.order){
+        queryStandard+=`ORDER BY $${query_placeholder_num++} `;
+        query_placeholder_values.push(req.query.order);
+    }else{
+        queryStandard+=`ORDER BY timestamp_last_update DESC `;
+    }
+
+    //query di copia per ottenere tutti i prodotti con questi filtri
+    let queryCopy=queryStandard;
+    //applicazione delle pagine
+    let page=req.params.page;
+    if(!isBodyInt(page)) {
+        sendError(res, 404);
+        return;
+    }
+    let offset=(page-1)*PER_PAGE;
+    queryStandard+=`LIMIT ${PER_PAGE} OFFSET ${offset} `;
+    
+    try{
+        console.log("QUERY DA ESEGUIRE "+queryStandard);
+        console.log("PLACEHOLDER UTILIZZATI "+query_placeholder_values);
+        const sql_res=await pool.query(queryStandard, query_placeholder_values);
+        
+        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
+        //ottengo il numero delle pagine e il numero di prodotti totali
+        const ris2=await pool.query(queryCopy, query_placeholder_values);
+        let pages=Math.ceil(ris2.rowCount/PER_PAGE);
+        let numProducts=ris2.rowCount;
+        res.json({products:products,pages:pages,numProducts:numProducts});
+    }catch(err){
+        console.error('Error fetching products:',err);
+        sendError(res,500);
     }
 });
 

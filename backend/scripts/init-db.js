@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +42,15 @@ async function initiateDB() {
                     const sql_code = fs.readFileSync(sql_file_path, 'utf-8');
 
                     await pool.query(sql_code);
+
+                    const admin_role_id = (await pool.query('SELECT "ID" FROM roles WHERE name = \'admin\'')).rows[0].ID;
+                    const admin_password = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
+
+                    await pool.query(
+                        'INSERT INTO users(email, name, surname, password, id_role, slug) VALUES ($1, $2, $3, $4, $5, $6)',
+                        [process.env.ADMIN_EMAIL, 'admin', 'admin', admin_password, admin_role_id, 'admin']
+                    );
+
                     console.log('Database initialized successfully');
                 } catch(err) {
                     console.error('Error in the initialization of the database, details: ' + err);

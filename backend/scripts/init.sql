@@ -130,7 +130,6 @@ ON CONFLICT (name) DO NOTHING;
 CREATE TABLE IF NOT EXISTS orders (
 	"ID" SERIAL PRIMARY KEY,
 	id_user INTEGER REFERENCES users("ID"),
-	status INTEGER REFERENCES order_status("ID"),
 	timestamp_order TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	payment_intent VARCHAR(100) NOT NULL
 );
@@ -138,9 +137,11 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS products_order (
 	"ID_order" INTEGER REFERENCES orders("ID"),
 	"ID_product" INTEGER REFERENCES products("ID"),
+	status INTEGER REFERENCES order_status("ID"),
 	quantity INTEGER NOT NULL,
 	single_product_price INTEGER NOT NULL,
-	refunded_import INTEGER
+	refunded_import INTEGER,
+	PRIMARY KEY("ID_order", "ID_product")
 );
 
 CREATE VIEW products_view AS
