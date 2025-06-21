@@ -123,3 +123,10 @@
 .thirdRow{
     margin-top:0.5rem;
 }
+.cardResume.cardPrimary{
+    background:#2D5938;
+    color:white !important;
+}
+.cardResume.cardPrimary a{
+    color:white !important;
+}

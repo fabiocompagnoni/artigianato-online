@@ -85,7 +85,7 @@
                             0
                         </div>
                     </div>
-                    <div class="card cardPrimary cardResume">
+                    <div class="card cardResume">
                         <a href="/artigiani/area-riservata/rimborsi" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
                             <div class="stat-icon">
                                 <i class="fa-solid fa-money-bill"></i>
@@ -140,9 +140,44 @@
             <div class="" id="products"></div>
             <div class="" id="product"></div>
             <div class="" id="orders"></div>
+            <div class="" id="customers"></div>
+            <div class="" id="refounds"></div>
         </div>
     </div>
-    <script type="module" src="/src/components/index.js"></script>
+    
+    <script type="module">
+        //gestione delle pagine
+        import {handlePageUrl, handleNavigation} from "/src/js/dashboard/artisan/index.js";
+        
+        document.addEventListener("DOMContentLoaded",async()=>{
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                orders: document.querySelector("#orders"),
+                products: document.querySelector("#products"),
+                product: document.querySelector("#product"),
+                customers: document.querySelector("#customers"),
+                refounds: document.querySelector("#refounds")
+            });
+            handleNavigation({
+                home: document.querySelector("#home"),
+                orders: document.querySelector("#orders"),
+                products: document.querySelector("#products"),
+                product: document.querySelector("#product"),
+                customers: document.querySelector("#customers"),
+                refounds: document.querySelector("#refounds")
+            });
+        });
+        window.addEventListener("pushstate", async () => {
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                orders: document.querySelector("#orders"),
+                products: document.querySelector("#products"),
+                product: document.querySelector("#product"),
+                customers: document.querySelector("#customers"),
+                refounds: document.querySelector("#refounds")
+            });
+        });
+    </script>
     <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
