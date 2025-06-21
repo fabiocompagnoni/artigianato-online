@@ -419,22 +419,22 @@ function getPercentage(total, last2w) {
 
 function getMonthDay(date) {
 	date = new Date(date)
-	return date.getMonth() + '-' + date.getDate();
+	return date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
 }
 
-function getL2WObject() {
+function getLXDObject(days) {
 	const today = new Date();
 	const obj = {};
-	for(let i = 0; i < 14; i++) {
+	for(let i = 0; i <= days; i++) {
 		const prev_day = new Date().setDate(today.getDate() - i);
-		obj[getMonthDay(prev_day)] = 0
+		obj[getMonthDay(prev_day)] = 0;
 	}
 
-	return obj
+	return obj;
 }
 
 //per ottenere le informazioni per la dashboard artigiani
-app.get('/dashboard', authJWT, async (req, res) => {
+app.get('/dashboard/:days', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
         if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
@@ -442,14 +442,37 @@ app.get('/dashboard', authJWT, async (req, res) => {
             return;
         }
 
+        if(!req.params || !req.params.days || !isBodyInt(req.params.days, false)) {
+            sendError(res, 400);
+            return;
+        }
+
         const ANNULLATO_STATUS_ID = await getOrderStatusID('Annullato', pool);
         const RIMBORSATO_STATUS_ID = await getOrderStatusID('Rimborsato', pool);
 
-        //timestamp di 2 settimane fa
-        const date_2wago = new Date().setDate(new Date().getDate() - 14);
-        const performance_sales = getL2WObject();
-        const performance_visits = getL2WObject();
-        const performance_refunds = getL2WObject();
+        let days = req.params.days;
+
+        //se days è negativo, calcoliamo la data più lontana
+        if(days < 0) {
+            let sql_res = await pool.query(
+                'SELECT timestamp_creation FROM products WHERE artisan = $1 ORDER BY timestamp_creation ASC LIMIT 1',
+                [req.user.user_id]
+            );
+
+            if(sql_res.rowCount > 0) {
+                const old_date = new Date(getMonthDay(sql_res.rows[0].timestamp_creation));
+                const diff = Math.round((new Date(getMonthDay(new Date())) - old_date) / (1000 * 60 * 60 * 24));
+                days = diff;
+            }
+            else
+                days = 0;
+        }
+
+        //timestamp di x giorni fa
+        const date_x_days_ago = new Date(getMonthDay(new Date().setDate(new Date().getDate() - days)));
+        const performance_sales = getLXDObject(days);
+        const performance_visits = getLXDObject(days);
+        const performance_refunds = getLXDObject(days);
 
         //info vendite
         let sql_res = await pool.query(
@@ -459,22 +482,22 @@ app.get('/dashboard', authJWT, async (req, res) => {
 
         const total_orders = sql_res.rowCount;
         let total_gain = 0;
-        let total_gain_l2w = 0;
+        let total_gain_lxd = 0;
 
         for(const row of sql_res.rows) {
             const total_price = row.quantity * row.single_product_price / 100;
             total_gain += total_price;
-            if(new Date(row.timestamp_order) >= date_2wago) {
+            if(new Date(getMonthDay(row.timestamp_order)) >= date_x_days_ago) {
                 performance_sales[getMonthDay(row.timestamp_order)] += total_price;
-                total_gain_l2w += total_price;
+                total_gain_lxd += total_price;
             }
         }
 
         const sales = {
             total_orders,
             total_gain,
-            total_gain_last_2_weeks: total_gain_l2w,
-            total_gain_last_2_weeks_percent: getPercentage(total_gain, total_gain_l2w)
+            total_gain_last_days: total_gain_lxd,
+            total_gain_last_days_percent: getPercentage(total_gain, total_gain_lxd)
         };
 
         //info visite
@@ -484,19 +507,19 @@ app.get('/dashboard', authJWT, async (req, res) => {
         );
 
         const total_visits = sql_res.rowCount;
-        let total_visits_l2w = 0;
+        let total_visits_lxd = 0;
 
         for(const row of sql_res.rows) {
-            if(new Date(row.timestamp_visit) >= date_2wago) {
+            if(new Date(getMonthDay(row.timestamp_visit)) >= date_x_days_ago) {
                 performance_visits[getMonthDay(row.timestamp_visit)]++;
-                total_visits_l2w++;
+                total_visits_lxd++;
             }
         }
 
         const visits = {
             total_visits,
-            total_visits_last_2_weeks: total_visits_l2w,
-            total_visits_last_2_weeks_percent: getPercentage(total_visits, total_visits_l2w)
+            total_visits_last_days: total_visits_lxd,
+            total_visits_last_days_percent: getPercentage(total_visits, total_visits_lxd)
         }
 
         //info rimborsi
@@ -506,19 +529,19 @@ app.get('/dashboard', authJWT, async (req, res) => {
         );
 
         const total_refunds = sql_res.rowCount;
-        let total_refunds_l2w = 0;
+        let total_refunds_lxd = 0;
 
         for(const row of sql_res.rows) {
-            if(new Date(row.timestamp_order) >= date_2wago) {
+            if(new Date(getMonthDay(row.timestamp_order)) >= date_x_days_ago) {
                 performance_refunds[getMonthDay(row.timestamp_order)] += row.quantity;
-                total_refunds_l2w += row.quantity;
+                total_refunds_lxd += row.quantity;
             }
         }
 
         const refunds = {
             total_refunds,
-            total_refunds_last_2_weeks: total_refunds_l2w,
-            total_refunds_last_2_weeks_percent: getPercentage(total_refunds, total_refunds_l2w)
+            total_refunds_last_days: total_refunds_lxd,
+            total_refunds_last_days_percent: getPercentage(total_refunds, total_refunds_lxd)
         };
         
         res.json({
@@ -532,7 +555,7 @@ app.get('/dashboard', authJWT, async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Error fetching dahsboard data: ' + err);
+        console.error('Error fetching dashboard data: ' + err);
         sendError(res, 500);
     }
 });
