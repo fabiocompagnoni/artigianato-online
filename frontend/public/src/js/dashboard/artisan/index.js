@@ -70,7 +70,8 @@ const initDashboard=async()=>{
 }
 
 const initOrders=async()=>{
-
+    const {showOrders} = await import("/src/js/dashboard/artisan/orders.js");
+    showOrders();
 }
 
 const initOrder=async()=>{
@@ -101,6 +102,7 @@ const showHidePage=(currentPage, allPages)=>{
         }
     });
 }
+
 export const handlePageUrl=(pages)=>{
     let page=window.location.href.split('/').pop();
     let currentPage=page;
@@ -119,6 +121,8 @@ export const handlePageUrl=(pages)=>{
         document.querySelectorAll(".btnOrders").forEach(btn=>{
             btn.classList.add("selected");
         });
+    }else if(page=="ordine"){
+
     }else if(page=="rimborsi"){
         initRefounds();
         pageTitle.innerText="I tuoi rimborsi";
