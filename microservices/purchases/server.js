@@ -9,8 +9,8 @@ const PORT = 4000;
 
 import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
-import { getRoleID, getOrderStatusID } from './common_scripts/utils.js';
-import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
+import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
+import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 
 const app = express();
 
@@ -377,6 +377,35 @@ app.put('/itemStatus', authJWT, async (req, res) => {
         }
     } catch(err) {
         console.error('Error adding item to cart: ' + err);
+        sendError(res, 500);
+    }
+});
+
+//per segnalare un acquisto
+app.post('/report/:id_order', authJWT, async (req, res) => {
+    try {
+        if(!req.body || !req.body.note || !isBodyString(req.body.note, true) ||
+            !isBodyInt(req.params.id_order, true)) {
+            sendError(400);
+            return;
+        }
+
+        //controllo che l'utente abbia accesso all'ordine
+        const sql_res = await pool.query('SELECT 1 FROM ORDERS WHERE "ID" = $1 AND id_user = $2', [req.params.id_order, req.user.user_id]);
+
+        if(sql_res.rowCount > 0) {
+            const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
+            await pool.query(
+                'INSERT INTO ticket_orders(id_order, id_user, status, note) VALUES($1, $2, $3, $4)',
+                [req.params.id_order, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
+            );
+
+            res.json({status: 'ok'});
+        }
+        else
+            sendError(res, 404);
+    } catch (err) {
+        console.error('Error adding fetching single product info: ' + err);
         sendError(res, 500);
     }
 });

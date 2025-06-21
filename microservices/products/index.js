@@ -14,7 +14,7 @@ const PORT = 4000;
 import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
-import { getRoleID, getOrderStatusID } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -148,6 +148,11 @@ app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
     const query = single_product_query;
 
     try {
+        if(!isBodyInt(req.params.artisan_slug, true) || !isBodyInt(req.params.product_slug, true)) {
+            sendError(res, 400);
+            return;
+        }
+
         const sql_res = await pool.query(query, [req.params.artisan_slug, req.params.product_slug]);
 
         if(sql_res.rowCount > 0) {
@@ -168,6 +173,36 @@ app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
             }
 
             res.json(product);
+        }
+        else
+            sendError(res, 404);
+    } catch (err) {
+        console.error('Error adding fetching single product info: ' + err);
+        sendError(res, 500);
+    }
+});
+
+//per segnalare un oggetto
+app.post('/report/:artisan_slug/:product_slug', authJWT, async (req, res) => {
+    try {
+        if(!req.body || !req.body.note || !isBodyString(req.body.note, true) ||
+            !isBodyInt(req.params.artisan_slug, true) || !isBodyInt(req.params.product_slug, true)) {
+            sendError(400);
+            return;
+        }
+
+        const sql_res = await pool.query(single_product_query, [req.params.artisan_slug, req.params.product_slug]);
+
+        if(sql_res.rowCount > 0) {
+            const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
+            const product_id = sql_res.rows[0].id;
+
+            await pool.query(
+                'INSERT INTO ticket_products(id_product, id_user, status, note) VALUES($1, $2, $3, $4)',
+                [product_id, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
+            );
+
+            res.json({status: 'ok'});
         }
         else
             sendError(res, 404);
