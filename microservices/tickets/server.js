@@ -117,6 +117,57 @@ app.get('/fetchTickets', authJWT, async (req, res) => {
     }
 });
 
+//per chiudere i ticket
+app.post('/resolve/:ticket_type/:ticket_id', authJWT, async (req, res) => {
+    try {
+        //controllo che la route sia corretta
+        if(!req.params || !req.params.ticket_type ||
+        req.params.ticket_type !== 'product' && req.params.ticket_type !== 'order') {
+            sendError(res, 404);
+            return;
+        }
+
+        //per il controllo effettuato prima, potrà essere solo 'product' oppure 'order'
+        const ticket_type = req.params.ticket_type;
+
+        //controllo che l'utente sia un admin
+        const ADMIN_ROLE_ID = await getRoleID('admin', pool);
+        if(req.user.user_role_id !== ADMIN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(!isBodyInt(req.params.ticket_id)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
+        const STATUS_TICKET_CHIUSO_ID = await getTicketStatusID('Chiuso', pool);
+
+        //verifico che il ticket esista e sia aperto
+        const sql_res = await pool.query(
+            `SELECT 1 FROM ticket_${ticket_type}s WHERE "ID" = $1 AND status = $2`,
+            [req.params.ticket_id, STATUS_TICKET_APERTO_ID]
+        );
+
+        if(sql_res.rowCount <= 0) {
+            sendError(res, 404);
+            return;
+        }
+
+        //chiudo il ticket
+        await pool.query(
+            `UPDATE ticket_${ticket_type}s SET timestamp_resolved = CURRENT_TIMESTAMP, status = $1, id_admin = $2 WHERE "ID" = $3`,
+            [STATUS_TICKET_CHIUSO_ID, req.user.user_id, req.params.ticket_id]
+        );
+        res.json({status: 'ok'});
+    } catch(err) {
+        console.error('Error fetching tickets: ' + err);
+        sendError(res, 500);
+    }
+});
+
 https.createServer(credentials, app).listen(PORT, () => {
   console.log("Microservice tickets online");
 });
