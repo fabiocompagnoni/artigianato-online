@@ -141,7 +141,7 @@ app.get('/product/:artisan_slug/:product_slug', async (req, res) => {
     const query = single_product_query;
 
     try {
-        if(!isBodyInt(req.params.artisan_slug, true) || !isBodyInt(req.params.product_slug, true)) {
+        if(!isBodyString(req.params.artisan_slug, true) || !isBodyString(req.params.product_slug, true)) {
             sendError(res, 400);
             return;
         }
@@ -224,7 +224,7 @@ app.post('/product', authJWT, async (req, res) => {
         }
 
         //conversione del prezzo in centesimi
-        const adjusted_price = Math.floor(price * 100);
+        const adjusted_price = Math.round(price * 100);
 
         if(!Array.isArray(categories) || !Array.isArray(images)) {
             sendError(res, 400);
@@ -267,7 +267,7 @@ app.post('/product', authJWT, async (req, res) => {
                     id: product_info.ID,
                     name: product_info.name,
                     description: product_info.short_description,
-                    price: Math.floor(product_info.price / 100),
+                    price: product_info.price / 100,
                     category: categories,
                     product_image: images[0],
                     quantity: quantity
@@ -302,7 +302,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
             return;
         }
 
-        if(!req.params || !req.params.slug || !isBodyInt(req.params.slug, true)) {
+        if(!req.params || !req.params.slug || !isBodyString(req.params.slug, true)) {
             sendError(res, 400);
             return;
         }
@@ -358,7 +358,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
             }
 
             if (typeof price !== 'undefined') {
-                const adjusted_price = Math.floor(price * 100);
+                const adjusted_price = Math.round(price * 100);
                 await client.query(
                     'UPDATE products SET price = $1 WHERE "ID" = $2 AND artisan = $3',
                     [adjusted_price, product_id, user_id]
