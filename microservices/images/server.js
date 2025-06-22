@@ -5,11 +5,13 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import sharp from 'sharp';
+import cookieParser from 'cookie-parser';
 
 import https from 'https';
 import fs from 'fs';
 
 import sendError from './common_scripts/sendError.js';
+import authJWT from "./common_scripts/authJWT.js";
 
 const PORT = 4000;
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -48,6 +50,8 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
+app.use(cookieParser());
+
 
 if(!fs.existsSync(IMAGES_FOLDER))
     fs.mkdirSync(IMAGES_FOLDER);
@@ -60,7 +64,7 @@ app.get('/', (req, res) => {
     res.json({ service: 'images', status: 'ok' });
 });
 
-app.post('/upload', upload.single('image'), async (req, res) => {
+app.post('/upload', authJWT, upload.single('image'), async (req, res) => {
     const file = req.file;
     if(!file)
         sendError(res, 519);
