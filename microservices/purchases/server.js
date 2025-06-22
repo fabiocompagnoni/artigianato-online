@@ -9,8 +9,9 @@ const PORT = 4000;
 
 import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
-import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
 import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
+import { selectLowestStatus } from "./scripts/utils.js";
 
 const app = express();
 
@@ -195,15 +196,20 @@ app.get('/orders', authJWT, async (req, res) => {
         //calcolo della quantità di prodotti e prezzo totale nell'ordine
         for(const row of sql_res.rows) {
             const order_items = await pool.query(
-                'SELECT quantity, single_product_price FROM products_order WHERE "ID_order" = $1',
+                'SELECT p."ID", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON status = os."ID" WHERE "ID_order" = $1',
                 [row.ID]
             );
+
+            let products = [];
+            let products_statuses = [];
 
             let total_items = 0;
             let total_price = 0;
             for(const inner_row of order_items.rows) {
                 total_items += inner_row.quantity;
                 total_price += inner_row.quantity * inner_row.single_product_price;
+                products.push({name: inner_row.name, thumbnail: await getProductThumbnail(inner_row.ID, pool)});
+                products_statuses.push(inner_row.status);
             }
 
             response.push({
@@ -211,7 +217,9 @@ app.get('/orders', authJWT, async (req, res) => {
                 timestamp: row.timestamp_order,
                 payment_intent: row.payment_intent,
                 amount_paid: total_price / 100,
-                num_products: total_items
+                num_products: total_items,
+                products,
+                status: selectLowestStatus(products_statuses)
             });
         }
 

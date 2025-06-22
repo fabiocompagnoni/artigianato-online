@@ -47,3 +47,11 @@ export function getTrimmedName(name) {
 
     return trim;
 }
+
+export const getProductThumbnail=async(idProduct, pool)=>{
+    let product_image = "https://localhost/src/img/placeholder.png";
+    const product_image_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1 AND position = 0', [idProduct]);
+    if(product_image_res.rowCount > 0)
+        product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
+    return product_image;  
+}
