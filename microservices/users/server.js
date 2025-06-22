@@ -13,6 +13,9 @@ import authJWT from './common_scripts/authJWT.js';
 import { getRoleID } from './common_scripts/utils.js';
 import { sendUserData } from './scripts/userScripts.js';
 
+import passport from 'passport';
+import configurePassport from "./passportSetup.js";
+import session from "express-session";
 
 const app = express();
 const port = 4000;
@@ -52,6 +55,15 @@ app.use(cors({
   },
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
+
+console.log(process.env.GOOGLE_CLIENT_ID ?? "Client ID non letto");
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie:true
+}));
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -188,16 +200,94 @@ app.get('/user', authJWT, async (req, res) => {
         const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
 
         res.status(200).json({
-                name: user_data.user_name,
-                surname: user_data.surname,
-                role: user_data.role_name,
-                bio: user_data.bio,
-                url_profile_picture: propic_url,
-            });
+            name: user_data.user_name,
+            surname: user_data.surname,
+            role: user_data.role_name,
+            bio: user_data.bio,
+            url_profile_picture: propic_url,
+        });
     } catch (err) {
         console.error('Error getting user data:', err);
         sendError(res, 500);
     }
+});
+//configurazione autenticazione con google
+configurePassport(passport);
+/**
+ * API utilizzata per il login con google
+ */
+app.get("/user/:googleId",async(req, res)=>{
+    const googleId = req.params.googleId;
+
+    const sql_res = await pool.query(
+        'SELECT users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE users.google_id = $1',
+        [googleId]
+    );
+
+    if (sql_res.rowCount < 1) {
+        sendError(res, 515);
+        return;
+    }
+
+    const user_data = sql_res.rows[0];
+
+    const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
+
+    res.status(200).json({
+        name: user_data.user_name,
+        surname: user_data.surname,
+        role: user_data.role_name,
+        bio: user_data.bio,
+        url_profile_picture: propic_url,
+    });
+});
+app.post("/user/:googleId",async(req, res)=>{
+    const googleId = req.params.googleId;
+
+    if (!req.body || !req.body.email || !req.body.name || !req.body.surname) {
+        sendError(res, 400); // Bad request se mancano campi
+        return;
+    }
+
+    const { email, name, surname} = req.body;
+    
+    let slug = '';
+    try {
+        slug = await generateUserSlug(name, surname, pool);
+    } catch (e) {
+        sendError(res, 518);
+        return;
+    }
+
+    let slug_error = false;
+    do {
+        try {
+            slug_error = false;
+
+            const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
+            const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+            const sql_res = await pool.query(
+                'INSERT INTO users(email, name, slug, google_id) VALUES ($1, $2, $3, $4) RETURNING "ID", email, name, surname',
+                [email, name, surname, slug, googleId]
+            );
+
+            const user_info = sql_res.rows[0];
+
+            sendUserData(res, user_info, 200);
+        } catch (err) {
+            if (err.detail.startsWith('Key (email)')) //unique violation on email
+                sendError(res, 512);
+            else if (err.detail.startsWith('Key (slug)')) { //unique violation on slug
+                slug_error = true;
+                slug = generateUserSlug(name, surname, pool);
+            } else {
+                console.error('Error creating user:', err);
+                sendError(res, 500);
+            }
+        }
+    } while (slug_error);
+
 });
 
 app.get('/user/:user_slug', async (req, res) => {
@@ -358,3 +448,47 @@ app.get("/dashboardPage", authJWT, (req, res) => {
 https.createServer(credentials, app).listen(port, () => {
   console.log("Microservice users online");
 });
+
+app.get("/auth/google/callback", async(req, res)=>{
+    passport.authenticate("google", {failureRedirect:'/login'}),(req, res)=>{
+        const payload={
+            user:{
+                id:req.user.id,
+                role_id:req.user.role_id,
+                role:req.user.role
+            }
+        }
+        jwt.sign(
+            { user_id: payload.user.id, user_role_id: payload.user.role_id, user_role:payload.user.role },
+            JWT_SECRET,
+            { expiresIn: '1d' },
+            async(err, token)=>{
+            if(err) throw err;
+            //init cookie
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            });
+                // Ottieni il link della dashboard dall'API /dashboardPage
+                try {
+                    const fetch = (await import('node-fetch')).default;
+                    const dashboardRes = await fetch('https://localhost:4000/dashboardPage', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    const data = await dashboardRes.json();
+                    res.redirect(data.dashboardLink);
+                } catch (e) {
+                    res.redirect('/');
+                }
+            }
+        );
+        
+    }});
+
+app.get("/auth/google", (req, res)=>{
+    passport.authenticate("google",{scope:['profile','email']});
+});
+
