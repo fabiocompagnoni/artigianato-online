@@ -1,6 +1,6 @@
 import {ajax} from "/src/js/modules/fetchWorkerModule.js";
 import {loadImage} from "/src/js/modules/loadImageModule.js";
-import { handlePageUrl } from "./index.js";
+import { handlePageUrl, showErrorPopup } from "./index.js";
 export const showOrders=async()=>{
     let cont=document.getElementById("orderList");
 
@@ -128,49 +128,7 @@ export const showOrder=async(idOrder)=>{
             err="Per visualizzare l'ordine devi essere autenticato!";
         console.error(err);
 
-        let overlay = document.createElement("div");
-        overlay.style.position = "fixed";
-        overlay.style.top = 0;
-        overlay.style.left = 0;
-        overlay.style.width = "100vw";
-        overlay.style.height = "100vh";
-        overlay.style.background = "rgba(0,0,0,0.6)";
-        overlay.style.zIndex = 998;
-        overlay.style.display = "flex";
-        overlay.style.justifyContent = "center";
-        overlay.style.alignItems = "center";
-
-        let alertBox = document.createElement("div");
-        alertBox.style.background = "#fff";
-        alertBox.style.padding = "2rem";
-        alertBox.style.borderRadius = "12px";
-        alertBox.style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
-        alertBox.style.zIndex = 999;
-        alertBox.style.maxWidth = "90vw";
-        alertBox.style.textAlign = "center";
-        alertBox.innerHTML = `
-            <div style="font-size:1.2rem; margin-bottom:1rem;">${err}</div>
-            <button id="goToOrdersBtn" style="padding:0.5rem 1.5rem; border:none; background:#007bff; color:#fff; font-size:1rem; cursor:pointer;" class="rounded-4">
-                Torna agli ordini
-            </button>
-        `;
-
-        overlay.appendChild(alertBox);
-        document.body.appendChild(overlay);
-
-        document.getElementById("goToOrdersBtn").onclick = () => {
-            document.body.removeChild(overlay);
-            window.history.pushState({}, '', "/artigiani/area-riservata/ordini");
-            handlePageUrl({
-                home: document.querySelector("#home"),
-                ordini: document.querySelector("#orders"),
-                ordine: document.querySelector("#order"),
-                prodotti: document.querySelector("#products"),
-                prodotto: document.querySelector("#product"),
-                clienti: document.querySelector("#customers"),
-                rimborsi: document.querySelector("#refounds")
-            });
-        };
+        showErrorPopup(err, "/artigiani/area-riservata/ordini", "Torna agli ordini");
         return;
     }
 
