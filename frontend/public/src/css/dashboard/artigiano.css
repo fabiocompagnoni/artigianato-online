@@ -169,3 +169,82 @@
     color:white;
     
 }
+
+/*ordini*/
+.order{
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    gap:1rem;
+}
+.ordersCont{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.order .orderThumbnail{
+    border-radius: var(--bs-border-radius-xl);
+    width:min(100%, 15rem);
+    height:10rem;
+    object-fit:cover;
+}
+.order .prodThumbnail{
+    width:5rem;
+    height:5rem;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+}
+.order .prodPreview{
+    text-align:center;
+    max-width:5rem;
+}
+.order .prodPreview .prodTitle{
+    text-wrap: wrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.order .orderTitle{
+    color:var(--first-color);
+    font-size:1.5rem;
+    font-weight: bold;
+    width:100%;
+}
+.orderPrice{
+    font-size:1.3rem;
+    font-weight: bold;
+}
+@media(max-width:768px){
+    .order .btnCont {
+        flex:1;
+    }
+    .order .btnCont button{
+        width:100%;
+    }
+}
+.pillStatus{
+    padding:0.5rem;
+    border-radius: var(--bs-border-radius-xl);
+    text-transform: uppercase;
+    width:fit-content;
+}
+.pillStatus.pagato {
+    background: #d1e7dd;   /* verde chiaro */
+    color: #0f5132;
+}
+.pillStatus.spedito {
+    background: #cff4fc;   /* azzurro chiaro */
+    color: #055160;
+}
+.pillStatus.consegnato {
+    background: #e2e3e5;   /* grigio chiaro */
+    color: #41464b;
+}
+.pillStatus.annullato {
+    background: #f8d7da;   /* rosso chiaro */
+    color: #842029;
+}
+.pillStatus.rimborsato {
+    background: #fff3cd;   /* giallo chiaro */
+    color: #664d03;
+}
