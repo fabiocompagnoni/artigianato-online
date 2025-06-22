@@ -232,6 +232,42 @@ app.get('/orders', authJWT, async (req, res) => {
     }
 });
 
+//per ottenere info sui propri clienti
+app.get('/customers', authJWT, async (req, res) => {
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 400);
+            return;
+        }
+
+        const query = `SELECT u.name, surname, email, COUNT(*) AS num_orders, SUM(quantity) AS num_products, SUM(quantity * single_product_price) AS total_spent
+            FROM products_order
+            JOIN products p ON "ID_product" = p."ID"
+            JOIN orders o ON "ID_order" = o."ID"
+            JOIN users u ON id_user = u."ID"
+            WHERE artisan = $1
+            GROUP BY u."ID"`;
+        
+        const sql_res = await pool.query(query, [req.user.user_id]);
+
+        const users = sql_res.rows.map(row => ({
+            name: row.name,
+            surname: row.surname,
+            email: row.email,
+            num_orders: parseInt(row.num_orders),
+            num_products: parseInt(row.num_products),
+            amount_paid: row.total_spent / 100
+        }));
+
+        res.json(users);
+    } catch(err) {
+        console.error('Error fetching customers info: ' + err);
+        sendError(res, 500);
+    }
+});
+
 //per verificare informazioni su un ordine
 app.get('/order/:id_order', authJWT, async (req, res) => {
     try {
