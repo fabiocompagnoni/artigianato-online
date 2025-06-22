@@ -138,7 +138,7 @@ test('Registering two users with same email', async () => {
     expect(res.statusCode).toBe(512);
 });
 
-test('Change user informations', async () => {
+test('Change and get user informations', async () => {
     let res = await request(app)
         .post('/images/upload')
         .attach('image', path.resolve(process.cwd(), './test/images/avatar1.png'));
@@ -181,4 +181,13 @@ test('Change user informations', async () => {
     expect(res.body.email).toBe(new_data.email);
     expect(res.body.bio).toBe(new_data.bio);
     expect(res.body.id_profile_picture).toBe(new_data.id_profile_picture);
+    
+    res = await request(app)
+        .get('/users/user/svetonio-rulli');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe(new_data.name);
+    expect(res.body.surname).toBe(new_data.surname);
+    expect(res.body.role).toBe(new_data.role);
+    expect(res.body.bio).toBe(new_data.bio);
+    expect(res.body.url_profile_picture).toBe('https://localhost:3000/images/' + avatar_id);
 });
