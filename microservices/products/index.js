@@ -92,7 +92,8 @@ const outputProduct=async(dbRow, single_product=false)=>{
     const obj = {
         id: dbRow.id,
         name: dbRow.pname,
-        description: dbRow.short_description,
+        short_description: dbRow.short_description,
+        description:dbRow.description,
         price: (dbRow.price / 100),
         categories: categories,
         artisan: {
@@ -444,6 +445,168 @@ app.delete('/product/:slug', authJWT, async (req, res) => {
             sendError(res, 401);
     } catch (err) {
         console.error('Error deleting product: ' + err);
+        sendError(res, 500);
+    }
+});
+
+/**
+ * API per aggiornare la posizione di un immagine 
+*/
+
+app.post("/productImage/changePosition",authJWT, async(req, res)=>{
+    try {
+        const { product_id, image_id, new_position } = req.body;
+
+        if (
+            !isBodyInt(product_id, false) ||
+            !isBodyInt(image_id, false) ||
+            !isBodyInt(new_position, false)
+        ) {
+            sendError(res, 400);
+            return;
+        }
+
+        // Verifica che l'immagine appartenga al prodotto
+        const imgRes = await pool.query(
+            'SELECT position FROM product_images WHERE "ID_product" = $1 AND "ID_image" = $2',
+            [product_id, image_id]
+        );
+        if (imgRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const old_position = imgRes.rows[0].position;
+
+        // Ottieni il numero totale di immagini per il prodotto
+        const countRes = await pool.query(
+            'SELECT COUNT(*) FROM product_images WHERE "ID_product" = $1',
+            [product_id]
+        );
+        const total_images = parseInt(countRes.rows[0].count);
+
+        if (new_position < 0 || new_position >= total_images) {
+            sendError(res, 400);
+            return;
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            if (new_position > old_position) {
+                // Sposta tutte le immagini tra old_position+1 e new_position indietro di 1
+                await client.query(
+                    `UPDATE product_images
+                     SET position = position - 1
+                     WHERE "ID_product" = $1 AND position > $2 AND position <= $3`,
+                    [product_id, old_position, new_position]
+                );
+            } else if (new_position < old_position) {
+                // Sposta tutte le immagini tra new_position e old_position-1 avanti di 1
+                await client.query(
+                    `UPDATE product_images
+                     SET position = position + 1
+                     WHERE "ID_product" = $1 AND position >= $2 AND position < $3`,
+                    [product_id, new_position, old_position]
+                );
+            }
+
+            // Aggiorna la posizione dell'immagine selezionata
+            await client.query(
+                `UPDATE product_images
+                 SET position = $1
+                 WHERE "ID_product" = $2 AND "ID_image" = $3`,
+                [new_position, product_id, image_id]
+            );
+
+            await client.query('COMMIT');
+            res.json({ status: 'ok' });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.error('Error changing image position:', err);
+            sendError(res, 500);
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        console.error('Error changing image position:', err);
+        sendError(res, 500);
+    }
+});
+
+app.delete("/productImage/:product_id/:image_id",authJWT, async(req, res)=>{
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if (req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        const { product_id, image_id } = req.params;
+
+        if (!isBodyInt(product_id, false) || !isBodyInt(image_id, false)) {
+            sendError(res, 400);
+            return;
+        }
+
+        // Verifica che il prodotto appartenga all'utente autenticato
+        const productRes = await pool.query(
+            'SELECT "ID" FROM products WHERE "ID" = $1 AND artisan = $2',
+            [product_id, req.user.user_id]
+        );
+        if (productRes.rowCount === 0) {
+            sendError(res, 403);
+            return;
+        }
+
+        // Verifica che l'immagine appartenga al prodotto
+        const imgRes = await pool.query(
+            'SELECT position FROM product_images WHERE "ID_product" = $1 AND "ID_image" = $2',
+            [product_id, image_id]
+        );
+        if (imgRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const old_position = imgRes.rows[0].position;
+
+        // Elimina l'immagine
+        await pool.query(
+            'DELETE FROM product_images WHERE "ID_product" = $1 AND "ID_image" = $2',
+            [product_id, image_id]
+        );
+
+        // Aggiorna la posizione delle immagini successive
+        await pool.query(
+            'UPDATE product_images SET position = position - 1 WHERE "ID_product" = $1 AND position > $2',
+            [product_id, old_position]
+        );
+
+        res.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Error deleting product image:', err);
+        sendError(res, 500);
+    }
+});
+
+app.get("/categories",async(req, res)=>{
+    try {
+        const result = await pool.query('SELECT name, slug FROM categories ORDER BY name ASC');
+        let selectedCategories = [];
+        if (req.query && req.query.product_slug) {
+            const productRes = await pool.query(
+                'SELECT C.slug FROM product_categories AS PC INNER JOIN categories AS C ON C."ID" = PC."ID_category" INNER JOIN products AS P ON P."ID" = PC."ID_product" WHERE P.slug = $1',
+                [req.query.product_slug]
+            );
+            selectedCategories = productRes.rows.map(row => row.slug);
+        }
+        const categoriesWithSelected = result.rows.map(cat => ({
+            ...cat,
+            selected: selectedCategories.includes(cat.slug)
+        }));
+        res.json({ categories: categoriesWithSelected });
+    } catch (err) {
+        console.error('Error fetching categories:', err);
         sendError(res, 500);
     }
 });
