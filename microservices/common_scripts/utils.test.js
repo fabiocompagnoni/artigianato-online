@@ -19,3 +19,7 @@ test('Trimmed name 3', () => {
 test('Trimmed name 4', () => {
     expect(getTrimmedName('us3rname_not:standard@#!')).toBe('usrnamenotstandard');
 });
+
+test('Trimmed name 5', () => {
+    expect(getTrimmedName('Tavolo in legno', false)).toBe('tavolo-in-legno');
+});

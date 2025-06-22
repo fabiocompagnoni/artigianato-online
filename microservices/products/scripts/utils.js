@@ -3,7 +3,7 @@ import { getTrimmedName } from '../common_scripts/utils.js';
 //generates the category if it doesn't exist in the database
 //not immune to race conditions, DBMS will handle that
 export async function getCategoryID(name, pool) {
-    const slug = getTrimmedName(name);
+    const slug = getTrimmedName(name, false);
 
     if (slug === '')
         throw new Error('Unable to get category ID');
@@ -18,7 +18,7 @@ export async function getCategoryID(name, pool) {
 }
 
 export async function generateArtisanProductSlug(artisan_id, product_name, pool) {
-    const slug = getTrimmedName(product_name);
+    const slug = getTrimmedName(product_name, false);
 
     if(slug === '')
         throw new Error('Unable to generate product slug');

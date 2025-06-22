@@ -191,14 +191,14 @@ app.post('/report/:artisan_slug/:product_slug', authJWT, async (req, res) => {
             const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
             const product_id = sql_res.rows[0].id;
 
-            await pool.query(
-                'INSERT INTO ticket_products(id_product, id_user, status, note) VALUES($1, $2, $3, $4)',
+            const sql_res2 = await pool.query(
+                'INSERT INTO ticket_products(id_product, id_user, status, note) VALUES($1, $2, $3, $4) RETURNING "ID"',
                 [product_id, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
             );
 
-            res.json({status: 'ok'});
+            res.json({ticket_id: sql_res2.rows[0].ID});
         }
-        else
+        else //il prodotto non è stato trovato
             sendError(res, 404);
     } catch (err) {
         console.error('Error reporting product: ' + err);
@@ -303,7 +303,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
             return;
         }
 
-        if(!req.params || !req.params.slug) {
+        if(!req.params || !req.params.slug || !isBodyInt(req.params.slug, true)) {
             sendError(res, 400);
             return;
         }
@@ -420,18 +420,24 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 });
 
 //delete product (lo marchia come eliminato nel db)
-app.delete('/product/:slug', authJWT, async (req, res) => {
+app.delete('/product/:product_id', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
         const ADMIN_ROLE_ID = await getRoleID('admin', pool);
-        if(req.user.user_role_id !== ARTISAN_ROLE_ID || req.user.user_role_id !== ADMIN_ROLE_ID) {
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
-        let query = 'UPDATE products SET removed = true WHERE slug = $1';
-        const params = [req.params.slug];
+        if(!isBodyInt(req.params.product_id, true)) {
+            sendError(res, 400);
+            return;
+        }
 
+        let query = 'UPDATE products SET removed = true WHERE "ID" = $1 AND removed = false';
+        const params = [req.params.product_id];
+
+        //se l'utente non è admin, verifica che abbia accesso al prodotto
         if(req.user.user_role_id === ARTISAN_ROLE_ID) {
             query += ' AND artisan = $2';
             params.push(req.user.user_id);
@@ -441,7 +447,7 @@ app.delete('/product/:slug', authJWT, async (req, res) => {
 
         if(sql_res.rowCount > 0) //il prodotto è stato eliminato
             res.json({status: 'ok'});
-        else //il prodotto non è stato elminato perché non esiste una coppia (slug, utente) che combaci con la richiesta
+        else //il prodotto non è stato elminato perché non esiste una coppia (id, utente) che combaci con la richiesta
             sendError(res, 401);
     } catch (err) {
         console.error('Error deleting product: ' + err);

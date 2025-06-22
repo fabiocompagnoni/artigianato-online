@@ -63,6 +63,7 @@ services:
       - ./certs:/certs:ro
     environment:
       DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      JWT_SECRET: test_jwt_secret
     depends_on:
       - test_db
     networks:

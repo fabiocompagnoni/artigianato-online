@@ -10,7 +10,7 @@ const PORT = 4000;
 import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
-import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
+import { isPrice, isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 import { selectLowestStatus } from "./scripts/utils.js";
 
 const app = express();
@@ -228,6 +228,38 @@ app.get('/orders', authJWT, async (req, res) => {
         res.json(response);
     } catch(err) {
         console.error('Error fetching purchases: ' + err);
+        sendError(res, 500);
+    }
+});
+
+//per dare un rimborso ad un cliente
+app.post('/refund', authJWT, async (req, res) => {
+    try {
+        const ADMIN_ROLE_ID = await getRoleID('admin', pool);
+        if(req.user.user_role_id !== ADMIN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(!req.body || !req.body.amount || !isPrice(req.body.amount, true)
+        || !req.body.product_id || !isBodyInt(req.body.product_id, true)
+        || !req.body.order_id || !isBodyInt(req.body.order_id, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const RIMBORSATO_STATUS_ID = await getOrderStatusID('Rimborsato', pool);
+
+        const { amount, product_id, order_id } = req.body;
+
+        await pool.query(
+            'UPDATE products_order SET status = $1, refunded_import = $2 WHERE "ID_order" = $3 AND "ID_product" = $4',
+            [RIMBORSATO_STATUS_ID, Math.round(amount * 100), order_id, product_id]
+        );
+
+        res.json({status: 'ok'});
+    } catch(err) {
+        console.error('Error refunding purchase: ' + err);
         sendError(res, 500);
     }
 });
@@ -453,14 +485,14 @@ app.post('/report/:id_order', authJWT, async (req, res) => {
 
         if(sql_res.rowCount > 0) {
             const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
-            await pool.query(
-                'INSERT INTO ticket_orders(id_order, id_user, status, note) VALUES($1, $2, $3, $4)',
+            const sql_res2 = await pool.query(
+                'INSERT INTO ticket_orders(id_order, id_user, status, note) VALUES($1, $2, $3, $4) RETURNING "ID"',
                 [req.params.id_order, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
             );
 
-            res.json({status: 'ok'});
+            res.json({ticket_id: sql_res2.rows[0].ID});
         }
-        else
+        else //l'ordine non è stato trovato o non appartiene all'utente
             sendError(res, 404);
     } catch (err) {
         console.error('Error adding fetching single product info: ' + err);
