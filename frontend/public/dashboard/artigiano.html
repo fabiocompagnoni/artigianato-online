@@ -142,6 +142,9 @@
                 </div>
             </div>
             <div id="products" style="display:none">
+                <div class="d-flex align-items-center justify-content-end my-2">
+                    <button class="btn btn-success rounded-4" id="btnToggleNewProd"><i class="fa-solid fa-plus"></i> Nuovo prodotto</button>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -160,7 +163,80 @@
                     <div class="pagination" id="paginationProducts"></div>
                 </div>
             </div>
-            <div id="product" style="display:none"></div>
+            <div id="product" style="display:none">
+                <div class="editorProductCont">
+                    <div class="card cardPartProduct">
+                        <div class="mb-2">
+                            <label>Nome del prodotto</label>
+                            <input type="text" class="form-control rounded-4" id="productName"/>
+                        </div>
+                        <div class="mb-2">
+                            <label>Prezzo</label>
+                            <div class="input-group rounded-4">
+                                <input type="number" class="form-control" id="productPrice" step="0.01"/>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label>Descrizione breve del prodotto</label>
+                            <textarea class="form-control rounded-4" id="productShortDescription" maxlength="255"></textarea>
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct">
+                        <label>Immagini del prodotto</label>
+                        <div class="productImgCont" id="imgProdUploaded">
+                            <div class="selectImgBtn"><i class="fa-solid fa-plus"></i></div>
+                        </div>
+                        <input id="fotoInput" type="file" accept="image/*" hidden/>
+                        
+                        <div class="infoChangeOrder">Trascina le foto una sopra l'altra per cambiarne l'ordine</div>
+                        <div class="releaseTrash" id="releaseTrashImg">
+                            Rilascia qui le foto che vuoi eliminare
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct" style="flex-basis:60rem;">
+                        <div class="mb-2">
+                            <label>Descrizione del prodotto</label>
+                            <textarea class="form-control rounded-4" id="productDescription" maxlength="65535" style="height:10rem;"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label>Disponibilità</label>
+                            <div class="d-flex flex-row gap-2 align-items-center flex-wrap">
+                                <input type="number" id="pruductDisponibility" class="form-control rounded-4" disabled/>
+                                <button class="btn btn-secondary rounded-4" style="flex:1;white-space: no-wrap;" data-bs-toggle="modal" data-bs-target="#modalRestock">Aggiungi disponibilità</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct">
+                        <div class="d-flex flex-row flex-wrap gap-2 align-items-center justify-content-between">
+                            <label>Categorie del prodotto</label>
+                            <button class="btn btn-secondary rounded-4"><i class="fa-solid fa-plus"></i> Aggiungi categoria</button>
+                        </div>
+                        <div class="categoryList" id="categoryList"></div>
+                    </div> 
+                </div>
+                <button class="btn btn-success rounded-4 btnActionPrimary">Salva</button>
+                <div class="modal fade" id="modalRestock" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="exampleModalLabel">Aggiungi disponibilità in magazzino</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Aggiorna la disponibilità del tuo prodotto, aggiungendo il numero di pezzi che hai aggiunto al magazzino per questo prodotto</p>
+                                <div class="my-2">
+                                    <label>Quantità</label>
+                                    <input type="number" class="form-control rounded-4" id="productQuantityAdd"/>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary rounded-4">Aggiorna disponibilità</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>  
+            </div>
             <div id="orders" style="display:none">
                 <div class="ordersCont" id="orderList">
                     <div class="order placeholder"></div>

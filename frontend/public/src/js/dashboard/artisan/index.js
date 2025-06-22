@@ -144,10 +144,34 @@ const initProducts=async()=>{
     }
     loadProducts(page);
     //TODO: listener cambio pagina, fare anche nel sito visibile al pubblico per artigiani e prodotti
+
+    document.getElementById("btnToggleNewProd").addEventListener("click",(event)=>{
+        event.preventDefault();
+        window.history.pushState({}, '', "/artigiani/area-riservata/prodotti/nuovo");
+        handlePageUrl({
+            home: document.querySelector("#home"),
+            ordini: document.querySelector("#orders"),
+            ordine: document.querySelector("#order"),
+            prodotti: document.querySelector("#products"),
+            prodotto: document.querySelector("#product"),
+            clienti: document.querySelector("#customers"),
+            rimborsi: document.querySelector("#refounds")
+        });
+    })
 }
 
-const initProduct=async(idOrder)=>{
-
+const initProduct=async(slugProduct=null)=>{
+    const {loadCategories} = await import("/src/js/dashboard/artisan/products.js");
+    if(slugProduct==null){
+        //nuovo prodotto
+    }else{
+        //modifica prodotto esistente
+    }
+    loadCategories(slugProduct);
+    document.querySelector(".selectImgBtn").addEventListener("click",(event)=>{
+        event.preventDefault();
+        document.getElementById("fotoInput").click();
+    });
 }
 
 const showHidePage=(currentPage, allPages)=>{
@@ -175,16 +199,24 @@ export const handlePageUrl=(pages)=>{
             btn.classList.add("selected");
         });
         page = "ordine";
-    } else if (/^\/artigiani\/area-riservata\/prodotti\/\d+$/.test(window.location.pathname)) {
-        let idProduct=page.split('/').pop();
-        initProduct(idProduct);
+    } else if (/^\/artigiani\/area-riservata\/prodotti\/nuovo$/.test(window.location.pathname)) {
+        initProduct(null);
         currentPage = "prodotto";
-        pageTitle.innerText = "Dettaglio prodotto";
+        pageTitle.innerText = "Nuovo prodotto";
+        document.querySelectorAll(".btnProducts").forEach(btn => {
+            btn.classList.add("selected");
+        });
+    }else if (/^\/artigiani\/area-riservata\/prodotti\/[^\/]+$/.test(window.location.pathname)) {
+        let productSlug=page.split('/').pop();
+        
+        initProduct(productSlug);
+        currentPage = "prodotto";
+        pageTitle.innerText = "Modifica prodotto";
         document.querySelectorAll(".btnProducts").forEach(btn => {
             btn.classList.add("selected");
         });
         page = "prodotto";
-    }else{
+    } else {
 
         if(page=="area-riservata"){
             initDashboard();
@@ -200,7 +232,7 @@ export const handlePageUrl=(pages)=>{
                 btn.classList.add("selected");
             });
         }else if(page=="ordine"){
-    
+        
         }else if(page=="rimborsi"){
             initRefounds();
             pageTitle.innerText="I tuoi rimborsi";
@@ -224,7 +256,7 @@ export const handlePageUrl=(pages)=>{
             document.querySelectorAll(".btnProducts").forEach(btn=>{
                 btn.classList.add("selected");
             });
-    
+        
         }
     }
     showHidePage(currentPage, pages);
