@@ -485,14 +485,14 @@ app.post('/report/:id_order', authJWT, async (req, res) => {
 
         if(sql_res.rowCount > 0) {
             const STATUS_TICKET_APERTO_ID = await getTicketStatusID('Aperto', pool);
-            await pool.query(
-                'INSERT INTO ticket_orders(id_order, id_user, status, note) VALUES($1, $2, $3, $4)',
+            const sql_res2 = await pool.query(
+                'INSERT INTO ticket_orders(id_order, id_user, status, note) VALUES($1, $2, $3, $4) RETURNING "ID"',
                 [req.params.id_order, req.user.user_id, STATUS_TICKET_APERTO_ID, req.body.note]
             );
 
-            res.json({status: 'ok'});
+            res.json({ticket_id: sql_res2.rows[0].ID});
         }
-        else
+        else //l'ordine non è stato trovato o non appartiene all'utente
             sendError(res, 404);
     } catch (err) {
         console.error('Error adding fetching single product info: ' + err);
