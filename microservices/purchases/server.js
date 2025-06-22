@@ -283,27 +283,39 @@ app.get('/order/:id_order', authJWT, async (req, res) => {
             [id_order]
         );
 
+        const id_user = sql_res.rows[0].id_user;
+
         if(sql_res.rowCount === 0) {
             sendError(404);
             return;
         }
 
-        if(sql_res.rows[0].id_user !== req.user.user_id && req.user.user_role_id !== ADMIN_ROLE_ID) {
+        if(id_user !== req.user.user_id && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
         const order_timestamp = sql_res.rows[0].timestamp_order;
 
-        const response = {timestamp: order_timestamp, items: []};
+        sql_res = await pool.query(
+            'SELECT name, surname FROM users WHERE "ID" = $1',
+            [id_user]
+        );
 
-        sql_res = await pool.query('SELECT "ID_product", quantity, single_product_price FROM products_order WHERE "ID_order" = $1', [id_order]);
+        const response = {timestamp: order_timestamp, user_name: sql_res.rows[0].name, user_surname: sql_res.rows[0].surname, items: []};
+
+        sql_res = await pool.query(
+            'SELECT "ID_product", quantity, single_product_price, name FROM products_order JOIN products ON "ID_product" = "ID" WHERE "ID_order" = $1',
+            [id_order]
+        );
 
         for(const row of sql_res.rows)
             response.items.push({
                 id: row.ID_product,
+                name: row.name,
                 quantity: row.quantity,
                 single_product_price: row.single_product_price,
+                thumbnail: await getProductThumbnail(row.ID_product, pool)
             });
 
         res.json(response);

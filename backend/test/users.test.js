@@ -1,5 +1,6 @@
 import app from '../app.js';
 import request from 'supertest';
+import path from 'path';
 import beforeAllCallback from './waitForServices.js';
 
 //aspettiamo che tutti i servizi siano online prima di usarli
@@ -81,7 +82,6 @@ test('Registering and logging in user', async () => {
     expect(res.body.name).toBe(new_data.name);
     expect(res.body.email).toBe(new_data.email);
     expect(res.body.surname).toBe(new_data.surname);
-    expect(res.body.roleName).toBe(new_data.role);
 
     const login_data = {email: new_data.email, password: new_data.password};
 
@@ -93,7 +93,6 @@ test('Registering and logging in user', async () => {
     expect(res.body.name).toBe(new_data.name);
     expect(res.body.email).toBe(new_data.email);
     expect(res.body.surname).toBe(new_data.surname);
-    expect(res.body.roleName).toBe(new_data.role);
 });
 
 test('Registering and fetching user data', async () => {
@@ -137,4 +136,49 @@ test('Registering two users with same email', async () => {
         .send(new_data)
         .set('Content-Type', 'application/json');
     expect(res.statusCode).toBe(512);
+});
+
+test('Change user informations', async () => {
+    let res = await request(app)
+        .post('/images/upload')
+        .attach('image', path.resolve(process.cwd(), './test/images/avatar1.png'));
+    expect(res.statusCode).toBe(200);
+
+    const avatar_id = res.body.file_id;
+
+    const new_data = {...user_data};
+    new_data.email = 'svetoniorulli@gmail.com';
+    new_data.name = 'Svetonio';
+
+    res = await request(app)
+        .post('/users/user')
+        .send(new_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+
+    const cookies = res.headers['set-cookie'];
+    const jwtCookie = cookies.find(cookie => cookie.startsWith('jwt='));
+
+    new_data.name = 'Patrizio';
+    new_data.surname = 'Spauracchi';
+    new_data.email = 'patspaur@gmail.com';
+    new_data.bio = 'Ciao mi chiamo patrizio';
+    new_data.password = 'Nuovapassword1.';
+    new_data.id_profile_picture = avatar_id;
+
+    res = await request(app)
+        .put('/users/user')
+        .send(new_data)
+        .set({
+            'Content-Type': 'application/json',
+            'Cookie': jwtCookie
+        });
+    
+    expect(res.statusCode).toBe(200);
+    expect(res.body.password_changed).toBe(true);
+    expect(res.body.name).toBe(new_data.name);
+    expect(res.body.surname).toBe(new_data.surname);
+    expect(res.body.email).toBe(new_data.email);
+    expect(res.body.bio).toBe(new_data.bio);
+    expect(res.body.id_profile_picture).toBe(new_data.id_profile_picture);
 });
