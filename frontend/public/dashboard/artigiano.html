@@ -161,10 +161,66 @@
             <div id="product" style="display:none"></div>
             <div id="orders" style="display:none">
                 <div class="ordersCont" id="orderList">
-                    
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
                 </div>
             </div>
-            <div id="order" style="display:none"></div>
+            <div id="order" style="display:none">
+                <h2>Dati dell'ordine</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Acquirente</th>
+                            <td id="acquirente" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Indirizzo di spedizione</th>
+                            <td id="indirizzoSpedizione" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Data e ora</th>
+                            <td id="dataOra" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Prodotto acquistati</th>
+                            <td id="numProducts" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Totale ordine</th>
+                            <td id="totaleOrdine" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Stato</th>
+                            <td>
+                                <select class="form-select" id="statusOrder"></select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <h2>Prodotti acquistati</h2>
+                <div class="productLists placeholder-glow" id="orderProducts">
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                </div>
+            </div>
 
             <div id="customers" style="display:none">
                 <div class="table-responsive">

@@ -74,8 +74,9 @@ const initOrders=async()=>{
     showOrders();
 }
 
-const initOrder=async()=>{
-
+const initOrder=async(idOrder)=>{
+    const {showOrder} = await import("/src/js/dashboard/artisan/orders.js");
+    showOrder(idOrder);
 }
 
 const initCustomers=async()=>{
@@ -89,7 +90,7 @@ const initProducts=async()=>{
 
 }
 
-const initProduct=async()=>{
+const initProduct=async(idOrder)=>{
 
 }
 
@@ -108,45 +109,67 @@ export const handlePageUrl=(pages)=>{
     let currentPage=page;
     let pageTitle=document.querySelector(".pageTitle");
 
-    if(page=="area-riservata"){
-        initDashboard();
-        currentPage="home";
-        document.querySelectorAll(".btnHome").forEach(btn=>{
+    //caso speciale ordini e prodotti
+    if (/^\/artigiani\/area-riservata\/ordini\/\d+$/.test(window.location.pathname)) {
+        let idOrder=page.split('/').pop();
+        initOrder(idOrder);
+        currentPage = "ordine";
+        pageTitle.innerText = `Ordine #${idOrder}`;
+        document.querySelectorAll(".btnOrders").forEach(btn => {
             btn.classList.add("selected");
         });
-        //TODO: mettere il nome dell'artigiano nel titolo della pagina
-    }else if(page=="ordini"){
-        initOrders();
-        pageTitle.innerText="I tuoi ordini";
-        document.querySelectorAll(".btnOrders").forEach(btn=>{
+        page = "ordine";
+    } else if (/^\/artigiani\/area-riservata\/prodotti\/\d+$/.test(window.location.pathname)) {
+        let idProduct=page.split('/').pop();
+        initProduct(idProduct);
+        currentPage = "prodotto";
+        pageTitle.innerText = "Dettaglio prodotto";
+        document.querySelectorAll(".btnProducts").forEach(btn => {
             btn.classList.add("selected");
         });
-    }else if(page=="ordine"){
+        page = "prodotto";
+    }else{
 
-    }else if(page=="rimborsi"){
-        initRefounds();
-        pageTitle.innerText="I tuoi rimborsi";
-        /*document.querySelectorAll(".btnRefounds").forEach(btn=>{
-            btn.classList.add("selected");
-        });*/
-    }else if(page=="clienti"){
-        initCustomers();
-        pageTitle.innerText="I tuoi clienti";
-        document.querySelectorAll(".btnCustomers").forEach(btn=>{
-            btn.classList.add("selected");
-        });
-    }else if(page=="prodotti"){
-        initProducts();
-        pageTitle.innerText="I tuoi prodotti";
-        document.querySelectorAll(".btnProducts").forEach(btn=>{
-            btn.classList.add("selected");
-        });
-    }else if(page=="prodotto"){
-        initProduct();
-        document.querySelectorAll(".btnProducts").forEach(btn=>{
-            btn.classList.add("selected");
-        });
-
+        if(page=="area-riservata"){
+            initDashboard();
+            currentPage="home";
+            document.querySelectorAll(".btnHome").forEach(btn=>{
+                btn.classList.add("selected");
+            });
+            //TODO: mettere il nome dell'artigiano nel titolo della pagina
+        }else if(page=="ordini"){
+            initOrders();
+            pageTitle.innerText="I tuoi ordini";
+            document.querySelectorAll(".btnOrders").forEach(btn=>{
+                btn.classList.add("selected");
+            });
+        }else if(page=="ordine"){
+    
+        }else if(page=="rimborsi"){
+            initRefounds();
+            pageTitle.innerText="I tuoi rimborsi";
+            /*document.querySelectorAll(".btnRefounds").forEach(btn=>{
+                btn.classList.add("selected");
+            });*/
+        }else if(page=="clienti"){
+            initCustomers();
+            pageTitle.innerText="I tuoi clienti";
+            document.querySelectorAll(".btnCustomers").forEach(btn=>{
+                btn.classList.add("selected");
+            });
+        }else if(page=="prodotti"){
+            initProducts();
+            pageTitle.innerText="I tuoi prodotti";
+            document.querySelectorAll(".btnProducts").forEach(btn=>{
+                btn.classList.add("selected");
+            });
+        }else if(page=="prodotto"){
+            initProduct();
+            document.querySelectorAll(".btnProducts").forEach(btn=>{
+                btn.classList.add("selected");
+            });
+    
+        }
     }
     showHidePage(currentPage, pages);
 }

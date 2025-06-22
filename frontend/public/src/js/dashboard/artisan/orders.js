@@ -1,80 +1,21 @@
 import {ajax} from "/src/js/modules/fetchWorkerModule.js";
 import {loadImage} from "/src/js/modules/loadImageModule.js";
-
+import { handlePageUrl } from "./index.js";
 export const showOrders=async()=>{
     let cont=document.getElementById("orderList");
 
-    /*let ordersRequest=await ajax("https://localhost:3000/purchases/orders");
+    let ordersRequest=await ajax("https://localhost:3000/purchases/orders");
     if(ordersRequest.error!=null){
         let err="Si è verificato un errore durante il caricamento dei tuoi ordini";
         if(ordersRequest.error.message=="Unauthorized")
             err="Per visualizzare gli ordini devi essere autenticato!";
         cont.innerHTML=`${err}</td>`;
         return;
-    }*/
-    let mockOrders = [
-        {
-            id: 1,
-            timestamp: Date.now() - 86400000,
-            name: "Mario",
-            surname: "Rossi",
-            amount_paid: 49.99,
-            status: "Pagato",
-            products: [
-                { id: 101, name: "Vaso", image: "/img/vaso.jpg" },
-                { id: 102, name: "Tazza", image: "/img/tazza.jpg" }
-            ]
-        },
-        {
-            id: 2,
-            timestamp: Date.now() - 172800000,
-            name: "Luca",
-            surname: "Bianchi",
-            amount_paid: 89.50,
-            status: "Spedito",
-            products: [
-                { id: 103, name: "Piatto", image: "/img/piatto.jpg" }
-            ]
-        },
-        {
-            id: 3,
-            timestamp: Date.now() - 259200000,
-            name: "Giulia",
-            surname: "Verdi",
-            amount_paid: 120.00,
-            status: "Consegnato",
-            products: [
-                { id: 104, name: "Lampada", image: "/img/lampada.jpg" },
-                { id: 105, name: "Ciotola", image: "/img/ciotola.jpg" },
-                { id: 106, name: "Brocca", image: "/img/brocca.jpg" }
-            ]
-        },
-        {
-            id: 4,
-            timestamp: Date.now() - 345600000,
-            name: "Sara",
-            surname: "Neri",
-            amount_paid: 35.75,
-            status: "Annullato",
-            products: [
-                { id: 107, name: "Portacandele", image: "/img/portacandele.jpg" }
-            ]
-        },
-        {
-            id: 5,
-            timestamp: Date.now() - 432000000,
-            name: "Alessandro",
-            surname: "Russo",
-            amount_paid: 75.20,
-            status: "Rimborsato",
-            products: [
-                { id: 108, name: "Bicchiere", image: "/img/bicchiere.jpg" },
-                { id: 109, name: "Piatto fondo", image: "/img/piatto_fondo.jpg" }
-            ]
-        }
-    ];
-    // Per test: sostituisci ordersRequest con mockOrders
-    let ordersRequest = mockOrders;
+    }
+    if(ordersRequest.length==0){
+        cont.innerHTML=`Non hai ricevuto ancora nessun ordine. Ci dispiace 🥲`;
+        return;
+    }
     ordersRequest.forEach(order=>{
         let dataOrdine=new Date(order.timestamp).toLocaleDateString();
 
@@ -103,6 +44,15 @@ export const showOrders=async()=>{
         btn.addEventListener("click",(event)=>{
             event.preventDefault();
             window.history.pushState({}, '', "/artigiani/area-riservata/ordini/"+order.id);
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                ordini: document.querySelector("#orders"),
+                ordine: document.querySelector("#order"),
+                prodotti: document.querySelector("#products"),
+                prodotto: document.querySelector("#product"),
+                clienti: document.querySelector("#customers"),
+                rimborsi: document.querySelector("#refounds")
+            });
         });
         c2.appendChild(btn);
         r1.appendChild(c2);
@@ -137,5 +87,104 @@ export const showOrders=async()=>{
         
         loadImage(img);
         
-    })
+    });
+}
+
+const showOrderProducts=(products)=>{
+    let cont=document.getElementById("orderProducts");
+    if(products.length==0){
+        cont.innerHTML="Nessun prodotto ordinato in questo ordine";
+        return;
+    }
+    products.forEach(product=>{
+        let prod=document.createElement("div");
+        prod.classList.add("product","shadow-sm");
+
+        let img=document.createElement("img");
+        img.classList.add("productThumbnail","lazyImages");
+        //TODO: add dataset.src quando è finita l'api
+        loadImage(img);
+
+        let div=document.createElement("div");
+        div.classList.add("productInfo", "d-flex","flex-column","gap-1");
+        div.innerHTML=`
+            <div class='titleProd'>${product.name}</div>
+            <div class='quantity'>Quantità: ${product.quantity}</div>
+            <div class='priceUnit'>Prezzo unitario <b>${parseFloat(product.single_product_price).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</b></div>
+            <div class='priceTotal'>Prezzo totale <b>${parseFloat(product.single_product_price*product.quantity).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</b></div>
+        `;
+        prod.appendChild(img);
+        prod.appendChild(div);
+        cont.appendChild(prod);
+    });
+}
+
+export const showOrder=async(idOrder)=>{
+    //ottengo le informazioni dell'ordine
+    const orderInfo=await ajax("https://localhost:3000/purchases/order/"+idOrder);
+    if(orderInfo.error!=null){
+        let err="Si è verificato un errore durante il caricamento dell'ordine";
+        if(orderInfo.error.message=="Unauthorized")
+            err="Per visualizzare l'ordine devi essere autenticato!";
+        console.error(err);
+
+        let overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(0,0,0,0.6)";
+        overlay.style.zIndex = 998;
+        overlay.style.display = "flex";
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+
+        let alertBox = document.createElement("div");
+        alertBox.style.background = "#fff";
+        alertBox.style.padding = "2rem";
+        alertBox.style.borderRadius = "12px";
+        alertBox.style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
+        alertBox.style.zIndex = 999;
+        alertBox.style.maxWidth = "90vw";
+        alertBox.style.textAlign = "center";
+        alertBox.innerHTML = `
+            <div style="font-size:1.2rem; margin-bottom:1rem;">${err}</div>
+            <button id="goToOrdersBtn" style="padding:0.5rem 1.5rem; border:none; background:#007bff; color:#fff; font-size:1rem; cursor:pointer;" class="rounded-4">
+                Torna agli ordini
+            </button>
+        `;
+
+        overlay.appendChild(alertBox);
+        document.body.appendChild(overlay);
+
+        document.getElementById("goToOrdersBtn").onclick = () => {
+            document.body.removeChild(overlay);
+            window.history.pushState({}, '', "/artigiani/area-riservata/ordini");
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                ordini: document.querySelector("#orders"),
+                ordine: document.querySelector("#order"),
+                prodotti: document.querySelector("#products"),
+                prodotto: document.querySelector("#product"),
+                clienti: document.querySelector("#customers"),
+                rimborsi: document.querySelector("#refounds")
+            });
+        };
+        return;
+    }
+
+    //mostro le informazioni
+    //TODO: da aggiornare con api completa
+    document.getElementById("acquirente").innerText=``;
+    document.getElementById("indirizzoSpedizione").innerText=``;
+    document.getElementById("dataOra").innerText=`${new Date(orderInfo.timestamp).toLocaleString()}`;
+    //riempire gli stati con api e selezionare quello corrente
+    
+    //prodotti
+    showOrderProducts(orderInfo.products);
+}
+
+const shipOrder=(idOrder, trackingCode)=>{
+
 }
