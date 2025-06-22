@@ -1,0 +1,2142 @@
+openapi: 3.0.0
+info:
+  title: API Baclemd - Proxy per microservices
+  description: API aggregata per i microservizi di un e-commerce artigianale
+  version: 1.0.0
+servers:
+  - url: https://localhost:3000
+    description: API Gateway principale
+tags:
+  - name: Users
+    description: Operazioni relative alla gestione degli utenti e all'autenticazione.
+  - name: Products
+    description: Gestione e recupero dei prodotti.
+  - name: Purchases
+    description: Gestione del carrello, ordini e rimborsi.
+  - name: Tickets
+    description: Gestione dei ticket di supporto per prodotti e ordini.
+  - name: Images
+    description: Caricamento e recupero di immagini.
+  - name: Health Check
+    description: Endpoint per la verifica dello stato dei servizi.
+
+security:
+  - cookieAuth: []
+
+paths:
+  # USERS MICROSERVICE PATHS
+  /user:
+    post:
+      summary: Registrazione di un nuovo utente
+      tags:
+        - Users
+      description: Permette la registrazione di un nuovo utente con ruolo 'customer' o 'artisan'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - surname
+                - email
+                - password
+                - role
+              properties:
+                name:
+                  type: string
+                  example: Mario
+                surname:
+                  type: string
+                  example: Rossi
+                email:
+                  type: string
+                  format: email
+                  example: mario.rossi@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123!
+                role:
+                  type: string
+                  enum: [customer, artisan]
+                  description: Ruolo dell'utente (cliente o artigiano).
+                  example: customer
+      responses:
+        '200':
+          description: Utente registrato con successo.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: jwt=your_jwt_token; Path=/; HttpOnly; Secure; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  email:
+                    type: string
+                    format: email
+                    example: mario.rossi@example.com
+                  name:
+                    type: string
+                    example: Mario
+                  surname:
+                    type: string
+                    example: Rossi
+                  id_role:
+                    type: integer
+                    example: 1
+                  roleName:
+                    type: string
+                    example: customer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '512':
+          description: Violazione di unicità (email già registrata).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 512
+                message: Email already registered.
+        '516':
+          description: Formato password non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 516
+                message: Invalid password format.
+        '517':
+          description: Formato email non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 517
+                message: Invalid email format.
+        '518':
+          description: Errore durante la generazione dello slug utente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 518
+                message: Error generating user slug.
+        '522':
+          description: Ruolo utente non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 522
+                message: Invalid user role.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      summary: Ottiene il profilo dell'utente autenticato
+      tags:
+        - Users
+      description: Recupera le informazioni del profilo dell'utente autenticato tramite JWT.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Informazioni del profilo recuperate con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Mario
+                  surname:
+                    type: string
+                    example: Rossi
+                  role:
+                    type: string
+                    example: customer
+                  bio:
+                    type: string
+                    nullable: true
+                    example: Sono un artigiano specializzato in ceramica.
+                  url_profile_picture:
+                    type: string
+                    format: url
+                    nullable: true
+                    example: https://localhost:3000/images/profile_pic_id
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '515':
+          description: Utente non trovato (per l'ID nel JWT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 515
+                message: User not found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Aggiorna il profilo utente autenticato
+      tags:
+        - Users
+      description: Aggiorna le informazioni del profilo dell'utente autenticato.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Nuovo indirizzo email (verrà convalidato).
+                  example: nuovo.email@example.com
+                name:
+                  type: string
+                  example: Luigi
+                surname:
+                  type: string
+                  example: Verdi
+                bio:
+                  type: string
+                  nullable: true
+                  example: Nuova descrizione della biografia.
+                password:
+                  type: string
+                  format: password
+                  description: Nuova password (verrà hashata).
+                id_profile_picture:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: ID della nuova immagine del profilo.
+                  example: 123e4567-e89b-12d3-a456-426614174000
+              minProperties: 1 # Almeno un campo deve essere presente per l'aggiornamento
+      responses:
+        '200':
+          description: Profilo aggiornato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  password_changed:
+                    type: boolean
+                    description: Indica se la password è stata modificata.
+                    example: true
+                  email:
+                    type: string
+                    format: email
+                    example: nuovo.email@example.com
+                  name:
+                    type: string
+                    example: Luigi
+                  surname:
+                    type: string
+                    example: Verdi
+                  bio:
+                    type: string
+                    example: Nuova descrizione della biografia.
+                  id_profile_picture:
+                    type: string
+                    format: uuid
+                    example: 123e4567-e89b-12d3-a456-426614174000
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '512':
+          description: L'email fornita è già in uso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 512
+                message: Email already registered.
+        '516':
+          description: Formato password non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 516
+                message: Invalid password format.
+        '517':
+          description: Formato email non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 517
+                message: Invalid email format.
+        '521':
+          description: ID immagine del profilo non valido o non esistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 521
+                message: Invalid image ID.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /login:
+    post:
+      summary: Login utente
+      tags:
+        - Users
+      description: Autentica un utente tramite email e password e imposta un cookie JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: mario.rossi@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123!
+      responses:
+        '200':
+          description: Login riuscito. Il cookie JWT è impostato.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: jwt=your_jwt_token; Path=/; HttpOnly; Secure; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  email:
+                    type: string
+                    format: email
+                    example: mario.rossi@example.com
+                  name:
+                    type: string
+                    example: Mario
+                  surname:
+                    type: string
+                    example: Rossi
+                  id_role:
+                    type: integer
+                    example: 1
+                  roleName:
+                    type: string
+                    example: customer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '513':
+          description: Utente non trovato (email non registrata).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 513
+                message: User not found.
+        '514':
+          description: Password non corretta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 514
+                message: Incorrect password.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /logout:
+    post:
+      summary: Logout utente
+      tags:
+        - Users
+      description: Effettua il logout dell'utente invalidando il cookie JWT.
+      responses:
+        '200':
+          description: Logout riuscito. Il cookie JWT è invalidato.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /user/{user_slug}:
+    get:
+      summary: Ottiene il profilo di un utente per slug
+      tags:
+        - Users
+      description: Recupera le informazioni del profilo di un utente specifico utilizzando il suo slug.
+      parameters:
+        - in: path
+          name: user_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug identificativo dell'utente (es. "mario-rossi").
+          example: "mario-rossi"
+      responses:
+        '200':
+          description: Informazioni del profilo recuperate con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Mario
+                  surname:
+                    type: string
+                    example: Rossi
+                  role:
+                    type: string
+                    example: customer
+                  bio:
+                    type: string
+                    nullable: true
+                    example: Sono un artigiano specializzato in ceramica.
+                  url_profile_picture:
+                    type: string
+                    format: url
+                    nullable: true
+                    example: https://localhost:3000/images/profile_pic_id
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '515':
+          description: Utente non trovato per lo slug fornito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 515
+                message: User not found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /dashboardPage:
+    get:
+      summary: Ottiene il link della dashboard in base al ruolo
+      tags:
+        - Users
+      description: Restituisce l'URL della pagina della dashboard appropriata in base al ruolo dell'utente autenticato (admin, customer, artisan).
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Link della dashboard recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dashboardLink:
+                    type: string
+                    description: L'URL della dashboard specifico per il ruolo dell'utente.
+              examples: # <-- Aggiunto blocco examples qui
+                AdminDashboard:
+                  summary: Esempio per Amministratore
+                  value:
+                    dashboardLink: "/admin/area-riservata"
+                CustomerDashboard:
+                  summary: Esempio per Cliente
+                  value:
+                    dashboardLink: "/clienti/area-riservata"
+                ArtisanDashboard:
+                  summary: Esempio per Artigiano
+                  value:
+                    dashboardLink: "/artigiani/area-riservata"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /isLoggedIn:
+    get:
+      summary: Verifica lo stato di login dell'utente
+      tags:
+        - Users
+      description: Controlla se l'utente è attualmente loggato, verificando la presenza del cookie JWT.
+      responses:
+        '200':
+          description: Stato di login restituito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loggedIn:
+                    type: boolean
+                    example: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # PRODUCTS MICROSERVICE PATHS
+  /products/status:
+    get:
+      summary: Health check del servizio Products
+      tags:
+        - Health Check
+      description: Verifica lo stato di salute del microservizio Products.
+      responses:
+        '200':
+          description: Servizio attivo e funzionante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: products
+                  status:
+                    type: string
+                    example: ok
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products:
+    get:
+      summary: Ottiene tutti i prodotti (senza paginazione)
+      tags:
+        - Products
+      description: Recupera un elenco di tutti i prodotti disponibili nel sistema. Non supporta paginazione o filtri su questo endpoint.
+      responses:
+        '200':
+          description: Elenco di prodotti recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductSummary'
+                  numberProducts:
+                    type: integer
+                    description: Numero totale di prodotti.
+                    example: 10
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/{page}:
+    get:
+      summary: Ottiene i prodotti con paginazione e filtri
+      tags:
+        - Products
+      description: Recupera un elenco di prodotti paginati con opzioni di filtro.
+      parameters:
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina richiesta.
+        - in: query
+          name: artisan
+          schema:
+            type: string
+          description: Filtra i prodotti per lo slug dell'artigiano.
+          example: "my-artisan-slug"
+        - in: query
+          name: disponibilita
+          schema:
+            type: integer
+            enum: [0, 1]
+          description: Filtra per disponibilità (0 per esauriti, 1 per disponibili).
+          example: 1
+        - in: query
+          name: prezzi.min
+          schema:
+            type: number
+            format: float
+          description: Prezzo minimo del prodotto.
+          example: 10.50
+        - in: query
+          name: prezzi.max
+          schema:
+            type: number
+            format: float
+          description: Prezzo massimo del prodotto.
+          example: 99.99
+        - in: query
+          name: queryString
+          schema:
+            type: string
+          description: Filtra i prodotti per stringa di ricerca nel nome.
+          example: "ceramica"
+        - in: query
+          name: order
+          schema:
+            type: string
+          description: Campo per l'ordinamento dei risultati. Se non specificato, ordina per timestamp_last_update DESC.
+          example: "price ASC"
+      responses:
+        '200':
+          description: Elenco di prodotti paginati recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductSummary'
+                  pages:
+                    type: integer
+                    description: Numero totale di pagine disponibili.
+                    example: 5
+                  numProducts:
+                    type: integer
+                    description: Numero totale di prodotti che corrispondono ai filtri.
+                    example: 45
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Pagina non trovata o formato della pagina non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/product/{artisan_slug}/{product_slug}:
+    get:
+      summary: Ottiene i dettagli di un singolo prodotto
+      tags:
+        - Products
+      description: Recupera tutti i dettagli di un prodotto specifico, identificato dallo slug dell'artigiano e dallo slug del prodotto.
+      parameters:
+        - in: path
+          name: artisan_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug dell'artigiano proprietario del prodotto.
+        - in: path
+          name: product_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug del prodotto.
+      responses:
+        '200':
+          description: Dettagli del prodotto recuperati con successo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Prodotto non trovato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/report/{artisan_slug}/{product_slug}:
+    post:
+      summary: Segnala un prodotto
+      tags:
+        - Products
+      description: Permette a un utente di segnalare un prodotto per un problema. Crea un nuovo ticket di tipo 'product'.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: artisan_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug dell'artigiano proprietario del prodotto.
+        - in: path
+          name: product_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug del prodotto da segnalare.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - note
+              properties:
+                note:
+                  type: string
+                  description: Descrizione del problema o motivo della segnalazione.
+                  example: "Questo prodotto contiene materiale offensivo."
+      responses:
+        '200':
+          description: Prodotto segnalato e ticket creato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticket_id:
+                    type: integer
+                    example: 123
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Prodotto non trovato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/product:
+    post:
+      summary: Crea un nuovo prodotto
+      tags:
+        - Products
+      description: Permette a un artigiano di creare un nuovo prodotto. Richiede il ruolo di Artigiano.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - short_description
+                - price
+                - categories
+                - images
+                - quantity
+              properties:
+                name:
+                  type: string
+                  example: Vaso in Ceramica Blu
+                description:
+                  type: string
+                  example: "Un vaso artigianale in ceramica blu, perfetto per arredare qualsiasi ambiente."
+                short_description:
+                  type: string
+                  example: "Vaso in ceramica blu fatto a mano."
+                price:
+                  type: number
+                  format: float
+                  example: 29.99
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  description: Nomi delle categorie a cui appartiene il prodotto.
+                  example: ["Decorazioni", "Casa"]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Array di ID delle immagini caricate (UUID). Il primo è la thumbnail.
+                  example: ["a1b2c3d4-e5f6-7890-1234-567890abcdef", "b2c3d4e5-f6a7-8901-2345-67890abcdef0"]
+                quantity:
+                  type: integer
+                  minimum: 0
+                  example: 10
+      responses:
+        '200':
+          description: Prodotto creato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: Vaso in Ceramica Blu
+                  description:
+                    type: string
+                    example: Vaso in ceramica blu fatto a mano.
+                  price:
+                    type: number
+                    format: float
+                    example: 29.99
+                  category:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Decorazioni", "Casa"]
+                  product_image:
+                    type: string
+                    format: uuid
+                    example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+                  quantity:
+                    type: integer
+                    example: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '521':
+          description: Immagine o categoria non valida (ID immagine non esistente o categoria non trovata).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 521
+                message: Invalid image or category.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/product/{slug}:
+    put:
+      summary: Modifica un prodotto esistente
+      tags:
+        - Products
+      description: Permette a un artigiano di modificare i dettagli di un suo prodotto esistente. Richiede il ruolo di Artigiano.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug del prodotto da modificare.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Vaso in Ceramica Verde
+                description:
+                  type: string
+                  example: "Un vaso artigianale in ceramica verde scuro, ideale per piante da interno."
+                short_description:
+                  type: string
+                  example: "Vaso artigianale verde."
+                price:
+                  type: number
+                  format: float
+                  example: 35.00
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  description: Nuovi nomi delle categorie. Le categorie esistenti verranno sostituite.
+                  example: ["Giardinaggio", "Esterni"]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Nuovi ID delle immagini. Le immagini esistenti verranno sostituite.
+                  example: ["f1e2d3c4-b5a6-9012-3456-7890abcdef12"]
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: Nuova quantità disponibile.
+                  example: 15
+      responses:
+        '200':
+          description: Prodotto modificato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Vaso in Ceramica Verde
+                  description:
+                    type: string
+                    example: Un vaso artigianale in ceramica verde scuro, ideale per piante da interno.
+                  price:
+                    type: number
+                    format: float
+                    example: 35.00
+                  quantity:
+                    type: integer
+                    example: 15
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Non autorizzato (l'utente non è l'artigiano proprietario o non è admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 403
+                message: Forbidden.
+        '404':
+          description: Prodotto non trovato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/product/{product_id}:
+    delete:
+      summary: Elimina (marca come rimosso) un prodotto
+      tags:
+        - Products
+      description: Marca un prodotto come "rimosso" nel database, rendendolo non visibile. Richiede il ruolo di Artigiano (per i propri prodotti) o Amministratore.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: product_id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID del prodotto da eliminare.
+      responses:
+        '200':
+          description: Prodotto marcato come eliminato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Non autorizzato o prodotto non corrispondente all'utente/admin.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 401
+                message: Unauthorized.
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /products/dashboard/{days}:
+    get:
+      summary: Ottiene i dati della dashboard per gli artigiani
+      tags:
+        - Products
+      description: Recupera statistiche di vendita, visite e rimborsi per l'artigiano autenticato.
+                   Permette di specificare un numero di giorni per l'analisi recente.
+                   Un valore negativo per 'days' (-1) indica un intervallo di tempo dall'inizio della creazione dei prodotti.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: days
+          schema:
+            type: integer
+            format: int32
+            minimum: -1
+          required: true
+          description: Numero di giorni indietro per l'analisi delle performance (es. 7, 30, o -1 per tutti i dati).
+      responses:
+        '200':
+          description: Dati della dashboard recuperati con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sales:
+                    type: object
+                    properties:
+                      total_orders:
+                        type: integer
+                        description: Ordini totali.
+                      total_gain:
+                        type: number
+                        format: float
+                        description: Guadagno totale.
+                      total_gain_last_days:
+                        type: number
+                        format: float
+                        description: Guadagno negli ultimi 'days' giorni.
+                      total_gain_last_days_percent:
+                        type: number
+                        format: float
+                        description: Percentuale di guadagno negli ultimi 'days' giorni rispetto al totale.
+                  visits:
+                    type: object
+                    properties:
+                      total_visits:
+                        type: integer
+                        description: Visite totali.
+                      total_visits_last_days:
+                        type: integer
+                        description: Visite negli ultimi 'days' giorni.
+                      total_visits_last_days_percent:
+                        type: number
+                        format: float
+                        description: Percentuale di visite negli ultimi 'days' giorni rispetto al totale.
+                  refunds:
+                    type: object
+                    properties:
+                      total_refunds:
+                        type: integer
+                        description: Rimborsi totali.
+                      total_refunds_last_days:
+                        type: integer
+                        description: Rimborsi negli ultimi 'days' giorni.
+                      total_refunds_last_days_percent:
+                        type: number
+                        format: float
+                        description: Percentuale di rimborsi negli ultimi 'days' giorni rispetto al totale.
+                  performance:
+                    type: object
+                    properties:
+                      sales:
+                        type: object
+                        additionalProperties:
+                          type: number
+                          format: float
+                        description: Vendite per giorno (YYYY-MM-DD) negli ultimi 'days' giorni.
+                      visits:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        description: Visite per giorno (YYYY-MM-DD) negli ultimi 'days' giorni.
+                      refunds:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        description: Rimborsi per giorno (YYYY-MM-DD) negli ultimi 'days' giorni.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # PURCHASES MICROSERVICE PATHS
+  /purchases:
+    get:
+      summary: Health check del servizio Purchases
+      tags:
+        - Health Check
+      description: Verifica lo stato di salute del microservizio Purchases.
+      responses:
+        '200':
+          description: Servizio attivo e funzionante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: purchases
+                  status:
+                    type: string
+                    example: ok
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/addToCart:
+    post:
+      summary: Aggiunge/modifica elementi al carrello
+      tags:
+        - Purchases
+      description: Aggiunge nuovi prodotti al carrello dell'utente o aggiorna la quantità di prodotti esistenti.
+                   Una quantità negativa può rimuovere prodotti dal carrello. Richiede il ruolo di Cliente.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - id
+                  - quantity
+                properties:
+                  id:
+                    type: integer
+                    description: ID del prodotto.
+                    example: 101
+                  quantity:
+                    type: integer
+                    description: Quantità da aggiungere/sottrarre (può essere negativo per rimuovere).
+                    example: 2
+              example:
+                - id: 101
+                  quantity: 2
+                - id: 102
+                  quantity: -1
+      responses:
+        '200':
+          description: Carrello aggiornato con successo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 101
+                    quantity:
+                      type: integer
+                      example: 2
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '523':
+          description: Prodotto non trovato nel database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 523
+                message: Product not found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/cart:
+    get:
+      summary: Ottiene il contenuto del carrello
+      tags:
+        - Purchases
+      description: Recupera l'elenco dei prodotti attualmente presenti nel carrello dell'utente autenticato. Richiede il ruolo di Cliente.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Contenuto del carrello recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                      description: Slug completo del prodotto (artigiano_slug/prodotto_slug).
+                      example: "nome-cognome/prodotto-xyz"
+                    quantity:
+                      type: integer
+                      example: 2
+              example:
+                - slug: "mario-rossi/vaso-blu"
+                  quantity: 1
+                - slug: "paolo-verdi/tavolo-legno"
+                  quantity: 1
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/orders:
+    get:
+      summary: Ottiene gli ordini dell'utente o dell'artigiano
+      tags:
+        - Purchases
+      description: Recupera gli ordini effettuati dall'utente (se cliente) o ricevuti (se artigiano). Richiede autenticazione.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Elenco di ordini recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/CustomerOrderSummary'
+                    - $ref: '#/components/schemas/ArtisanOrderItem'
+              examples:
+                customerOrders:
+                  value:
+                    - id: 1
+                      timestamp: "2024-01-20T10:00:00.000Z"
+                      payment_intent: "pi_xxxxxxx"
+                      amount_paid: 50.00
+                      num_products: 3
+                      products:
+                        - name: "Vaso in Ceramica"
+                          thumbnail: "https://localhost:3000/images/thumb_id1"
+                        - name: "Tavolo di Legno"
+                          thumbnail: "https://localhost:3000/images/thumb_id2"
+                      status: "Pagato"
+                artisanOrders:
+                  value:
+                    - order_id: 1
+                      product_id: 101
+                      quantity: 1
+                      single_product_price: 25.00
+                      status: "Pagato"
+                      product_name: "Vaso in Ceramica"
+                      product_thumbnail: "https://localhost:3000/images/thumb_id1"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/refund:
+    post:
+      summary: Effettua un rimborso (Admin)
+      tags:
+        - Purchases
+      description: Permette a un amministratore di rimborsare un prodotto specifico all'interno di un ordine. Richiede il ruolo di Amministratore.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - product_id
+                - order_id
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  description: L'importo da rimborsare per il prodotto (in valuta intera, non centesimi).
+                  example: 15.50
+                product_id:
+                  type: integer
+                  format: int64
+                  description: L'ID del prodotto all'interno dell'ordine da rimborsare.
+                  example: 101
+                order_id:
+                  type: integer
+                  format: int64
+                  description: L'ID dell'ordine a cui appartiene il prodotto.
+                  example: 1
+      responses:
+        '200':
+          description: Rimborso elaborato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/customers:
+    get:
+      summary: Ottiene informazioni sui clienti (Artisan)
+      tags:
+        - Purchases
+      description: Recupera un riepilogo dei clienti che hanno acquistato prodotti dall'artigiano autenticato, con statistiche di acquisto. Richiede il ruolo di Artigiano.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Informazioni sui clienti recuperate con successo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: Mario
+                    surname:
+                      type: string
+                      example: Rossi
+                    email:
+                      type: string
+                      format: email
+                      example: mario.rossi@example.com
+                    num_orders:
+                      type: integer
+                      description: Numero di ordini totali effettuati dal cliente all'artigiano.
+                      example: 3
+                    num_products:
+                      type: integer
+                      description: Numero totale di prodotti acquistati dal cliente dall'artigiano.
+                      example: 5
+                    amount_paid:
+                      type: number
+                      format: float
+                      description: Importo totale speso dal cliente dall'artigiano.
+                      example: 120.50
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/order/{id_order}:
+    get:
+      summary: Ottiene i dettagli di un singolo ordine
+      tags:
+        - Purchases
+      description: Recupera i dettagli di un ordine specifico. Accessibile dall'utente che ha effettuato l'ordine o da un Amministratore.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id_order
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID dell'ordine da recuperare.
+      responses:
+        '200':
+          description: Dettagli dell'ordine recuperati con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-20T10:00:00.000Z"
+                  user_name:
+                    type: string
+                    example: Mario
+                  user_surname:
+                    type: string
+                    example: Rossi
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 101
+                        name:
+                          type: string
+                          example: Vaso in Ceramica
+                        quantity:
+                          type: integer
+                          example: 1
+                        single_product_price:
+                          type: number
+                          format: float
+                          example: 25.00
+                        thumbnail:
+                          type: string
+                          format: url
+                          example: https://localhost:3000/images/thumbnail_id
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Ordine non trovato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/purchase:
+    post:
+      summary: Effettua un acquisto dal carrello
+      tags:
+        - Purchases
+      description: Processa l'acquisto degli articoli presenti nel carrello dell'utente. Richiede il ruolo di Cliente.
+                   Svuota il carrello dopo un acquisto riuscito.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Acquisto completato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                    description: ID del nuovo ordine creato.
+                    example: 1
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 101
+                        quantity:
+                          type: integer
+                          example: 1
+                        single_product_price:
+                          type: number
+                          format: float
+                          example: 25.00
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '524':
+          description: Non ci sono abbastanza articoli disponibili per l'acquisto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 524
+                message: Not enough items to purchase.
+        '525':
+          description: Carrello vuoto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 525
+                message: Cart is empty.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/itemStatus:
+    put:
+      summary: Modifica lo stato di un articolo in un ordine
+      tags:
+        - Purchases
+      description: Aggiorna lo stato di un singolo prodotto all'interno di un ordine. Accessibile da Artigiani (per i propri prodotti) o Amministratori.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_id
+                - item_id
+                - item_status
+              properties:
+                order_id:
+                  type: integer
+                  format: int64
+                  description: L'ID dell'ordine a cui appartiene l'articolo.
+                  example: 1
+                item_id:
+                  type: integer
+                  format: int64
+                  description: L'ID del prodotto (articolo) all'interno dell'ordine.
+                  example: 101
+                item_status:
+                  type: string
+                  description: Il nuovo stato dell'articolo.
+                  example: "Spedito"
+      responses:
+        '200':
+          description: Stato dell'articolo aggiornato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: ok
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /purchases/report/{id_order}:
+    post:
+      summary: Segnala un acquisto/ordine
+      tags:
+        - Purchases
+      description: Permette a un utente di segnalare un problema relativo a un ordine. Crea un nuovo ticket di tipo 'order'.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id_order
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID dell'ordine da segnalare.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - note
+              properties:
+                note:
+                  type: string
+                  description: Descrizione del problema o motivo della segnalazione.
+                  example: "L'ordine è incompleto o danneggiato."
+      responses:
+        '200':
+          description: Ordine segnalato e ticket creato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticket_id:
+                    type: integer
+                    example: 456
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Ordine non trovato o non appartenente all'utente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # TICKETS MICROSERVICE PATHS
+  /tickets:
+    get:
+      summary: Health check del servizio Tickets
+      tags:
+        - Health Check
+      description: Verifica lo stato di salute del microservizio Tickets.
+      responses:
+        '200':
+          description: Servizio attivo e funzionante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: tickets
+                  status:
+                    type: string
+                    example: ok
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /tickets/fetchTickets:
+    get:
+      summary: Ottiene tutti i ticket
+      tags:
+        - Ticket Management
+      description: Recupera un elenco di tutti i ticket aperti e chiusi (ticket di prodotti e ordini). Richiede il ruolo di Amministratore.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Elenco di ticket recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+              example:
+                - type: product
+                  id: 1
+                  product_id: 101
+                  user_id: 5
+                  timestamp_open: "2024-01-15T10:00:00.000Z"
+                  timestamp_resolved: null
+                  status: "Aperto"
+                  note: "Prodotto non funzionante."
+                  resolved_by: null
+                - type: order
+                  id: 2
+                  order_id: 205
+                  user_id: 8
+                  timestamp_open: "2024-01-16T14:30:00.000Z"
+                  timestamp_resolved: "2024-01-17T09:15:00.000Z"
+                  status: "Chiuso"
+                  note: "Ordine incompleto."
+                  resolved_by: 1
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /tickets/resolve/{ticket_type}/{ticket_id}:
+    post:
+      summary: Risolve un ticket
+      tags:
+        - Ticket Management
+      description: Chiude un ticket di tipo 'product' o 'order', aggiornandone lo stato a 'Chiuso' e registrando l'amministratore che lo ha risolto. Richiede il ruolo di Amministratore e che il ticket sia attualmente 'Aperto'.
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: ticket_type
+          schema:
+            type: string
+            enum: [product, order]
+          required: true
+          description: Il tipo di ticket da risolvere ('product' o 'order').
+        - in: path
+          name: ticket_id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID numerico del ticket da risolvere.
+      responses:
+        '200':
+          description: Ticket risolto con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Ticket non trovato o già risolto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # IMAGES MICROSERVICE PATHS
+  /images:
+    get:
+      summary: Health check del servizio Images
+      tags:
+        - Health Check
+      description: Verifica lo stato di salute del microservizio Images.
+      responses:
+        '200':
+          description: Servizio attivo e funzionante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: images
+                  status:
+                    type: string
+                    example: ok
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /images/upload:
+    post:
+      summary: Carica un'immagine
+      tags:
+        - Images
+      description: Carica un'immagine (formato JPEG raccomandato, verrà convertita) e restituisce un ID univoco. Richiede autenticazione.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Il file immagine da caricare.
+      responses:
+        '200':
+          description: Immagine caricata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_id:
+                    type: string
+                    format: uuid
+                    description: L'ID univoco dell'immagine caricata.
+                    example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '519':
+          description: Nessun file immagine fornito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 519
+                message: No image file provided.
+        '520':
+          description: Errore durante l'elaborazione dell'immagine.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 520
+                message: Error during image processing.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /images/{id}:
+    get:
+      summary: Recupera un'immagine per ID
+      tags:
+        - Images
+      description: Recupera un file immagine tramite il suo ID univoco.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: L'ID univoco dell'immagine.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        '200':
+          description: Immagine recuperata con successo.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Immagine non trovata o ID non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Not Found.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: jwt
+      description: Autenticazione tramite cookie HTTP-only contenente il JWT.
+
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Mario
+        surname:
+          type: string
+          example: Rossi
+        email:
+          type: string
+          format: email
+          example: mario.rossi@example.com
+        role:
+          type: string
+          enum: [customer, artisan, admin]
+          example: customer
+        photoProfile:
+          type: string
+          format: url
+          nullable: true
+          description: URL dell'immagine del profilo.
+          example: https://localhost:3000/images/profile_pic_id
+      required:
+        - id
+        - name
+        - surname
+        - email
+        - role
+    ProductSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID univoco del prodotto.
+          example: 101
+        name:
+          type: string
+          description: Nome del prodotto.
+          example: Vaso in Ceramica
+        description:
+          type: string
+          description: Breve descrizione del prodotto.
+          example: Vaso fatto a mano con argilla locale.
+        price:
+          type: number
+          format: float
+          description: Prezzo del prodotto in valuta.
+          example: 25.50
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              link:
+                type: string
+            required:
+              - id
+              - name
+              - link
+          description: Categorie a cui appartiene il prodotto.
+        artisan:
+          type: object
+          properties:
+            name:
+              type: string
+            surname:
+              type: string
+            photoProfile:
+              type: string
+              format: url
+              nullable: true
+            link:
+              type: string
+            required:
+              - name
+              - surname
+              - link
+          description: Informazioni sull'artigiano che ha creato il prodotto.
+        link:
+          type: string
+          description: Link diretto al prodotto.
+        quantity:
+          type: integer
+          description: Quantità disponibile del prodotto.
+        visits:
+          type: integer
+          description: Numero di visite alla pagina del prodotto.
+        thumbnail:
+          type: string
+          format: url
+          description: URL dell'immagine thumbnail del prodotto.
+      required:
+        - id
+        - name
+        - description
+        - price
+        - categories
+        - artisan
+        - link
+        - quantity
+        - visits
+        - thumbnail
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          properties:
+            images:
+              type: array
+              items:
+                type: string
+                format: url
+              description: URL di tutte le immagini del prodotto.
+            short_description:
+              type: string
+              description: Una descrizione più concisa del prodotto.
+          required:
+            - images
+            - short_description
+    CustomerOrderSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-20T10:00:00.000Z"
+        payment_intent:
+          type: string
+          example: "pi_xxxxxxx"
+        amount_paid:
+          type: number
+          format: float
+          example: 50.00
+        num_products:
+          type: integer
+          example: 3
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Vaso in Ceramica"
+              thumbnail:
+                type: string
+                format: url
+                example: "https://localhost:3000/images/thumb_id1"
+        status:
+          type: string
+          example: "Pagato"
+    ArtisanOrderItem:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          format: int64
+          example: 1
+        product_id:
+          type: integer
+          format: int64
+          example: 101
+        quantity:
+          type: integer
+          example: 1
+        single_product_price:
+          type: number
+          format: float
+          example: 25.00
+        status:
+          type: string
+          example: "Pagato"
+        product_name:
+          type: string
+          example: "Vaso in Ceramica"
+        product_thumbnail:
+          type: string
+          format: url
+          example: "https://localhost:3000/images/thumb_id1"
+    Ticket:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [product, order]
+          description: Tipo di ticket (prodotto o ordine).
+          example: product
+        id:
+          type: integer
+          format: int64
+          description: ID del ticket.
+          example: 1
+        product_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID del prodotto (se ticket di tipo 'product').
+          example: 101
+        order_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID dell'ordine (se ticket di tipo 'order').
+          example: 205
+        user_id:
+          type: integer
+          format: int64
+          description: ID dell'utente che ha aperto il ticket.
+          example: 5
+        timestamp_open:
+          type: string
+          format: date-time
+          description: Timestamp di apertura del ticket.
+          example: "2024-01-15T10:00:00.000Z"
+        timestamp_resolved:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp di risoluzione del ticket (null se ancora aperto).
+          example: null
+        status:
+          type: string
+          description: Stato attuale del ticket.
+          example: "Aperto"
+        note:
+          type: string
+          nullable: true
+          description: Note aggiuntive sul ticket.
+          example: "Problema con la spedizione."
+        resolved_by:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID dell'amministratore che ha risolto il ticket (null se ancora aperto).
+          example: 1
+      required:
+        - type
+        - id
+        - user_id
+        - timestamp_open
+        - status
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: Codice di errore specifico del backend.
+          example: 500
+        message:
+          type: string
+          description: Descrizione leggibile dell'errore.
+          example: Internal Server Error.
+
+  responses:
+    BadRequest:
+      description: Richiesta non valida. Campi obbligatori mancanti o formattati male.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 400
+            message: Bad Request.
+    UnauthorizedError:
+      description: Autenticazione richiesta o non valida (token JWT mancante/scaduto/non valido).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 401
+            message: Unauthorized.
+    ForbiddenError:
+      description: L'utente non ha i permessi necessari per accedere a questa risorsa (es. non è un amministratore).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 403
+            message: Forbidden.
+    InternalServerError:
+      description: Errore interno del server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 500
+            message: Internal Server Error.

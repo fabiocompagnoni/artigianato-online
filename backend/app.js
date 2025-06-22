@@ -2,6 +2,10 @@ import express from 'express';
 import cors from "cors";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import https from 'https';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+
+const swaggerDocument = YAML.load('./swagger.yaml');
 
 const app = express();
 
@@ -26,6 +30,8 @@ app.use(cors({
   },
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use((req, res, next) => {
   if(process.env.NODE_ENV !== 'test')
