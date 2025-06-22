@@ -61,7 +61,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie:true
+    cookie:{
+        secure:true,
+        httpOnly:true,
+        sameSite:'None',
+        maxAge: 24 * 60 * 60 * 1000
+    }
 }));
 
 
@@ -420,6 +425,24 @@ app.get('/isLoggedIn', (req, res) => {
     }
 });
 
+app.get("/userSlug", authJWT, async(req, res)=>{
+    const user_id = req.user.user_id;
+    try {
+        const sql_res = await pool.query(
+            'SELECT slug FROM users WHERE "ID" = $1',
+            [user_id]
+        );
+        if (sql_res.rowCount < 1) {
+            sendError(res, 515); // Utente non trovato
+            return;
+        }
+        res.status(200).json({ slug: sql_res.rows[0].slug });
+    } catch (err) {
+        console.error('Error getting user slug:', err);
+        sendError(res, 500);
+    }
+
+});
 /**
  * API per ottenere il link della dashboard in base al ruolo dell'utente
  */

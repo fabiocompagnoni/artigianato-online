@@ -1,3 +1,6 @@
+import {ajax} from "/src/js/modules/fetchWorkerModule.js";
+
+
 let chart;
 const initChartSell = async () => {
     const {  Chart, 
@@ -133,7 +136,14 @@ const initRefounds=async()=>{
 
 }
 const initProducts=async()=>{
-
+    const {loadProducts} = await import("/src/js/dashboard/artisan/products.js");
+    let url=new URL(window.location.href);
+    let page=1;
+    if(url.hash!=""&&url.hash.search("pagina")){
+        page = parseInt(url.hash.substring(url.hash.lastIndexOf("a")+1));
+    }
+    loadProducts(page);
+    //TODO: listener cambio pagina, fare anche nel sito visibile al pubblico per artigiani e prodotti
 }
 
 const initProduct=async(idOrder)=>{
@@ -267,3 +277,12 @@ export const handleNavigation = (pages) => {
         });
     });
 };
+
+export const getArtisanSlug=async()=>{
+    return new Promise(async(resolve, reject)=>{
+        const request=await ajax("https://localhost:3000/users/userSlug");
+        if(request.error!=null)
+            reject(request.error);
+        resolve(request.slug);
+    });    
+}
