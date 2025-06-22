@@ -152,17 +152,19 @@ app.get('/cart', authJWT, async (req, res) => {
 
 async function artisanOrdersHandler(req, res) {
     const sql_res = await pool.query(
-        'SELECT "ID_order", "ID_product", quantity, single_product_price, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1',
+        'SELECT "ID_order", "ID_product", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1',
         [req.user.user_id]
     );
 
-    const result = sql_res.rows.map(row => ({
+    const result = await Promise.all(sql_res.rows.map(async row => ({
         order_id: row.ID_order,
         product_id: row.ID_product,
         quantity: row.quantity,
         single_product_price: row.single_product_price,
-        status: row.status
-    }));
+        status: row.status,
+        product_name: row.name,
+        product_thumbnail: await getProductThumbnail(row.ID_product, pool)
+    })));
 
     res.json(result);
 }
