@@ -139,18 +139,11 @@ test('Registering two users with same email', async () => {
 });
 
 test('Change and get user informations', async () => {
-    let res = await request(app)
-        .post('/images/upload')
-        .attach('image', path.resolve(process.cwd(), './test/images/avatar1.png'));
-    expect(res.statusCode).toBe(200);
-
-    const avatar_id = res.body.file_id;
-
     const new_data = {...user_data};
     new_data.email = 'svetoniorulli@gmail.com';
     new_data.name = 'Svetonio';
 
-    res = await request(app)
+    let res = await request(app)
         .post('/users/user')
         .send(new_data)
         .set('Content-Type', 'application/json');
@@ -158,6 +151,14 @@ test('Change and get user informations', async () => {
 
     const cookies = res.headers['set-cookie'];
     const jwtCookie = cookies.find(cookie => cookie.startsWith('jwt='));
+
+    res = await request(app)
+        .post('/images/upload')
+        .set('Cookie', jwtCookie)
+        .attach('image', path.resolve(process.cwd(), './test/images/avatar1.png'));
+    expect(res.statusCode).toBe(200);
+
+    const avatar_id = res.body.file_id;
 
     new_data.name = 'Patrizio';
     new_data.surname = 'Spauracchi';
