@@ -9,8 +9,9 @@ const PORT = 4000;
 
 import authJWT from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
-import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
 import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
+import { selectLowestStatus } from "./scripts/utils.js";
 
 const app = express();
 
@@ -55,7 +56,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-    res.send(JSON.stringify({ service: 'purchases', status: 'ok' }));
+    res.json({ service: 'purchases', status: 'ok' });
 });
 
 //per aggiungere/aggiornare quantità/rimuovere qualcosa al carrello
@@ -151,17 +152,19 @@ app.get('/cart', authJWT, async (req, res) => {
 
 async function artisanOrdersHandler(req, res) {
     const sql_res = await pool.query(
-        'SELECT "ID_order", "ID_product", quantity, single_product_price, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1',
+        'SELECT "ID_order", "ID_product", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1',
         [req.user.user_id]
     );
 
-    const result = sql_res.rows.map(row => ({
+    const result = await Promise.all(sql_res.rows.map(async row => ({
         order_id: row.ID_order,
         product_id: row.ID_product,
         quantity: row.quantity,
         single_product_price: row.single_product_price,
-        status: row.status
-    }));
+        status: row.status,
+        product_name: row.name,
+        product_thumbnail: await getProductThumbnail(row.ID_product, pool)
+    })));
 
     res.json(result);
 }
@@ -195,15 +198,20 @@ app.get('/orders', authJWT, async (req, res) => {
         //calcolo della quantità di prodotti e prezzo totale nell'ordine
         for(const row of sql_res.rows) {
             const order_items = await pool.query(
-                'SELECT quantity, single_product_price FROM products_order WHERE "ID_order" = $1',
+                'SELECT p."ID", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON status = os."ID" WHERE "ID_order" = $1',
                 [row.ID]
             );
+
+            let products = [];
+            let products_statuses = [];
 
             let total_items = 0;
             let total_price = 0;
             for(const inner_row of order_items.rows) {
                 total_items += inner_row.quantity;
                 total_price += inner_row.quantity * inner_row.single_product_price;
+                products.push({name: inner_row.name, thumbnail: await getProductThumbnail(inner_row.ID, pool)});
+                products_statuses.push(inner_row.status);
             }
 
             response.push({
@@ -211,13 +219,51 @@ app.get('/orders', authJWT, async (req, res) => {
                 timestamp: row.timestamp_order,
                 payment_intent: row.payment_intent,
                 amount_paid: total_price / 100,
-                num_products: total_items
+                num_products: total_items,
+                products,
+                status: selectLowestStatus(products_statuses)
             });
         }
 
         res.json(response);
     } catch(err) {
         console.error('Error fetching purchases: ' + err);
+        sendError(res, 500);
+    }
+});
+
+//per ottenere info sui propri clienti
+app.get('/customers', authJWT, async (req, res) => {
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 400);
+            return;
+        }
+
+        const query = `SELECT u.name, surname, email, COUNT(*) AS num_orders, SUM(quantity) AS num_products, SUM(quantity * single_product_price) AS total_spent
+            FROM products_order
+            JOIN products p ON "ID_product" = p."ID"
+            JOIN orders o ON "ID_order" = o."ID"
+            JOIN users u ON id_user = u."ID"
+            WHERE artisan = $1
+            GROUP BY u."ID"`;
+        
+        const sql_res = await pool.query(query, [req.user.user_id]);
+
+        const users = sql_res.rows.map(row => ({
+            name: row.name,
+            surname: row.surname,
+            email: row.email,
+            num_orders: parseInt(row.num_orders),
+            num_products: parseInt(row.num_products),
+            amount_paid: row.total_spent / 100
+        }));
+
+        res.json(users);
+    } catch(err) {
+        console.error('Error fetching customers info: ' + err);
         sendError(res, 500);
     }
 });
@@ -237,27 +283,39 @@ app.get('/order/:id_order', authJWT, async (req, res) => {
             [id_order]
         );
 
+        const id_user = sql_res.rows[0].id_user;
+
         if(sql_res.rowCount === 0) {
             sendError(404);
             return;
         }
 
-        if(sql_res.rows[0].id_user !== req.user.user_id && req.user.user_role_id !== ADMIN_ROLE_ID) {
+        if(id_user !== req.user.user_id && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
         const order_timestamp = sql_res.rows[0].timestamp_order;
 
-        const response = {timestamp: order_timestamp, items: []};
+        sql_res = await pool.query(
+            'SELECT name, surname FROM users WHERE "ID" = $1',
+            [id_user]
+        );
 
-        sql_res = await pool.query('SELECT "ID_product", quantity, single_product_price FROM products_order WHERE "ID_order" = $1', [id_order]);
+        const response = {timestamp: order_timestamp, user_name: sql_res.rows[0].name, user_surname: sql_res.rows[0].surname, items: []};
+
+        sql_res = await pool.query(
+            'SELECT "ID_product", quantity, single_product_price, name FROM products_order JOIN products ON "ID_product" = "ID" WHERE "ID_order" = $1',
+            [id_order]
+        );
 
         for(const row of sql_res.rows)
             response.items.push({
                 id: row.ID_product,
+                name: row.name,
                 quantity: row.quantity,
                 single_product_price: row.single_product_price,
+                thumbnail: await getProductThumbnail(row.ID_product, pool)
             });
 
         res.json(response);

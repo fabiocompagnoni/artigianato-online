@@ -22,13 +22,11 @@ export function sendUserData(res, user_info, response_code = 200) {
         secure: true,
         maxAge: 24 * 60 * 60 * 1000
     });
-    res.status(response_code).send(
-        JSON.stringify({
-            email: user_info.email,
-            name: user_info.name,
-            surname: user_info.surname,
-            role:user_info.ID,
-            roleName: user_info.roleName
-        })
-    );
+    res.status(response_code).json({
+        email: user_info.email,
+        name: user_info.name,
+        surname: user_info.surname,
+        role:user_info.id_role,
+        roleName: user_info.roleName,
+    });
 }

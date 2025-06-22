@@ -1,0 +1,121 @@
+version: '3.9'
+
+services:
+  # Database di test
+  test_db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: marketplace_artigiani_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - test-network
+
+  # Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      NODE_ENV: test
+      ADMIN_EMAIL: testadmin@example.com
+      ADMIN_PASSWORD: testpassword
+    command: ["npm", "test"]
+    depends_on:
+      - test_db
+      - microservice_users
+      - microservice_images
+      - microservice_products
+      - microservice_purchases
+      - microservice_tickets
+    networks:
+      - test-network
+
+  # Microservices
+  microservice_users:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        - SERVICE_NAME=users
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      JWT_SECRET: test_jwt_secret
+    depends_on:
+      - test_db
+    networks:
+      - test-network
+
+  microservice_images:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        - SERVICE_NAME=images
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+    depends_on:
+      - test_db
+    networks:
+      - test-network
+
+  microservice_products:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        - SERVICE_NAME=products
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      JWT_SECRET: test_jwt_secret
+    depends_on:
+      - test_db
+    networks:
+      - test-network
+
+  microservice_purchases:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        - SERVICE_NAME=purchases
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      JWT_SECRET: test_jwt_secret
+    depends_on:
+      - test_db
+    networks:
+      - test-network
+
+  microservice_tickets:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.microservices
+      args:
+        - SERVICE_NAME=tickets
+    volumes:
+      - ./certs:/certs:ro
+    environment:
+      DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
+      JWT_SECRET: test_jwt_secret
+    depends_on:
+      - test_db
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

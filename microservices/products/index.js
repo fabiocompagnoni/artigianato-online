@@ -14,7 +14,7 @@ const PORT = 4000;
 import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
-import { getRoleID, getOrderStatusID, getTicketStatusID } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -60,7 +60,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/status', (req, res) => {
-    res.send(JSON.stringify({ service: 'products', status: 'ok' }));
+    res.json({ service: 'products', status: 'ok' });
 });
 /**
  * API per ottenere tutti i prodotti
@@ -68,13 +68,6 @@ app.get('/status', (req, res) => {
 
 const PER_PAGE=20;
 
-const getProductThumbnail=async(idProduct)=>{
-    let product_image = "https://localhost/src/img/placeholder.png";
-    const product_image_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1 AND position = 0', [idProduct]);
-    if(product_image_res.rowCount > 0)
-        product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
-    return product_image;  
-}
 const getProductImages=async(idProduct)=>{
     const product_images = [];
     const product_images_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1', [idProduct]);
@@ -119,7 +112,7 @@ const outputProduct=async(dbRow, single_product=false)=>{
         obj.description = dbRow.description;
     }
     else {
-        obj.thumbnail = await getProductThumbnail(dbRow.id);
+        obj.thumbnail = await getProductThumbnail(dbRow.id, pool);
         obj.description = dbRow.short_description;
     }
 
@@ -429,12 +422,21 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 app.delete('/product/:slug', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
-        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+        const ADMIN_ROLE_ID = await getRoleID('admin', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID || req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
-        const sql_res = await pool.query('UPDATE products SET removed = true WHERE slug = $1 AND artisan = $2', [req.params.slug, req.user.user_id]);
+        let query = 'UPDATE products SET removed = true WHERE slug = $1';
+        const params = [req.params.slug];
+
+        if(req.user.user_role_id === ARTISAN_ROLE_ID) {
+            query += ' AND artisan = $2';
+            params.push(req.user.user_id);
+        }
+
+        const sql_res = await pool.query(query, params);
 
         if(sql_res.rowCount > 0) //il prodotto è stato eliminato
             res.json({status: 'ok'});

@@ -123,6 +123,7 @@ app.post('/user', async (req, res) => {
             );
 
             const user_info = sql_res.rows[0];
+            user_info.roleName = role;
 
             sendUserData(res, user_info, 200);
         } catch (err) {
@@ -405,7 +406,7 @@ app.get("/dashboardPage", authJWT, (req, res) => {
         case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
         default: dashboardLink="/clienti/area-riservata"; break;
     }
-    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+    res.status(200).json({dashboardLink: dashboardLink});
 });
 
 /**
@@ -413,21 +414,10 @@ app.get("/dashboardPage", authJWT, (req, res) => {
  */
 app.get('/isLoggedIn', (req, res) => {
     // Verifica manuale della presenza del token JWT nel cookie
-    let loggedin=false;
-    const token = req.cookies.jwt;
-    if (typeof token === 'undefined' || !token) {
-        // Controlla anche che il token non sia stringa vuota, null o undefined
-        res.status(200).send(JSON.stringify({ loggedIn: false, otherInfo:"token non presente" }))
-        return;
+    const token = req.cookies && req.cookies.jwt;
+    if (!token) {
+        return res.status(200).json({ loggedIn: false });
     }
-    let role=null;
-    jwt.verify(token, JWT_SECRET, (err, user)=>{
-        loggedin=true;
-        role=user.user_role;
-        console.log(user);
-    });
-    
-    res.status(200).send(JSON.stringify({ loggedIn: loggedin, role:role }));
 });
 
 /**
@@ -442,7 +432,19 @@ app.get("/dashboardPage", authJWT, (req, res) => {
         case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
         default: dashboardLink="/clienti/area-riservata"; break;
     }
-    res.status(200).send(JSON.stringify({dashboardLink: dashboardLink}));
+    res.status(200).json({dashboardLink: dashboardLink});
+});
+
+/**
+ * API per verificare se l'utente è loggato (token JWT valido)
+ */
+app.get('/isLoggedIn', (req, res) => {
+    // Verifica manuale della presenza del token JWT nel cookie
+    const token = req.cookies && req.cookies.jwt;
+    if (!token) {
+        return res.status(200).send(JSON.stringify({ loggedIn: false }));
+    }
+    res.status(200).send(JSON.stringify({ loggedIn: true }));
 });
 
 https.createServer(credentials, app).listen(port, () => {
