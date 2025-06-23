@@ -155,8 +155,65 @@ const initCustomers=async()=>{
 const initRefounds=async()=>{
 
 }
-const initReviews=async()=>{
 
+const loadReviews=async(page)=>{
+    let cont=document.getElementById("listReviews");
+    const request=await ajax(`https://localhost:3000/users/reviews/${window.artisanSlug}/${page}`);
+    if(request.error!=null){
+        cont.innerHTML="Si è verificato un errore nel caricamento delle recensioni";
+    }
+    cont.innerHTML="";
+    Array.from(request.reviews).forEach(review=>{
+        let rCont=document.createElememt("div");
+        rCont.classList.add("review");
+        //todo mettere nome reviewer quando api completa
+        //let rName=
+        let starsCont=document.createElement("div");
+        let rating = review.rating || 0;
+        let fullStars = Math.floor(rating);
+        let halfStar = (rating - fullStars >= 0.5) ? 1 : 0;
+        let emptyStars = 5 - fullStars - halfStar;
+
+        for (let i = 0; i < fullStars; i++) {
+            let star = document.createElement("span");
+            star.innerHTML = "&#9733;"; // full star
+            star.style.color = "#FFD700";
+            starsCont.appendChild(star);
+        }
+        if (halfStar) {
+            let star = document.createElement("span");
+            star.innerHTML = "&#189;"; // half star (can use icon or custom svg)
+            star.style.color = "#FFD700";
+            starsCont.appendChild(star);
+        }
+        for (let i = 0; i < emptyStars; i++) {
+            let star = document.createElement("span");
+            star.innerHTML = "&#9734;"; // empty star
+            star.style.color = "#FFD700";
+            starsCont.appendChild(star);
+        }
+        rCont.appendChild(starsCont);
+        let time=document.createElement("div");
+        time.classList.add("text-muted");
+        time.innerHTML = new Date(review.created_at).toLocaleDateString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        rCont.appendChild(time);
+        let textReview = document.createElement("p");
+        textReview.innerHTML=review.review_text;
+        rCont.appendChild(textReview);
+        cont.appendChild(rCont);
+    });
+    if(request.reviews.length==0||request.reviews==null){
+        cont.innerHTML="Non hai ricevuto ancora nessuna recensione";
+    }
+}
+const initReviews=async()=>{
+    loadReviews(1);
 }
 const initProducts=async()=>{
     const {loadProducts, deleteProduct} = await import("/src/js/dashboard/artisan/products.js");
