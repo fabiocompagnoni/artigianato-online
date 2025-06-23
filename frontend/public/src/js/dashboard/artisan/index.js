@@ -161,7 +161,7 @@ const initProducts=async()=>{
 }
 
 const initProduct=async(slugProduct=null)=>{
-    const {loadCategories, uploadImage, addNewCategory, addNewQuantity, saveProduct, updateProduct} = await import("/src/js/dashboard/artisan/products.js");
+    const {loadCategories, uploadImage, addNewCategory, addNewQuantity, saveProduct, updateProduct, deleteFoto} = await import("/src/js/dashboard/artisan/products.js");
     let btnAction=document.getElementById("btnActionProduct");
     if(slugProduct==null){
         //nuovo prodotto
@@ -211,7 +211,15 @@ const initProduct=async(slugProduct=null)=>{
             }
         }
     });
-
+    /*rimozione immagini*/
+    document.getElementById("releaseTrashImg").addEventListener("dragover",(event)=>{
+        event.preventDefault();
+    });
+    document.getElementById("releaseTrashImg").addEventListener("drop",(event)=>{
+        event.preventDefault();
+        let data=JSON.parse(event.dataTransfer.getData("application/json"));
+        deleteFoto(data.idFoto, data.idProd);
+    });
 }
 
 const showHidePage=(currentPage, allPages)=>{

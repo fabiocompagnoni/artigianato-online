@@ -106,6 +106,7 @@ export const preloadProductInfo=async(slug, artisanSlug)=>{
         imgEl.classList.add("lazyImages", "line-items");
         imgEl.dataset.src=img.url;
         imgEl.dataset.id=img.id;
+        addListenerDelete(img.id, req.id, imgEl);
         loadImage(imgEl);
         document.getElementById("imgProdUploaded").appendChild(imgEl);
         selectedImages.push(img.id);
@@ -190,7 +191,9 @@ export const uploadImage=async()=>{
                     imgEl.dataset.id = data.file_id;
                     imgEl.src = URL.createObjectURL(file);
                     selectedImages.push(data.file_id);
+                    addListenerDelete(data.file_id, null, imgEl);
                     document.getElementById("imgProdUploaded").appendChild(imgEl);
+                    initDragAndDrop(document.getElementById("imgProdUploaded"),swapFoto);
                 } else {
                     alert("Errore durante il caricamento dell'immagine");
                 }
@@ -286,7 +289,18 @@ const swapFoto=async(id, pos, idProd)=>{
     }
 
 }
-const deleteFoto=async(id, idProd)=>{
+
+const addListenerDelete=(idFoto, idProd, imgElement)=>{
+    imgElement.addEventListener("dragstart",(event)=>{
+        event.dataTransfer.clearData();
+        event.dataTransfer.setData("application/json",JSON.stringify({
+            idFoto:idFoto,
+            idProd:idProd
+        }));
+    })
+}
+
+export const deleteFoto=async(id, idProd)=>{
     const request=await ajax(`https://localhost:3000/products/productImage/${idProd}/${id}`,"DELETE");
     if(request.error!=null){
         alert("Si è verificato un errore nell'eliminazione della foto");
