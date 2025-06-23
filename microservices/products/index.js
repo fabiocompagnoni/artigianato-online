@@ -963,6 +963,100 @@ app.get("/:page",async(req,res)=>{
     }
 });
 
+/**
+ * API per ottenere prodotti dello stesso artigiano ma diversi da quello corrente
+ */
+
+app.get("/correlated/:slugArtisan/:slugProduct",async(req,res)=>{
+    try {
+        const { slugArtisan, slugProduct } = req.params;
+        if (!isBodyString(slugArtisan, true) || !isBodyString(slugProduct, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const sql_res = await pool.query(
+            base_query +
+            'AND u.slug = $1 AND p.slug <> $2 ORDER BY timestamp_last_update DESC LIMIT 4',
+            [slugArtisan, slugProduct]
+        );
+
+        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
+        res.json({ products });
+    } catch (err) {
+        console.error('Error fetching correlated products:', err);
+        sendError(res, 500);
+    }
+});
+
+/**
+ * API per ottenere prodotti simili
+ */
+app.get("/similar/:slugProduct", async (req, res) => {
+    try {
+        const { slugProduct } = req.params;
+        if (!isBodyString(slugProduct, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        // 1. Ottieni info prodotto di riferimento
+        const productRes = await pool.query(
+            'SELECT "ID", price FROM products WHERE slug = $1 AND removed = false',
+            [slugProduct]
+        );
+        if (productRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const { ID: productId, price } = productRes.rows[0];
+
+        // 2. Ottieni categorie del prodotto
+        const catRes = await pool.query(
+            'SELECT "ID_category" FROM product_categories WHERE "ID_product" = $1',
+            [productId]
+        );
+        const categoryIds = catRes.rows.map(row => row.ID_category);
+        if (categoryIds.length === 0) {
+            // Se non ha categorie, cerca solo per prezzo simile
+            categoryIds.push(-1); // Nessuna categoria, non troverà nulla con IN
+        }
+
+        // 3. Trova prodotti simili per categoria o prezzo (±20%)
+        const minPrice = Math.round(price * 0.8);
+        const maxPrice = Math.round(price * 1.2);
+
+        const similarRes = await pool.query(
+            `
+            ${base_query}
+            AND p."ID" <> $1
+            AND (
+                p."ID" IN (
+                    SELECT "ID_product" FROM product_categories WHERE "ID_category" = ANY($2)
+                )
+                OR (p.price BETWEEN $3 AND $4)
+            )
+            ORDER BY
+                -- Priorità: più categorie in comune, poi prezzo più vicino
+                (
+                    SELECT COUNT(*) FROM product_categories pc
+                    WHERE pc."ID_product" = p."ID" AND pc."ID_category" = ANY($2)
+                ) DESC,
+                ABS(p.price - $5) ASC,
+                timestamp_last_update DESC
+            LIMIT 8
+            `,
+            [productId, categoryIds, minPrice, maxPrice, price]
+        );
+
+        const products = await Promise.all(similarRes.rows.map(row => outputProduct(row)));
+        res.json({ products });
+    } catch (err) {
+        console.error('Error fetching similar products:', err);
+        sendError(res, 500);
+    }
+});
+
 https.createServer(credentials, app).listen(PORT, () => {
   console.log("Microservice products online");
 });
