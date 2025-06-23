@@ -69,7 +69,6 @@ app.post('/addToCart', authJWT, async (req, res) => {
         }
 
         const items = req.body;
-        console.log('Items to add to cart: ' + items);
 
         if(!items || !Array.isArray(items)) {
             sendError(res, 400);
@@ -137,15 +136,15 @@ app.get('/cart', authJWT, async (req, res) => {
         }
 
         const sql_res = await pool.query(
-            'SELECT p.slug AS pslug, u.slug AS aslug, quantity FROM products_carts JOIN products p ON p."ID" = "ID_product" JOIN users u ON artisan = u."ID" WHERE "ID_user" = $1', 
+            'SELECT p."ID", p.slug AS pslug, u.slug AS aslug, quantity FROM products_carts JOIN products p ON p."ID" = "ID_product" JOIN users u ON artisan = u."ID" WHERE "ID_user" = $1', 
             [req.user.user_id]
         );
 
         res.json(sql_res.rows.map(row =>
-            ({'slug': row.aslug + '/' + row.pslug, 'quantity': row.quantity})
+            ({'id': row.ID, 'slug': row.aslug + '/' + row.pslug, 'quantity': row.quantity})
         ));
     } catch(err) {
-        console.error('Error adding item to cart: ' + err);
+        console.error('Error fetching items from cart: ' + err);
         sendError(res, 500);
     }
 });
@@ -252,12 +251,15 @@ app.post('/refund', authJWT, async (req, res) => {
 
         const { amount, product_id, order_id } = req.body;
 
-        await pool.query(
+        const sql_res = await pool.query(
             'UPDATE products_order SET status = $1, refunded_import = $2 WHERE "ID_order" = $3 AND "ID_product" = $4',
             [RIMBORSATO_STATUS_ID, Math.round(amount * 100), order_id, product_id]
         );
 
-        res.json({status: 'ok'});
+        if(sql_res.rowCount > 0)
+            res.json({status: 'ok'});
+        else //non è stata trovata la coppia (ordine, prodotto)
+            sendError(res, 404);
     } catch(err) {
         console.error('Error refunding purchase: ' + err);
         sendError(res, 500);
@@ -270,7 +272,7 @@ app.get('/customers', authJWT, async (req, res) => {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
         if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
-            sendError(res, 400);
+            sendError(res, 403);
             return;
         }
 
@@ -304,7 +306,7 @@ app.get('/customers', authJWT, async (req, res) => {
 app.get('/order/:id_order', authJWT, async (req, res) => {
     try {
         const id_order = req.params.id_order;
-        if(!isBodyInt(id_order)) {
+        if(!isBodyInt(id_order, true)) {
             sendError(res, 400);
             return;
         }
@@ -315,12 +317,12 @@ app.get('/order/:id_order', authJWT, async (req, res) => {
             [id_order]
         );
 
-        const id_user = sql_res.rows[0].id_user;
-
         if(sql_res.rowCount === 0) {
-            sendError(404);
+            sendError(res, 404);
             return;
         }
+
+        const id_user = sql_res.rows[0].id_user;
 
         if(id_user !== req.user.user_id && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
@@ -431,14 +433,13 @@ app.post('/purchase', authJWT, async (req, res) => {
 
 //per modificare lo stato di un acquisto
 app.put('/itemStatus', authJWT, async (req, res) => {
-    const order_id = req.body.order_id;
-    const item_id = req.body.item_id;
-    const item_status = req.body.item_status;
-
-    if(!order_id || !item_id || !item_status) {
+    if(!req.body || !req.body.order_id || !isBodyInt(req.body.order_id, true)
+    || !req.body.item_id || !isBodyInt(req.body.item_id, true) || !req.body.item_status) {
         sendError(res, 400);
         return;
     }
+
+    const { order_id, item_id, item_status } = req.body;
 
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
@@ -463,10 +464,10 @@ app.put('/itemStatus', authJWT, async (req, res) => {
                 res.json({result: 'ok'});
                 break;
             default:
-                sendError(403);
+                sendError(res, 403);
         }
     } catch(err) {
-        console.error('Error adding item to cart: ' + err);
+        console.error('Error editing item status: ' + err);
         sendError(res, 500);
     }
 });
@@ -476,7 +477,7 @@ app.post('/report/:id_order', authJWT, async (req, res) => {
     try {
         if(!req.body || !req.body.note || !isBodyString(req.body.note, true) ||
             !isBodyInt(req.params.id_order, true)) {
-            sendError(400);
+            sendError(res, 400);
             return;
         }
 
