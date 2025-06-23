@@ -423,6 +423,49 @@ app.put('/product/:slug', authJWT, async (req, res) => {
     }
 });
 
+app.post("/restock/:slugProduct",authJWT, async(req, res)=>{
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        const slugProduct = req.params.slugProduct;
+
+        if(!isBodyString(slugProduct, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { quantity } = req.body;
+
+        if(!isBodyInt(quantity, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        // Recupera l'ID del prodotto tramite slug e verifica che appartenga all'artigiano autenticato
+        const productRes = await pool.query(
+            'SELECT "ID" FROM products WHERE slug = $1 AND artisan = $2 AND removed = false',
+            [slugProduct, req.user.user_id]
+        );
+        if(productRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const productId = productRes.rows[0].ID;
+
+        await pool.query('INSERT INTO products_restock("ID_product", quantity) VALUES($1, $2)', [productId, quantity]);
+        //ottenimento quantita aggiornata
+        const sql_res2 = await pool.query('SELECT quantity FROM products_view WHERE "ID" = $1', [productId]);
+        res.json({quantity: sql_res2.rows[0].quantity});
+    } catch(err) {
+        console.error('Error restocking product: ' + err);
+        sendError(res, 500);
+    }
+});
+
 //delete product (lo marchia come eliminato nel db)
 app.delete('/product/:product_id', authJWT, async (req, res) => {
     try {
