@@ -129,10 +129,33 @@ export const showErrorPopup=(errorText, backPage, backBtnText)=>{
 }
 
 const initCustomers=async()=>{
-
+    let tbody=document.getElementById("customersTbContent");
+    const req=await ajax("https://localhost:3000/purchases/customers");
+    if(req.error!=null){
+        tbody.innerHTML="<tr><td colspan='5'>Si è verificato un errore nel caricamento dei clienti</td></tr>";
+        return;
+    }
+    if(req.length==0){
+        tbody.innerHTML="<tr><td colspan='5'>Non è stato ancora effettuato alcun acquisto</td></tr>";
+        return;
+    }
+    req.forEach(customer=>{
+        let tr=document.createElement("tr");
+        tr.innerHTML=`
+            <td>${customer.name} ${customer.surname}</td>
+            <td>${parseFloat(customer.amount_paid).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</td>
+            <td>${customer.num_products}</td>
+            <td>${customer.num_orders}</td>
+            <td><a href='mailto:${customer.email}'>${customer.email}</a></td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 const initRefounds=async()=>{
+
+}
+const initReviews=async()=>{
 
 }
 const initProducts=async()=>{
@@ -155,7 +178,8 @@ const initProducts=async()=>{
             prodotti: document.querySelector("#products"),
             prodotto: document.querySelector("#product"),
             clienti: document.querySelector("#customers"),
-            rimborsi: document.querySelector("#refounds")
+            rimborsi: document.querySelector("#refounds"),
+            recensioni: document.querySelector("#reviews")
         });
     });
 
@@ -168,7 +192,8 @@ const initProducts=async()=>{
             prodotti: document.querySelector("#products"),
             prodotto: document.querySelector("#product"),
             clienti: document.querySelector("#customers"),
-            rimborsi: document.querySelector("#refounds")
+            rimborsi: document.querySelector("#refounds"),
+            recensioni: document.querySelector("#reviews")
         });
 
     }
@@ -328,6 +353,12 @@ export const handlePageUrl=(pages)=>{
                 btn.classList.add("selected");
             });
         
+        }else if(page=="recensioni"){
+            initReviews();
+            pageTitle.innerText="Le tue recensioni";
+            document.querySelectorAll(".btnReviews").forEach(btn=>{
+                btn.classList.add("selected");
+            });
         }
     }
     showHidePage(currentPage, pages);
@@ -377,6 +408,14 @@ export const handleNavigation = (pages) => {
             resetSelected();
             btn.classList.add("selected");
             navigate("/artigiani/area-riservata/clienti");
+        });
+    });
+    document.querySelectorAll(".btnReviews").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            resetSelected();
+            btn.classList.add("selected");
+            navigate("/artigiani/area-riservata/recensioni");
         });
     });
 };

@@ -24,6 +24,7 @@
                     <button class="btnProducts"><i class="fa-solid fa-bag-shopping"></i> Prodotti</button>
                     <button class="btnOrders"><i class="fa-solid fa-receipt"></i> Ordini</button>
                     <button class="btnCustomers"><i class="fa-solid fa-users"></i> Clienti</button>
+                    <button class="btnReviews"><i class="fa-solid fa-star"></i> Recensioni</button>
                 </div>
             </div>
             <button class="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -33,6 +34,7 @@
             <button class="btnProducts"><i class="fa-solid fa-bag-shopping"></i> Prodotti</button>
             <button class="btnOrders"><i class="fa-solid fa-receipt"></i> Ordini</button>
             <button class="btnCustomers"><i class="fa-solid fa-users"></i> Clienti</button>
+            <button class="btnReviews"><i class="fa-solid fa-star"></i> Recensioni</button>
         </div>
         <div class="pageContent">
             <div class="fixedPart">
@@ -349,6 +351,9 @@
                 </div>
             </div>
             <div id="refounds" style="display:none"></div>
+            <div id="reviews" style="display:none">
+
+            </div>
         </div>
     </div>
     
@@ -369,7 +374,8 @@
                 prodotti: document.querySelector("#products"),
                 prodotto: document.querySelector("#product"),
                 clienti: document.querySelector("#customers"),
-                rimborsi: document.querySelector("#refounds")
+                rimborsi: document.querySelector("#refounds"),
+                recensioni: document.querySelector("#reviews")
             });
             handleNavigation({
                 home: document.querySelector("#home"),
@@ -378,7 +384,8 @@
                 prodotti: document.querySelector("#products"),
                 prodotto: document.querySelector("#product"),
                 clienti: document.querySelector("#customers"),
-                rimborsi: document.querySelector("#refounds")
+                rimborsi: document.querySelector("#refounds"),
+                recensioni: document.querySelector("#reviews")
             });
         });
         window.addEventListener("pushstate", async () => {
@@ -389,7 +396,8 @@
                 prodotti: document.querySelector("#products"),
                 prodotto: document.querySelector("#product"),
                 clienti: document.querySelector("#customers"),
-                rimborsi: document.querySelector("#refounds")
+                rimborsi: document.querySelector("#refounds"),
+                recensioni: document.querySelector("#reviews")
             });
         });
     </script>
