@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
 	surname VARCHAR(100) NOT NULL,
 	password CHAR(60) NOT NULL,
 	id_role INTEGER NOT NULL REFERENCES roles("ID"),
+	google_id VARCHAR(100),
 	timestamp_registration TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	id_profile_picture UUID REFERENCES images("ID"),
 	bio VARCHAR(255),

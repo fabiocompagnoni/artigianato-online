@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 
 import https from 'https';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 
 import sendError from './common_scripts/sendError.js';
 import { generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
@@ -13,10 +14,14 @@ import { getRoleID, getArtisanReviews } from './common_scripts/utils.js';
 import { sendUserData } from './scripts/userScripts.js';
 import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 
+import passport from 'passport';
+import configurePassport from "./passportSetup.js";
+import session from "express-session";
 
 const app = express();
 const port = 4000;
 
+const JWT_SECRET = process.env.JWT_SECRET;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
@@ -51,6 +56,20 @@ app.use(cors({
   },
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
+
+console.log(process.env.GOOGLE_CLIENT_ID ?? "Client ID non letto");
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie:{
+        secure:true,
+        httpOnly:true,
+        sameSite:'None',
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -206,6 +225,84 @@ app.get('/user', authJWT, async (req, res) => {
         console.error('Error getting user data:', err);
         sendError(res, 500);
     }
+});
+//configurazione autenticazione con google
+configurePassport(passport);
+/**
+ * API utilizzata per il login con google
+ */
+app.get("/user/:googleId",async(req, res)=>{
+    const googleId = req.params.googleId;
+
+    const sql_res = await pool.query(
+        'SELECT users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE users.google_id = $1',
+        [googleId]
+    );
+
+    if (sql_res.rowCount < 1) {
+        sendError(res, 515);
+        return;
+    }
+
+    const user_data = sql_res.rows[0];
+
+    const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
+
+    res.status(200).json({
+        name: user_data.user_name,
+        surname: user_data.surname,
+        role: user_data.role_name,
+        bio: user_data.bio,
+        url_profile_picture: propic_url,
+    });
+});
+app.post("/user/:googleId",async(req, res)=>{
+    const googleId = req.params.googleId;
+
+    if (!req.body || !req.body.email || !req.body.name || !req.body.surname) {
+        sendError(res, 400); // Bad request se mancano campi
+        return;
+    }
+
+    const { email, name, surname} = req.body;
+    
+    let slug = '';
+    try {
+        slug = await generateUserSlug(name, surname, pool);
+    } catch (e) {
+        sendError(res, 518);
+        return;
+    }
+
+    let slug_error = false;
+    do {
+        try {
+            slug_error = false;
+
+            const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
+            const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+            const sql_res = await pool.query(
+                'INSERT INTO users(email, name, slug, google_id) VALUES ($1, $2, $3, $4) RETURNING "ID", email, name, surname',
+                [email, name, surname, slug, googleId]
+            );
+
+            const user_info = sql_res.rows[0];
+
+            sendUserData(res, user_info, 200);
+        } catch (err) {
+            if (err.detail.startsWith('Key (email)')) //unique violation on email
+                sendError(res, 512);
+            else if (err.detail.startsWith('Key (slug)')) { //unique violation on slug
+                slug_error = true;
+                slug = generateUserSlug(name, surname, pool);
+            } else {
+                console.error('Error creating user:', err);
+                sendError(res, 500);
+            }
+        }
+    } while (slug_error);
+
 });
 
 app.get('/user/:user_slug', async (req, res) => {
@@ -437,10 +534,29 @@ app.get('/isLoggedIn', (req, res) => {
     const token = req.cookies && req.cookies.jwt;
     if (!token) {
         return res.status(200).json({ loggedIn: false });
+    }else{
+        return res.status(200).json({ loggedIn: true });
     }
-    res.status(200).json({ loggedIn: true });
 });
 
+app.get("/userSlug", authJWT, async(req, res)=>{
+    const user_id = req.user.user_id;
+    try {
+        const sql_res = await pool.query(
+            'SELECT slug FROM users WHERE "ID" = $1',
+            [user_id]
+        );
+        if (sql_res.rowCount < 1) {
+            sendError(res, 515); // Utente non trovato
+            return;
+        }
+        res.status(200).json({ slug: sql_res.rows[0].slug });
+    } catch (err) {
+        console.error('Error getting user slug:', err);
+        sendError(res, 500);
+    }
+
+});
 /**
  * API per ottenere il link della dashboard in base al ruolo dell'utente
  */
@@ -463,11 +579,55 @@ app.get('/isLoggedIn', (req, res) => {
     // Verifica manuale della presenza del token JWT nel cookie
     const token = req.cookies && req.cookies.jwt;
     if (!token) {
-        return res.status(200).json({ loggedIn: false });
+        return res.status(200).send(JSON.stringify({ loggedIn: false }));
     }
-    res.status(200).json({ loggedIn: true });
+    res.status(200).send(JSON.stringify({ loggedIn: true }));
 });
 
 https.createServer(credentials, app).listen(port, () => {
   console.log("Microservice users online");
 });
+
+app.get("/auth/google/callback", async(req, res)=>{
+    passport.authenticate("google", {failureRedirect:'/login'}),(req, res)=>{
+        const payload={
+            user:{
+                id:req.user.id,
+                role_id:req.user.role_id,
+                role:req.user.role
+            }
+        }
+        jwt.sign(
+            { user_id: payload.user.id, user_role_id: payload.user.role_id, user_role:payload.user.role },
+            JWT_SECRET,
+            { expiresIn: '1d' },
+            async(err, token)=>{
+            if(err) throw err;
+            //init cookie
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                sameSite: 'None',
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            });
+                // Ottieni il link della dashboard dall'API /dashboardPage
+                try {
+                    const fetch = (await import('node-fetch')).default;
+                    const dashboardRes = await fetch('https://localhost:4000/dashboardPage', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    const data = await dashboardRes.json();
+                    res.redirect(data.dashboardLink);
+                } catch (e) {
+                    res.redirect('/');
+                }
+            }
+        );
+        
+    }});
+
+app.get("/auth/google", (req, res)=>{
+    passport.authenticate("google",{scope:['profile','email']});
+});
+

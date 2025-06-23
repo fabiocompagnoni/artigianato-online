@@ -1,5 +1,30 @@
 import { ajax } from "/src/js/modules/fetchWorkerModule.js";
 
+const isLoggedIn=async()=>{
+    let isLoggedin=false;
+    let req=await fetch("https://localhost:3000/users/isLoggedIn",{
+        method:"GET",
+        credentials: 'include'
+    });
+    let respJson=await req.json();
+    if(req.status!=200){
+        console.error("Error fetching login status:", respJson.error);
+        return false;
+    }
+    if(respJson.loggedIn!=null)
+        isLoggedin=respJson.loggedIn;
+    return isLoggedin;
+}
+
+const getUrlDashboard=async()=>{
+    let urlDashboard="";
+    let reqLink=await ajax("https://localhost:3000/users/dashboardPage");
+    if(reqLink.dashboardLink!=null)
+        urlDashboard=reqLink.dashboardLink;
+    else
+        throw new Error("Dashboard link not found");
+    return urlDashboard;
+}
 
 const makeLogin=async()=>{
     let email=document.getElementById("emailLogin").value;
@@ -21,10 +46,12 @@ const makeLogin=async()=>{
             body:JSON.stringify({
                 email:email,
                 password:password
-            })
+            }),
+            credentials: 'include'
         });
 
         let response=await request.json();
+        console.log(response);
         if(request.status!=200){
             errorPart.innerHTML=response.error;
             errorPart.style.display="block";
@@ -32,14 +59,8 @@ const makeLogin=async()=>{
             document.getElementById("loadingPart").style.display="none";
             document.getElementById("inputPart").style.display="block";
             return;
-        }else{
-            
-            let urlDashboard="";
-            let reqLink=await ajax("https://localhost:3000/users/dashboardPage");
-            if(reqLink.dashboardLink!=null)
-                urlDashboard=reqLink.dashboardLink;
-            else
-                throw new Error("Dashboard link not found");
+        }else{ 
+            let urlDashboard=await getUrlDashboard();
             window.location.href=urlDashboard;
         }
 
@@ -127,7 +148,7 @@ const register=async()=>{
             password:password,
             name:nome,
             surname:cognome,
-            type:parsedType
+            role:parsedType
         },{
             "Content-Type": "application/json"
         });
@@ -151,15 +172,27 @@ const register=async()=>{
     }
 }
 
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded",async()=>{
+    //verifico se utente e' gia' loggato
+    let isLogged=await isLoggedIn();
+    if(isLogged){
+        try{
+            let urlDashboard=await getUrlDashboard();
+            window.location.href=urlDashboard;
+        }catch(err){
+            console.error(err);
+        }
+    }
+    
     if(document.getElementById("showPsw")!=null)
         document.getElementById("showPsw").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("password"), document.getElementById("showPsw"));});
     if(document.getElementById("showPsw1")!=null)
         document.getElementById("showPsw1").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("passwordRegister"), document.getElementById("showPsw1"));});
     if(document.getElementById("showPsw2")!=null)
         document.getElementById("showPsw2").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("passwordConfirm"), document.getElementById("showPsw2"));});
-    if(document.getElementById("loginButton") != null)
+    if(document.getElementById("loginButton") != null){
         document.getElementById("loginButton").addEventListener("click",makeLogin);
+    }
     if(document.getElementById("registerButton") != null)
         document.getElementById("registerButton").addEventListener("click",register);
 });

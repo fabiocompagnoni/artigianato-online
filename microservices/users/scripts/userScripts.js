@@ -15,7 +15,8 @@ function generateUserJWT(user_info) {
 }
 
 export function sendUserData(res, user_info, response_code = 200) {
-    res.cookie('jwt', generateUserJWT(user_info), {
+    let token=generateUserJWT(user_info);
+    res.cookie('jwt', token, {
         httpOnly: true,
         sameSite: 'None',
         secure: true,

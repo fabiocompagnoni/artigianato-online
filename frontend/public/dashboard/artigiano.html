@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area riservata artigiano &middot; Fabio Compagnoni</title>
+    <meta name="description" content="Area riservata per i clienti di Artigianato Online. Qui potrai vedere i tuoi ordini, gestirli e modificare tutto ciò che riguarda il tuo account" id="descrizione"/>
+    <meta name="keywords" content=""/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/dashboard/artigiano.css"/>
+
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="navbarDesktop d-none d-md-flex flex-column gap-4 justify-content-between">
+            <div class="d-flex flex-column">
+                <div class="navbarLogo">
+                    <a href="/"><img src="/src/img/logo_orizzontale.png" alt="Logo Artigiano Online"/></a>
+                </div>
+                <div class="navbarActions">
+                    <button class="btnHome"><i class="fa-solid fa-house"></i> Dashboard</button>
+                    <button class="btnProducts"><i class="fa-solid fa-bag-shopping"></i> Prodotti</button>
+                    <button class="btnOrders"><i class="fa-solid fa-receipt"></i> Ordini</button>
+                    <button class="btnCustomers"><i class="fa-solid fa-users"></i> Clienti</button>
+                </div>
+            </div>
+            <button class="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+        <div class="navbarMobile d-flex d-md-none">
+            <button class="btnHome"><i class="fa-solid fa-house"></i> Dashboard</button>
+            <button class="btnProducts"><i class="fa-solid fa-bag-shopping"></i> Prodotti</button>
+            <button class="btnOrders"><i class="fa-solid fa-receipt"></i> Ordini</button>
+            <button class="btnCustomers"><i class="fa-solid fa-users"></i> Clienti</button>
+        </div>
+        <div class="pageContent">
+            <div class="fixedPart">
+                <h1 class="pageTitle">Bentornato, Nome Artigiano</h1>
+                <div class="dropdown">
+                    <button class="customDropdownBtn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img alt="Immagine profilo" id="artisanPhotoNav"/>
+                        <div class="nomeArtigiano">Nome artigiano</div>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <!-- TODO: mettere link aggiornati-->
+                        <li><a class="dropdown-item" href="">Cambia password</a></li>
+                        <li><a class="dropdown-item" href="">Modifica profilo</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="home" style="display:none">
+                <div class="d-flex flex-row gap-4 flex-wrap align-items-stretch justify-content-center">
+                    <div class="card cardPrimary cardResume">
+                        <a href="/artigiani/area-riservata/ordini" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-basket-shopping"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Vendite</h2>
+                                <div class="statValue">
+                                    <span class="ordersNum">0</span> Ordini
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </a>
+                        <div class="secondRow" id="ordersValue">
+                            € 0,00
+                        </div>
+                        <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="statInfo">
+                                <i class="fa-solid fa-arrow-trend-up" id="trendOrders"></i>
+                                <span class="trendOrdersText">+0,00 %</span>
+                            </div>
+                            <div class="statInfo">
+                                <span id="ordersWeek">+0</span> questa settimana
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardResume">
+                        <div href="/artigiani/area-riservata/ordini" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Visite</h2>
+                            </div>
+                        </div>
+                        <div class="secondRow" id="visualsValue">
+                            0
+                        </div>
+                    </div>
+                    <div class="card cardResume">
+                        <a href="/artigiani/area-riservata/rimborsi" class="firstRow d-flex flex-row gap-2 align-items-center justify-content-between">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-money-bill"></i>
+                            </div>
+                            <div class="statText">
+                                <h2>Rimborsi</h2>
+                                <div class="statValue">
+                                    <span class="ordersNum">0</span> Ordini
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </a>
+                        <div class="secondRow" id="refoundsValue">
+                            0
+                        </div>
+                        <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="statInfo">
+                                <i class="fa-solid fa-arrow-trend-up" id="trendRefound"></i>
+                                <span class="trendRefoundText">+0,00 %</span>
+                            </div>
+                            <div class="statInfo">
+                                <span id="ordersWeek">+0</span> questa settimana
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardResume" style="flex-basis:50rem;">
+                        <div class="d-flex flex-row gap-2 align-items-center justify-content-between flex-wrap">
+                            <h3>Performance delle vendite</h3>
+                            <div class="col-sm-4">
+                                <select class="form-select rounded-4" id="selectTimePerformace">
+                                    <option value="0">Oggi</option>
+                                    <option value="1">Ieri</option>
+                                    <option value="7">Ultima settinana</option>
+                                    <option value="30">Ultimo mese</otion>
+                                    <option value="90">Ultimo trimestre</option>
+                                    <option value="365">Ultimo anno</option>
+                                    <option value="-1">Tutto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="chartContainer">
+                            <canvas id="salesChart" class="chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card cardResume">
+                        <h3>Top categorie</h3>
+                    </div>
+
+                </div>
+            </div>
+            <div id="products" style="display:none">
+                <div class="d-flex align-items-center justify-content-end my-2">
+                    <button class="btn btn-success rounded-4" id="btnToggleNewProd"><i class="fa-solid fa-plus"></i> Nuovo prodotto</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nome</th>
+                                <th>Disponibilità</th>
+                                <th>Categorie</th>
+                                <th>Prezzo</th>
+                                <th>Visite</th>
+                                <td></td>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTbContent"></tbody>
+                    </table>
+                    <div class="pagination" id="paginationProducts"></div>
+                </div>
+            </div>
+            <div id="product" style="display:none">
+                <div class="editorProductCont">
+                    <div class="card cardPartProduct">
+                        <div class="mb-2">
+                            <label>Nome del prodotto</label>
+                            <input type="text" class="form-control rounded-4" id="productName"/>
+                        </div>
+                        <div class="mb-2">
+                            <label>Prezzo</label>
+                            <div class="input-group rounded-4">
+                                <input type="number" class="form-control" id="productPrice" step="0.01"/>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label>Descrizione breve del prodotto</label>
+                            <textarea class="form-control rounded-4" id="productShortDescription" maxlength="255"></textarea>
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct">
+                        <label>Immagini del prodotto</label>
+                        <div class="productImgCont" id="imgProdUploaded">
+                            <div class="selectImgBtn"><i class="fa-solid fa-plus"></i></div>
+                        </div>
+                        <input id="fotoInput" type="file" accept="image/*" multiple hidden/>
+                        
+                        <div class="infoChangeOrder">Trascina le foto una sopra l'altra per cambiarne l'ordine</div>
+                        <div class="releaseTrash" id="releaseTrashImg">
+                            Rilascia qui le foto che vuoi eliminare
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct" style="flex-basis:60rem;">
+                        <div class="mb-2">
+                            <label>Descrizione del prodotto</label>
+                            <textarea class="form-control rounded-4" id="productDescription" maxlength="65535" style="height:10rem;"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label>Disponibilità</label>
+                            <div class="d-flex flex-row gap-2 align-items-center flex-wrap">
+                                <input type="number" id="pruductDisponibility" class="form-control rounded-4" disabled/>
+                                <button class="btn btn-secondary rounded-4" style="flex:1;white-space: no-wrap;" data-bs-toggle="modal" data-bs-target="#modalRestock" id="btnToggleProductRestock">Aggiungi disponibilità</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card cardPartProduct">
+                        <div class="d-flex flex-row flex-wrap gap-2 align-items-center justify-content-between">
+                            <label>Categorie del prodotto</label>
+                            <button class="btn btn-secondary rounded-4" data-bs-toggle="modal" data-bs-target="#modalCategory"><i class="fa-solid fa-plus"></i> Aggiungi categoria</button>
+                        </div>
+                        <div class="categoryList" id="categoryList"></div>
+                    </div> 
+                </div>
+                <button class="btn btn-success rounded-4 btnActionPrimary" id="btnActionProduct"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+                
+                <div class="modal fade" id="modalRestock" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="exampleModalLabel">Aggiungi disponibilità in magazzino</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Aggiorna la disponibilità del tuo prodotto, aggiungendo il numero di pezzi che hai aggiunto al magazzino per questo prodotto</p>
+                                <div class="my-2">
+                                    <label>Quantità</label>
+                                    <input type="number" class="form-control rounded-4" id="productQuantityAdd"/>
+                                </div>
+                                <div id="resQuantityAdd"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary rounded-4" id="btnAddQuantity">Aggiorna disponibilità</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="modalCategory" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="exampleModalLabel">Aggiungi una nuova categoria</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Inserisci il nome della categoria che vuoi aggiungere</p>
+                                <div class="my-2">
+                                    <label>Nome categoria</label>
+                                    <input type="text" class="form-control rounded-4" id="newCatName"/>
+                                </div>
+                                <div id="resCatNew"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary rounded-4" id="btnAddCategory">Aggiungi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="updates">
+                <div class="bodyArea">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC70lEQVR4nO2Y24tNURzHP2Zcj0sT48yhyC1FFFHThFyKpvHiRSQ8zwOat+FNlEZR5A8YJEoZD+6J4uQaIYxcGqWExMxghinmaE3freU458y5rD1nn+xP7dpr771+v993r9tvLQgJCQkCg4EFwEZgG7AFWAMsBMopAaqBw8BXIJHm+gg0AzUEkAnASaDXCvgZcBw4CBwCWoCnSaJagOkEhGXAewX2GdgFTMrw/QxgJ9CpOu1ALUVmFfBdAZ0AojnUHa8WM3V/ApspErOBbwpkR542Bqmu6ZI9wGJ8IqKZZoW6hMcQ4IlE7HbgZ49smS5agUOmAceA7qTB2QqsBRpUvgaUOfBXBlyRzSYcUWsNRNN3HwBXgdeWINMVfgGzXDkF5smm+XlVLox1KdhmTas2NRLmTZ2uOS3b9YUauiFDe/sZN/Uu/loKNsn/BQpgvoy81GAuBlHF8KkQIw0OZ6FC6FYcI/KpvAS4JwNFW5hEm+KYSg5UWQPMS+js9aIYvFUs+4HVwND+Ksy0ptQ2DbS8mtMxj5PWrg9AY7pxOw54pQ9PAaMIDmOARcAGLco9ivNuqlzuqF5e8mGGiuaYPGaTZdyyMgsj9E+y16vVeyJuiclZq+5dMVzpUEKt1Mc+PTiAW2LaTNkbK5diYsAXNYLJQLgvR0t9FOGXmCa7EdpVGOuDiOQWcS2mWjbNzMYPFYb5ICJmCUn1rlAqZK/DFN6okGlfnS2PUgTqCSFJzEMH/kbKltmZclmFdQ4M31Fab/9tWwh6Z0TcduBvjmy/MIWtKpzBH5KFuKTR2itRae0AzVFOqQiJWHlYnfdwux68A6aUiJAjsntTpy99mPPX85aY5QEWErFEdCoz+YvRwDnL8VlgPTA5m9TZZyERYK7GhNedzKq+Ml2Fcn3ckeHQOd0Vz0NIPA8/CXWnf1oiFZU6+r+odcZLnTNd130U0gU81+xUZ4+JgcTP6XdACYUEjbBFgkbYIkEjnmGNCQkJCflP+Q1txSw9AhDQdwAAAABJRU5ErkJggg==" alt="upload-to-cloud--v1" width="32" height="32">
+                    <div id="textContent">Annuncio aggiornato</div>
+                </div>
+                <div id="progress">
+                    <div id="active"></div>
+                </div>
+            </div>
+            <div id="orders" style="display:none">
+                <div class="ordersCont" id="orderList">
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                    <div class="order placeholder"></div>
+                </div>
+            </div>
+            <div id="order" style="display:none">
+                <h2>Dati dell'ordine</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Acquirente</th>
+                            <td id="acquirente" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Indirizzo di spedizione</th>
+                            <td id="indirizzoSpedizione" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Data e ora</th>
+                            <td id="dataOra" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Prodotto acquistati</th>
+                            <td id="numProducts" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Totale ordine</th>
+                            <td id="totaleOrdine" class="placeholder-glow">
+                                <div class="placeholder col-12"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Stato</th>
+                            <td>
+                                <select class="form-select" id="statusOrder"></select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <h2>Prodotti acquistati</h2>
+                <div class="productLists placeholder-glow" id="orderProducts">
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                    <div class="product placeholder"></div>
+                </div>
+            </div>
+
+            <div id="customers" style="display:none">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nome e Cognome</th>
+                                <th>Vendite</th>
+                                <th>Prodotti acquistati</th>
+                                <th>Ordini</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTbContent"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="refounds" style="display:none"></div>
+        </div>
+    </div>
+    
+    <script type="module">
+        //gestione delle pagine
+        import {handlePageUrl, handleNavigation, getArtisanSlug} from "/src/js/dashboard/artisan/index.js";
+        
+        document.addEventListener("DOMContentLoaded",async()=>{
+            let artisanReq=await getArtisanSlug()
+            window.artisanSlug=artisanReq ?? null;
+            if(window.artisanSlug==null){
+                window.location.href="/accedi";
+            }
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                ordini: document.querySelector("#orders"),
+                ordine: document.querySelector("#order"),
+                prodotti: document.querySelector("#products"),
+                prodotto: document.querySelector("#product"),
+                clienti: document.querySelector("#customers"),
+                rimborsi: document.querySelector("#refounds")
+            });
+            handleNavigation({
+                home: document.querySelector("#home"),
+                ordini: document.querySelector("#orders"),
+                ordine: document.querySelector("#order"),
+                prodotti: document.querySelector("#products"),
+                prodotto: document.querySelector("#product"),
+                clienti: document.querySelector("#customers"),
+                rimborsi: document.querySelector("#refounds")
+            });
+        });
+        window.addEventListener("pushstate", async () => {
+            handlePageUrl({
+                home: document.querySelector("#home"),
+                ordini: document.querySelector("#orders"),
+                ordine: document.querySelector("#order"),
+                prodotti: document.querySelector("#products"),
+                prodotto: document.querySelector("#product"),
+                clienti: document.querySelector("#customers"),
+                rimborsi: document.querySelector("#refounds")
+            });
+        });
+    </script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

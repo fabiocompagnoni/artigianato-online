@@ -104,6 +104,23 @@
 
     <footer-component></footer-component>
     <script>
+        //verify is is logged and is customer
+        fetch("https://localhost:3000/users/isLoggedIn",{
+            method:"GET",
+            credentials: 'include'
+        }).then(resp=>{
+            if(resp.status!=200){
+                window.location.href="/login?redirect="+window.location.pathname;
+                return Promise.reject();
+            }
+            return resp.json();
+        }).then(json=>{
+            console.log(json);
+            /*if(json.role!="customer")
+                window.location.href="/";
+            */
+        }).catch(() => {});
+        
         //manage view page by url
         const url = window.location.pathname;
         const home = document.getElementById('home');

@@ -1,0 +1,394 @@
+
+/*navbar desktop*/
+.navbarDesktop{
+    width:15rem;
+    height:100dvh;
+    position:fixed;
+    top:0;
+    left:0;
+    background:var(--bs-gray-800);
+    padding:1rem;
+}
+.navbarDesktop .navbarLogo{
+    width:100%;
+}
+.navbarDesktop .navbarLogo img{
+    width:100%;
+    height:auto;
+}
+.navbarActions{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+    margin-top:2rem;
+}
+.navbarDesktop button{
+    width:100%;
+    border:none;
+    background:none;
+    color:var(--bs-gray-200);
+    padding:0.5rem;
+    display:flex;
+    flex-direction: row;
+    align-items:center;
+    justify-content: space-between;
+    gap:0.5rem;
+    transition:all 300ms ease-in-out;
+    font-size:1.1rem;
+}
+.navbarDesktop button:hover{
+    background:var(--bs-gray-500);
+    color:var(--bs-white);
+    border-radius:var(--bs-border-radius-xl);
+}
+.navbarDesktop button.selected{
+    background:var(--second-color);
+    border-radius: var(--bs-border-radius-xl);
+}
+
+@media(min-width:768px){
+    .pageContent{
+        margin-left:15rem;
+    }
+}
+@media(max-width:768px){
+    .pageContent{
+        margin-bottom:70px;
+    }
+}
+
+.fixedPart{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap: wrap;
+    margin-bottom:2rem;
+}
+.pageContent{
+    padding:1rem;
+}
+.customDropdownBtn{
+    width:100%;
+    background:none;
+    padding:0.5rem;
+    border:1px solid var(--bs-border-color);
+    border-radius:var(--bs-border-radius-xl);
+    display:flex;
+    flex-direction: row;
+    align-items:center;
+    justify-content: space-between;
+    gap:0.5rem;
+    background:none;
+    color:var(--bs-gray-700);
+}
+.customDropdownBtn img{
+    width:2rem;
+    height:2rem;
+    border-radius:100%;
+}
+.cardResume{
+    display:flex;
+    flex-direction:column;
+    justify-content: space-between;
+    padding:1rem;
+    border-radius:var(--bs-border-radius-xl);
+    flex:1;
+    background:var(--bs-body-bg);
+    color:var(--bs-body-color);
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
+    flex-basis:25rem;
+}
+
+.pageContent{
+    background:var(--bs-body)
+}
+
+.cardResume .firstRow{
+    text-decoration:none;
+    color:var(--bs-body-color);
+    margin-bottom:0.5rem;
+}
+.cardResume .firstRow .stat-icon{
+    background:var(--second-color);
+    padding:0.5rem;
+    border-radius:var(--bs-border-radius-xl);
+    color:#2D5938;
+    width:2.5rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    aspect-ratio: 1 / 1;
+}
+.secondRow{
+    font-weight: 600;
+    font-size:1.5rem;
+}
+.thirdRow{
+    margin-top:0.5rem;
+}
+.cardResume.cardPrimary{
+    background:#2D5938;
+    color:white !important;
+}
+.cardResume.cardPrimary a{
+    color:white !important;
+}
+
+.navbarMobile{
+    width:100%;
+    position:fixed;
+    bottom:0;
+    left:0;
+    padding:0.5rem;
+    border-radius:var(--bs-border-radius-xl);
+    background: rgba( 168, 187, 162, 0.4 );
+    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+    backdrop-filter: blur( 6px );
+    -webkit-backdrop-filter: blur( 6px );
+    border: 1px solid rgba( 255, 255, 255, 0.18 );
+    z-index:1000;
+    display:flex;
+    gap:0.5rem;
+}
+.navbarMobile button{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:0.25rem;
+    padding:0.25rem;
+    background:none;
+    border:none;
+    color:#2D5938;
+    transition:all 300ms ease-in-out;
+    border-radius:var(--bs-border-radius-xl);
+}
+.navbarMobile button.selected{
+    background:#2D5938;
+    color:white;
+    
+}
+
+/*ordini*/
+.order{
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    gap:1rem;
+}
+.ordersCont{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.order .orderThumbnail{
+    border-radius: var(--bs-border-radius-xl);
+    width:min(100%, 15rem);
+    height:10rem;
+    object-fit:cover;
+}
+.order .prodThumbnail{
+    width:5rem;
+    height:5rem;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+}
+.order .prodPreview{
+    text-align:center;
+    max-width:5rem;
+}
+.order .prodPreview .prodTitle{
+    text-wrap: wrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.order .orderTitle{
+    color:var(--first-color);
+    font-size:1.5rem;
+    font-weight: bold;
+    width:100%;
+}
+.orderPrice{
+    font-size:1.3rem;
+    font-weight: bold;
+}
+@media(max-width:768px){
+    .order .btnCont {
+        flex:1;
+    }
+    .order .btnCont button{
+        width:100%;
+    }
+}
+.pillStatus{
+    padding:0.5rem;
+    border-radius: var(--bs-border-radius-xl);
+    text-transform: uppercase;
+    width:fit-content;
+}
+.pillStatus.pagato {
+    background: #d1e7dd;   /* verde chiaro */
+    color: #0f5132;
+}
+.pillStatus.spedito {
+    background: #cff4fc;   /* azzurro chiaro */
+    color: #055160;
+}
+.pillStatus.consegnato {
+    background: #e2e3e5;   /* grigio chiaro */
+    color: #41464b;
+}
+.pillStatus.annullato {
+    background: #f8d7da;   /* rosso chiaro */
+    color: #842029;
+}
+.pillStatus.rimborsato {
+    background: #fff3cd;   /* giallo chiaro */
+    color: #664d03;
+}
+
+.order.placeholder{
+    height:10rem;
+}
+
+/*pagina ordine*/
+.productLists{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.productLists .product.placeholder{
+    height:10rem;
+}
+.productLists .product{
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    display:flex;
+    flex-direction: row;
+    gap:1rem;
+    align-items:stretch;
+    flex-wrap: wrap;
+}
+
+.productLists .product img{
+    width:10rem;
+    height:100%;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+}
+@media(max-width:768px){
+    .productLists .product img{
+        width:100%;
+    }
+}
+
+/*pagina prodotto*/
+.editorProductCont{
+    display:flex;
+    flex-direction:row;
+    align-items:stretch;
+    justify-content:cecnter;
+    gap:1rem;
+    flex-wrap:wrap;
+}
+.editorProductCont .cardPartProduct{
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+    flex:1;
+    flex-basis:25rem;
+}
+.editorProductCont .cardPartProduct label{
+    font-size:1.35rem;
+}
+.productImgCont{
+    display:flex;
+    flex-direction:row;
+    gap:0.5rem;
+    align-items:center;
+    justify-content:flex-start;
+    margin-top:1rem;
+    margin-bottom:1rem;
+}
+.productImgCont .selectImgBtn{
+    width:5rem;
+    height:5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border:1px solid var(--bs-border-color);
+    border-radius:var(--bs-border-radius-xl);
+    cursor: pointer;
+}
+.productImgCont img{
+    width:5rem;
+    height:5rem;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+}
+.releaseTrash{
+    background:#842029;
+    color:white;
+    padding:0.5rem;
+    text-align:center;
+    width:100%;
+    border-radius:var(--bs-border-radius-xl);
+    margin-top:0.5rem;
+}
+@media(min-width:768px){
+    #pruductDisponibility{
+        max-width:60%;
+    }
+}
+.btnActionPrimary{
+    position:fixed;
+    bottom:0.5rem;
+    right:0.5rem;
+}
+
+#updates{
+    position:fixed;
+    top:2%;
+    right:2%;
+    z-index:1000;
+    display:none;
+    flex-direction:column;
+    gap:5px;
+    border-radius:var(--bs-border-radius);
+    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    min-width:250px;
+    padding-bottom:5px;
+    padding-left:5px;
+    padding-right:5px;
+    background:var(--bs-body-bg);
+}
+#updates .bodyArea{
+    display:flex;
+    flex-direction:row;
+    justify-content: space-between;
+    gap:10px;
+    padding:2%;
+}
+#updates #progress{
+    height:5px;
+}
+#updates #progress #active{
+    height:100%;
+    border-radius:1rem;
+}
+
+.list-item{
+    cursor:move;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+    user-select: none;
+}
+.list-item:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}

@@ -126,28 +126,46 @@ class NavBar extends HTMLElement {
             let btnMobile=document.getElementById("btnUserProfile");
 
             let isLoggedin=false;
-            let req=await fetch("https://localhost:3000/users/isLoggedIn");
+            let req=await fetch("https://localhost:3000/users/isLoggedIn",{
+                method:"GET",
+                credentials: 'include'
+            });
             let respJson=await req.json();
             if(req.status!=200){
                 console.error("Error fetching login status:", respJson.error);
                 return;
             }
-            if(respJson.isLoggedin!=null)
-                isLoggedin=respJson.isLoggedin;
+            if(respJson.loggedIn!=null)
+                isLoggedin=respJson.loggedIn;
             if(isLoggedin){
-                let reqLinkDashboard=await fetch("https://localhost:3000/users/dashboardPage");
+                let dropdown=document.createElement("div");
+                dropdown.classList.add("dropdownNavActions");
+                
+                let reqLinkDashboard=await fetch("https://localhost:3000/users/dashboardPage",{
+                    method:"GET",
+                    credentials: 'include'
+                });
                 let linkDashboard=await reqLinkDashboard.json();
                 if(reqLinkDashboard.status!=200){
                     console.error("Error fetching dashboard link:", linkDashboard.error);
                     return;
                 }
-                if(reqLinkDashboard.dashboardLink!=null){
-                    btnDesktop.onclick=()=>{
-                        window.location.href=reqLinkDashboard.dashboardLink;
-                    }
-                    btnMobile.onclick=()=>{
-                        window.location.href=reqLinkDashboard.dashboardLink;
-                    }
+                if(linkDashboard.dashboardLink!=null){
+                    let linkDashboardElement=document.createElement("a");
+                    linkDashboardElement.href=linkDashboard.dashboardLink;
+                    linkDashboardElement.innerHTML=`Area riservata`;
+                    dropdown.appendChild(linkDashboardElement);
+                }
+                let linkLogout=document.createElement("a");
+                linkLogout.href="/logout";
+                linkLogout.innerHTML=`Logout`;
+                
+                dropdown.appendChild(linkLogout);
+                btnDesktop.onclick=()=>{
+                        window.location.href=linkDashboard.dashboardLink;
+                }
+                btnMobile.onclick=()=>{
+                    window.location.href=linkDashboard.dashboardLink;
                 }
             }else{
                 btnDesktop.onclick=()=>{
