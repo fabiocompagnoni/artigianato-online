@@ -933,6 +933,17 @@ app.get("/:page",async(req,res)=>{
             }
 
         }
+        if(filter.categories!=null){
+            let categories = filter.categories.split(",");
+            let placeholders = categories.map((_, idx) => `$${query_placeholder_num + idx}`).join(", ");
+            queryStandard += `AND p."ID" IN (
+                SELECT product_categories."ID_product" FROM product_categories 
+                INNER JOIN categories ON categories."ID" = product_categories."ID_category"
+                WHERE categories.slug IN (${placeholders})
+            ) `;
+            query_placeholder_values.push(...categories);
+            query_placeholder_num += categories.length;
+        }
         if(filter.queryString!=null){
             queryStandard+=`AND p.name LIKE $${query_placeholder_num++} `;
             query_placeholder_values.push('%' + filter.queryString + '%');

@@ -19,6 +19,12 @@ const initPage=async()=>{
     document.getElementById("pageTitle").innerHTML="";
     document.getElementById("pageDesc").innerHTML="";
   }
+  // Se il pathname contiene /categorie/slug categoria
+  const pathParts = window.location.pathname.split("/");
+  const catIndex = pathParts.indexOf("categorie");
+  if (catIndex !== -1 && pathParts[catIndex + 1]) {
+    filter.categories = [pathParts[catIndex + 1]];
+  }
   //loadProducts();
 }
 
@@ -223,7 +229,7 @@ const mapFilter=()=>{
 const initPagination=(currentPage, numPages)=>{
   let cont=document.getElementById("paginationContainer");
   cont.innerHTML="";
-  for(let i=1;i<=pages;i++){
+  for(let i=1;i<=numPages;i++){
       let a=document.createElement("a");
       a.href="#pagina"+i;
       if(i==currentPage){
@@ -241,6 +247,15 @@ document.addEventListener("DOMContentLoaded",()=>{
         page = parseInt(url.hash.substring(url.hash.lastIndexOf("a")+1));
     }
     loadProducts(page);
+    loadCategory();
+    window.addEventListener("hashchange", () => {
+      let url = new URL(window.location.href);
+      let page = 1;
+      if (url.hash !== "" && url.hash.includes("pagina")) {
+        page = parseInt(url.hash.substring(url.hash.lastIndexOf("a") + 1));
+      }
+      loadProducts(page);
+    });
 });
 
 const loadProducts=async(page=1)=>{
@@ -259,11 +274,6 @@ const loadProducts=async(page=1)=>{
         const response=await ajax(baseURL,"GET");
         if(response.error!=null)
           throw new Error(response.error);
-
-        //aggiungere anche filtri e ordinamento
-        //aggiungere filtro artigiano
-        //TODO: fare pagination
-        //const products=mockupResponse;
         if(response.products.length==0){
             containerProducts.innerHTML="Nessun prodotto disponibile. Contatta il tuo artigiano di fiducia e fagli inserire i suoi prodotti!";
             return;
@@ -283,10 +293,37 @@ const loadCategory=async()=>{
     const listCategory=document.getElementById("categoryList");
     const listCategoryMobile=document.getElementById("categoryListMobile");
     try{
-        const request=await ajax("https://localhost:4000/category","GET");
-        const categories=await request.json();
-        categories.forEach((category)=>{
+      const request=await ajax("https://localhost:3000/products/categories","GET");
+      if(request.error!=null)
+        throw new Error(request.error);
+      listCategory.innerHTML="";
+      listCategoryMobile.innerHTML="";
+      request.categories.forEach(category=>{
+        let div=document.createElement("div");
+        div.classList.add("form-check");
+        div.innerHTML=`<input class='form-check-input' type='checkbox' name='productCategory' value='${category.slug}'>
+        <label class='form-check-label'>${category.name}</label>`;
+        let divCopy = div.cloneNode(true);
+        listCategory.appendChild(divCopy);
+        listCategoryMobile.appendChild(div);
+      });
+
+      document.querySelectorAll("input[name='productCategory']").forEach(category => {
+        category.addEventListener("change", (event) => {
+          console.log(event.target.value);
+          if (!filter.categories) {
+            filter.categories = [];
+          }
+          if (event.target.checked) {
+            if (!filter.categories.includes(event.target.value)) {
+              filter.categories.push(event.target.value);
+            }
+          } else {
+            filter.categories = filter.categories.filter(cat => cat !== event.target.value);
+          }
+          loadProducts();
         });
+      });
     }catch(err){
         console.error(err);
     }
