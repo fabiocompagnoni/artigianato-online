@@ -467,7 +467,7 @@ paths:
                   dashboardLink:
                     type: string
                     description: L'URL della dashboard specifico per il ruolo dell'utente.
-              examples: # <-- Aggiunto blocco examples qui
+              examples:
                 AdminDashboard:
                   summary: Esempio per Amministratore
                   value:
@@ -503,6 +503,147 @@ paths:
                     example: true
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /reviewArtisan/{artisan_slug}:
+    post:
+      summary: Aggiunge o aggiorna una recensione per un artigiano
+      tags:
+        - Users
+      description: Consente a un cliente di lasciare o modificare una recensione per un artigiano specifico. Se una recensione esiste già dallo stesso utente per lo stesso artigiano, verrà sovrascritta.
+      operationId: addOrUpdateArtisanReview
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: artisan_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug dell'artigiano a cui aggiungere/aggiornare la recensione.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  description: Il voto della recensione (da 0 a 5).
+                  minimum: 0
+                  maximum: 5
+                review_text:
+                  type: string
+                  description: Il testo della recensione.
+                  maxLength: 500 # Esempio di limite di lunghezza
+              required:
+                - rating
+                - review_text
+      responses:
+        '200':
+          description: Recensione aggiunta o aggiornata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artisan:
+                    type: string
+                    description: Lo slug dell'artigiano recensito.
+                  rating:
+                    type: integer
+                    description: Il voto assegnato.
+                  review_text:
+                    type: string
+                    description: Il testo della recensione.
+        '400':
+          description: Richiesta non valida (es. campi mancanti o formato errato, rating fuori range).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Non autorizzato (solo i clienti possono lasciare recensioni).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Artigiano non trovato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reviews/{artisan_slug}/{page}:
+    get:
+      summary: Ottiene le recensioni di un artigiano specifico
+      tags:
+        - Users
+      description: Recupera un elenco di recensioni per un artigiano, con paginazione.
+      operationId: getArtisanReviewsPaged
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: artisan_slug
+          schema:
+            type: string
+          required: true
+          description: Lo slug dell'artigiano di cui ottenere le recensioni.
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina delle recensioni da recuperare (a partire da 1).
+      responses:
+        '200':
+          description: Elenco di recensioni recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                    description: Il numero della pagina corrente.
+                  reviews_this_page:
+                    type: integer
+                    description: Il numero di recensioni in questa pagina.
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review' # Riferimento al nuovo schema Review
+                required:
+                  - page
+                  - reviews_this_page
+                  - reviews
+        '400':
+          description: Richiesta non valida (es. numero di pagina non intero).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Artigiano non trovato o pagina non valida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
 
   # PRODUCTS MICROSERVICE PATHS
   /products/status:
@@ -1833,38 +1974,51 @@ components:
       description: Autenticazione tramite cookie HTTP-only contenente il JWT.
 
   schemas:
-    UserProfile:
+    User:
       type: object
       properties:
         id:
           type: integer
           format: int64
-          example: 1
-        name:
-          type: string
-          example: Mario
-        surname:
-          type: string
-          example: Rossi
+          readOnly: true
+          description: ID dell'utente
         email:
           type: string
           format: email
-          example: mario.rossi@example.com
+          description: Indirizzo email dell'utente
+        name:
+          type: string
+          description: Nome dell'utente
+        surname:
+          type: string
+          description: Cognome dell'utente
         role:
           type: string
-          enum: [customer, artisan, admin]
-          example: customer
-        photoProfile:
+          description: Ruolo dell'utente (es. customer, artisan, admin)
+        bio:
+          type: string
+          nullable: true
+          description: Biografia dell'utente (solo per artigiani e amministratori)
+        url_profile_picture:
           type: string
           format: url
           nullable: true
-          description: URL dell'immagine del profilo.
-          example: https://localhost:3000/images/profile_pic_id
+          description: URL dell'immagine del profilo dell'utente
+        reviews_total:
+          type: integer
+          description: Numero totale di recensioni ricevute (solo per artigiani)
+          minimum: 0
+        reviews_avg:
+          type: number
+          format: float
+          description: Media delle recensioni ricevute (solo per artigiani)
+          minimum: 0.0
+          maximum: 5.0
       required:
         - id
+        - email
         - name
         - surname
-        - email
         - role
     ProductSummary:
       type: object
@@ -1916,11 +2070,21 @@ components:
               nullable: true
             link:
               type: string
-            required:
-              - name
-              - surname
-              - link
-          description: Informazioni sull'artigiano che ha creato il prodotto.
+              format: uri
+            reviews_total:
+              type: integer
+              description: Numero totale di recensioni ricevute dall'artigiano
+              minimum: 0
+            reviews_avg:
+              type: number
+              format: float
+              description: Media delle recensioni ricevute dall'artigiano (0.0-5.0)
+              minimum: 0.0
+              maximum: 5.0
+          required:
+            - name
+            - surname
+            - link
         link:
           type: string
           description: Link diretto al prodotto.
@@ -2102,6 +2266,31 @@ components:
           type: string
           description: Descrizione leggibile dell'errore.
           example: Internal Server Error.
+    Review:
+      type: object
+      properties:
+        reviewer:
+          type: integer
+          format: int64
+          description: ID dell'utente che ha lasciato la recensione.
+        rating:
+          type: integer
+          description: Il voto della recensione (da 0 a 5).
+          minimum: 0
+          maximum: 5
+        review_text:
+          type: string
+          description: Il testo della recensione.
+        timestamp:
+          type: string
+          format: date-time
+          description: Data e ora della recensione.
+      required:
+        - reviewer
+        - rating
+        - review_text
+        - timestamp
+
 
   responses:
     BadRequest:

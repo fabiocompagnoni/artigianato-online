@@ -10,8 +10,9 @@ import jwt from 'jsonwebtoken';
 import sendError from './common_scripts/sendError.js';
 import { generatePasswordHash, comparePassword, checkPasswordFormat, checkEmailFormat, generateUserSlug } from './scripts/util.js';
 import authJWT from './common_scripts/authJWT.js';
-import { getRoleID } from './common_scripts/utils.js';
+import { getRoleID, getArtisanReviews } from './common_scripts/utils.js';
 import { sendUserData } from './scripts/userScripts.js';
+import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 
 import passport from 'passport';
 import configurePassport from "./passportSetup.js";
@@ -205,13 +206,21 @@ app.get('/user', authJWT, async (req, res) => {
 
         const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
 
-        res.status(200).json({
+        const response = {
             name: user_data.user_name,
             surname: user_data.surname,
             role: user_data.role_name,
             bio: user_data.bio,
             url_profile_picture: propic_url,
-        });
+        }
+
+        if(user_data.role_name === 'artisan') {
+            const r = await getArtisanReviews(id_artisan, pool);
+            response.reviews_total = r.reviews_total;
+            response.reviews_avg = r.reviews_avg;
+        }
+
+        res.status(200).json(response);
     } catch (err) {
         console.error('Error getting user data:', err);
         sendError(res, 500);
@@ -301,7 +310,7 @@ app.get('/user/:user_slug', async (req, res) => {
 
     try {
         const sql_res = await pool.query(
-            'SELECT users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE slug = $1',
+            'SELECT users."ID", users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE slug = $1',
             [user_slug_param]
         );
 
@@ -313,13 +322,21 @@ app.get('/user/:user_slug', async (req, res) => {
         const user_data = sql_res.rows[0];
         const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
 
-        res.status(200).send({
-                name: user_data.user_name,
-                surname: user_data.surname,
-                role: user_data.role_name,
-                bio: user_data.bio,
-                url_profile_picture: propic_url,
-            });
+        const response = {
+            name: user_data.user_name,
+            surname: user_data.surname,
+            role: user_data.role_name,
+            bio: user_data.bio,
+            url_profile_picture: propic_url,
+        }
+
+        if(user_data.role_name === 'artisan') {
+            const r = await getArtisanReviews(user_data.ID, pool);
+            response.reviews_total = r.reviews_total;
+            response.reviews_avg = r.reviews_avg;
+        }
+
+        res.status(200).json(response);
     } catch (err) {
         console.error('Error getting user data by user slug:', err);
         sendError(res, 500);
@@ -396,6 +413,101 @@ app.put('/user', authJWT, async (req, res) => {
         await client.query('ROLLBACK'); // Fa il rollback in caso di errore
     } finally {
         client.release();
+    }
+});
+
+//per vedere le review di un artigiano
+app.get('/reviews/:artisan_slug/:page', async (req, res) => {
+    try {
+        const artisan_slug = req.params.artisan_slug; // slug dall'URL
+        const page = req.params.page;
+
+        //verifica della correttezza della richiesta
+        if(!isBodyInt(page, true)) {
+            sendError(res, 404);
+            return;
+        }
+
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        let sql_res = await pool.query('SELECT "ID" FROM users WHERE id_role = $1 AND slug = $2', [ARTISAN_ROLE_ID, artisan_slug]);
+
+        //non è stato trovato l'artigiano
+        if(sql_res.rowCount <= 0) {
+            sendError(res, 404);
+            return;
+        }
+
+        const id_artisan = sql_res.rows[0].ID;
+
+        const response = {page: parseInt(page), reviews: []};
+
+        sql_res = await pool.query('SELECT * FROM artisan_reviews WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
+
+        response.reviews_this_page = sql_res.rowCount;
+
+        for(const row of sql_res.rows)
+            response.reviews.push({
+                reviewer: row.id_reviewer,
+                rating: row.rating,
+                review_text: row.review_text,
+                timestamp: row.timestamp_review
+            });
+
+        res.json(response);
+    } catch (err) {
+        console.error('Error getting artisan reviews:', err);
+        sendError(res, 500);
+    }
+});
+
+//per aggiungere una review ad un artigiano
+app.post('/reviewArtisan/:artisan_slug', authJWT, async (req, res) => {
+    try {
+        const artisan_slug = req.params.artisan_slug; // slug dall'URL
+
+        const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
+
+        //solo i customer possono aggiungere recensioni
+        if(req.user.user_role_id !== CUSTOMER_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(!req.body || !req.body.rating || !isBodyInt(req.body.rating, true)
+        || !req.body.review_text || !isBodyString(req.body.review_text, false)
+        || req.body.rating < 0 || req.body.rating > 5) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { rating, review_text } = req.body;
+
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        const sql_res = await pool.query('SELECT "ID" FROM users WHERE id_role = $1 AND slug = $2', [ARTISAN_ROLE_ID, artisan_slug]);
+
+        //non è stato trovato l'artigiano
+        if(sql_res.rowCount <= 0) {
+            sendError(res, 404);
+            return;
+        }
+
+        const id_artisan = sql_res.rows[0].ID;
+        const id_reviewer = req.user.user_id;
+
+        //cancella la vecchia recensione, se presente
+        await pool.query('DELETE FROM artisan_reviews WHERE id_artisan = $1 AND id_reviewer = $2', [id_artisan, id_reviewer]);
+
+        await pool.query(
+            'INSERT INTO artisan_reviews(id_artisan, id_reviewer, rating, review_text) VALUES($1, $2, $3, $4)',
+            [id_artisan, id_reviewer, rating, review_text]
+        );
+
+        res.json({ artisan: artisan_slug, rating, review_text });
+    } catch (err) {
+        console.error('Error giving artisan review:', err);
+        sendError(res, 500);
     }
 });
 

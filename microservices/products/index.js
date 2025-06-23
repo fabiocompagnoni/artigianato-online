@@ -14,7 +14,7 @@ const PORT = 4000;
 import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
-import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail, getArtisanReviews } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -92,6 +92,7 @@ const getCategories=async(idProduct)=>{
 }
 const outputProduct=async(dbRow, single_product=false)=>{
     let categories=await getCategories(dbRow.id);
+    const artisan_reviews = await getArtisanReviews(dbRow.id, pool);
     const obj = {
         id: dbRow.id,
         name: dbRow.pname,
@@ -104,6 +105,8 @@ const outputProduct=async(dbRow, single_product=false)=>{
             surname: dbRow.surname,
             photoProfile: dbRow.artisan_propic_link,
             link: `/artigiani/${dbRow.aslug}`,
+            reviews_total: artisan_reviews.reviews_total,
+            reviews_avg: artisan_reviews.reviews_avg
         },
         link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`,
         quantity: parseInt(dbRow.availability),
@@ -128,9 +131,10 @@ const base_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short
 //come la query sopra ma con l'aggiunta di "description"
 const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
 
+//per ottenere i prodotti più recenti
 app.get('/', async (req, res) => {
     try {
-        const sql_res = await pool.query(base_query);
+        const sql_res = await pool.query(base_query + 'LIMIT 20');
 
         const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
 
@@ -218,14 +222,19 @@ app.post('/product', authJWT, async (req, res) => {
             return;
         }
 
-        const user_id = req.user.user_id;
-        const { name, description, short_description, price, categories, images, quantity } = req.body;
-
-        //validazione body
-        if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false) || !isBodyInt(quantity, true)) {
+        if(!req.body || !req.body.name || !isBodyString(req.body.name, true)
+        || !req.body.description || !isBodyString(req.body.description, false)
+        || !req.body.short_description || !isBodyString(req.body.short_description, true)
+        || !req.body.price || !isPrice(req.body.price, true)
+        || !req.body.categories || !Array.isArray(req.body.categories)
+        || !req.body.images || !Array.isArray(req.body.images)
+        || !req.body.quantity || !isBodyInt(req.body.quantity, true)) {
             sendError(res, 400);
             return;
         }
+
+        const user_id = req.user.user_id;
+        const { name, description, short_description, price, categories, images, quantity } = req.body;
 
         //conversione del prezzo in centesimi
         const adjusted_price = Math.round(price * 100);

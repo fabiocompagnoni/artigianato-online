@@ -51,16 +51,6 @@ const global_setup_product_data = {
     quantity: 1 // Quantità sufficiente solo per un acquisto iniziale
 };
 
-// Funzione helper per generare lo slug dell'artigiano
-function generateArtisanSlug(name, surname) {
-    return `${name.toLowerCase()}-${surname.toLowerCase()}`;
-}
-
-// Funzione helper per generare lo slug del prodotto
-function generateProductSlug(productName) {
-    return productName.toLowerCase().replace(/ /g, '-');
-}
-
 // Funzione helper per generare email uniche
 function generateUniqueEmail(prefix) {
     const timestamp = Date.now();
