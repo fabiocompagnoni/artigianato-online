@@ -642,8 +642,175 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-
+  /userSlug:
+    get:
+      summary: Ottiene lo slug dell'utente autenticato
+      tags:
+        - Users
+      description: Restituisce lo slug dell'utente attualmente autenticato.
+      operationId: getUserSlug
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Slug dell'utente recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slug:
+                    type: string
+                    description: Lo slug dell'utente autenticato.
+                required:
+                  - slug
+        '401':
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '515':
+          description: Utente non trovato (se l'ID utente dal JWT non corrisponde a nessun utente nel database).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /requestOTP:
+    post:
+      summary: Richiede un codice OTP per il recupero password
+      description: Invia un codice OTP all'indirizzo email fornito per avviare il processo di recupero password.
+      operationId: requestOTP
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: L'indirizzo email dell'utente che richiede l'OTP.
+              required:
+                - email
+      responses:
+        '200':
+          description: Richiesta OTP inviata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required:
+                  - status
+        '400':
+          description: Richiesta non valida (es. email mancante o formato errato).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '515':
+          description: Utente non trovato per l'email specificata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante l'invio dell'OTP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /resetPassword:
+    post:
+      summary: Resetta la password dell'utente tramite OTP
+      description: Consente all'utente di impostare una nuova password utilizzando un codice OTP valido ricevuto via email.
+      operationId: resetPassword
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: L'indirizzo email dell'utente.
+                otp:
+                  type: string
+                  description: Il codice OTP ricevuto via email.
+                password:
+                  type: string
+                  format: password
+                  description: La nuova password per l'account.
+              required:
+                - email
+                - otp
+                - password
+      responses:
+        '200':
+          description: Password resettata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required:
+                  - status
+        '400':
+          description: Richiesta non valida (es. campi mancanti o formato errato).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Codice OTP non corretto o non valido per l'utente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '515':
+          description: Utente non trovato per l'email specificata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '516':
+          description: Formato password non valido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '526':
+          description: Il codice OTP è scaduto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante il reset della password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # PRODUCTS MICROSERVICE PATHS
   /products/status:
@@ -1218,6 +1385,331 @@ paths:
           $ref: '#/components/responses/ForbiddenError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /restock/{slugProduct}:
+    post:
+      summary: Rifornisce la quantità di un prodotto esistente
+      description: Consente a un artigiano di aggiungere scorte a un suo prodotto specifico. Richiede il ruolo di Artigiano.
+      operationId: restockProduct
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: slugProduct
+          schema:
+            type: string
+          required: true
+          description: Lo slug del prodotto da rifornire.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                  description: La quantità di prodotti da aggiungere alle scorte esistenti. Deve essere un intero positivo.
+                  minimum: 1
+              required:
+                - quantity
+      responses:
+        '200':
+          description: Rifornimento effettuato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quantity:
+                    type: integer
+                    description: La nuova quantità totale disponibile del prodotto.
+                required:
+                  - quantity
+        '400':
+          description: Richiesta non valida (es. slug prodotto o quantità mancante/errata).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Non autorizzato (l'utente non è un artigiano).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Prodotto non trovato o non appartenente all'artigiano autenticato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante il rifornimento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /productImage/changePosition:
+    post:
+      summary: Cambia la posizione di un'immagine di prodotto
+      description: Consente a un artigiano di riordinare le immagini di un prodotto specificando l'ID del prodotto, l'ID dell'immagine e la nuova posizione desiderata.
+      operationId: changeProductImagePosition
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+                  description: L'ID del prodotto a cui appartiene l'immagine.
+                  example: 123
+                image_id:
+                  type: integer
+                  description: L'ID dell'immagine la cui posizione deve essere cambiata.
+                  example: 456
+                new_position:
+                  type: integer
+                  description: La nuova posizione (indice base 0) per l'immagine.
+                  minimum: 0
+                  example: 1
+              required:
+                - product_id
+                - image_id
+                - new_position
+      responses:
+        '200':
+          description: Posizione dell'immagine aggiornata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required:
+                  - status
+        '400':
+          description: Richiesta non valida (es. parametri mancanti, tipi errati o nuova posizione fuori intervallo).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (L'utente non ha i permessi per modificare le immagini di questo prodotto, es. non è l'artigiano proprietario).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Immagine o prodotto non trovati, o l'immagine non appartiene al prodotto specificato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante l'aggiornamento della posizione dell'immagine.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /productImage/{product_id}/{image_id}:
+    delete:
+      summary: Elimina un'immagine da un prodotto
+      description: Consente a un artigiano di eliminare una specifica immagine da uno dei suoi prodotti. L'eliminazione comporta l'aggiornamento delle posizioni delle altre immagini. Richiede il ruolo di Artigiano.
+      operationId: deleteProductImage
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: product_id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID del prodotto da cui eliminare l'immagine.
+        - in: path
+          name: image_id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: L'ID dell'immagine da eliminare.
+      responses:
+        '200':
+          description: Immagine eliminata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required:
+                  - status
+        '400':
+          description: Richiesta non valida (es. ID prodotto o ID immagine mancanti o non numerici).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (L'utente non è l'artigiano proprietario del prodotto).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Immagine non trovata nel prodotto specificato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante l'eliminazione dell'immagine.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /categories:
+    get:
+      summary: Ottiene tutte le categorie con stato di selezione per un prodotto
+      description: Restituisce un elenco di tutte le categorie disponibili, indicando se ciascuna categoria è associata a un prodotto specifico (tramite product_slug).
+      operationId: getAllCategoriesWithSelection
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: product_slug
+          schema:
+            type: string
+          required: false
+          description: Lo slug di un prodotto. Se fornito, le categorie associate a questo prodotto saranno marcate come 'selected'.
+      responses:
+        '200':
+          description: Elenco di categorie recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Il nome della categoria.
+                        slug:
+                          type: string
+                          description: Lo slug della categoria.
+                        selected:
+                          type: boolean
+                          description: Indica se la categoria è associata al product_slug fornito.
+                      required:
+                        - name
+                        - slug
+                        - selected
+                required:
+                  - categories
+        '500':
+          description: Errore interno del server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /category:
+    post:
+      summary: Crea una nuova categoria
+      description: Permette a un artigiano di creare una nuova categoria nel sistema. Richiede il ruolo di Artigiano.
+      operationId: createCategory
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Il nome della nuova categoria da creare.
+                  example: Nuova Categoria
+              required:
+                - name
+      responses:
+        '200':
+          description: Categoria creata con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    description: L'ID della categoria creata.
+                  name:
+                    type: string
+                    description: Il nome della categoria creata.
+                  slug:
+                    type: string
+                    description: Lo slug della categoria creata.
+                required:
+                  - id
+                  - name
+                  - slug
+        '400':
+          description: Richiesta non valida (es. nome categoria mancante o formato errato).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (L'utente non è un artigiano).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server durante la creazione della categoria.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # PURCHASES MICROSERVICE PATHS
   /purchases:

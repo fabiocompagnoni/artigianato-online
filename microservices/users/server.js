@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
+import nodemailer from 'nodemailer';
 
 import https from 'https';
 import fs from 'fs';
@@ -17,6 +18,35 @@ import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 import passport from 'passport';
 import configurePassport from "./passportSetup.js";
 import session from "express-session";
+
+const PER_PAGE = 20;
+
+const emailer = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.GOOGLE_EMAIL,
+        pass: process.env.GOOGLE_EMAIL_TOKEN
+    },
+	tls: {
+        // DO NOT DO THIS IN PRODUCTION
+        rejectUnauthorized: false
+    }
+});
+
+async function sendRecoveryEmail(user_email, user_name, otp) {
+    await emailer.sendMail({
+        to: user_email,
+        subject: 'Artigianto Online - OTP Recupero password',
+        html: `Gentile ${user_name},<br>
+        Le inviamo questa email a seguito della sua richiesta di recupero password,
+        se non ha effettuato questa richiesta può ignorare l'email.<br><br>
+        <h3>Codice OTP: ${otp}</h3>
+        Questo codice sarà valido per i prossimi 15 minuti.<br><br><br>
+        Il team di Artigianato Online`
+    });
+};
 
 const app = express();
 const port = 4000;
@@ -57,7 +87,6 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
-console.log(process.env.GOOGLE_CLIENT_ID ?? "Client ID non letto");
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -223,6 +252,46 @@ app.get('/user', authJWT, async (req, res) => {
         res.status(200).json(response);
     } catch (err) {
         console.error('Error getting user data:', err);
+        sendError(res, 500);
+    }
+});
+
+//per ottenere gli artisans
+app.get('/artisans/:page', async (req, res) => {
+    try {
+        const page = req.params.page;
+
+        //verifica della correttezza della richiesta
+        if(!isBodyInt(page, true)) {
+            sendError(res, 404);
+            return;
+        }
+
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        const query = 'SELECT "ID", name, surname, id_profile_picture, slug FROM users WHERE id_role = $1';
+        const pages_res = await pool.query(query, [ARTISAN_ROLE_ID]);
+        const num_artisans = pages_res.rowCount;
+        const pages = Math.ceil(num_artisans / PER_PAGE);
+
+        let sql_res = await pool.query(query + ` LIMIT ${PER_PAGE} OFFSET $2`, [ARTISAN_ROLE_ID, (pages - 1) * PER_PAGE]);
+
+        const artisans = [];
+        for(const row of sql_res.rows) {
+            const artisan_reviews = await getArtisanReviews(row.ID, pool);
+            artisans.push({
+                name: row.name,
+                surname: row.surname,
+                photoProfile: row.id_profile_picture ? 'https://localhost:3000/images/' + row.id_profile_picture : null,
+                link: `/artigiani/${row.slug}`,
+                reviews_total: artisan_reviews.reviews_total,
+                reviews_avg: artisan_reviews.reviews_avg
+            });
+        }
+
+        res.json({artisans, pages, num_artisans});
+    } catch (err) {
+        console.error('Error getting artisans:', err);
         sendError(res, 500);
     }
 });
@@ -442,7 +511,7 @@ app.get('/reviews/:artisan_slug/:page', async (req, res) => {
 
         const response = {page: parseInt(page), reviews: []};
 
-        sql_res = await pool.query('SELECT * FROM artisan_reviews WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
+        sql_res = await pool.query('SELECT ar.*, u.name, u.surname FROM artisan_reviews ar JOIN users u ON u."ID" = id_reviewer WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
 
         response.reviews_this_page = sql_res.rowCount;
 
@@ -451,7 +520,9 @@ app.get('/reviews/:artisan_slug/:page', async (req, res) => {
                 reviewer: row.id_reviewer,
                 rating: row.rating,
                 review_text: row.review_text,
-                timestamp: row.timestamp_review
+                timestamp: row.timestamp_review,
+                reviewer_name: row.name,
+                reviewer_surname: row.surname
             });
 
         res.json(response);
@@ -507,6 +578,96 @@ app.post('/reviewArtisan/:artisan_slug', authJWT, async (req, res) => {
         res.json({ artisan: artisan_slug, rating, review_text });
     } catch (err) {
         console.error('Error giving artisan review:', err);
+        sendError(res, 500);
+    }
+});
+
+function generateOTP() {
+    let otp = '';
+    for(let i = 0; i < 6; i++)
+        otp += Math.floor(Math.random() * 10);
+
+    return otp;
+}
+
+//per richiedere un OTP
+app.post('/requestOTP', async (req, res) => {
+    try {
+        if(!req.body || !req.body.email || !isBodyString(req.body.email, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { email } = req.body;
+
+        const user_info = await pool.query('SELECT "ID", name FROM users WHERE email = $1', [email]);
+
+        if(user_info.rowCount <= 0) {
+            sendError(res, 515);
+            return;
+        }
+
+        const otp = generateOTP();
+
+        await pool.query('INSERT INTO email_otp(id_user, otp_code) VALUES($1, $2)', [user_info.rows[0].ID, otp]);
+
+        await sendRecoveryEmail(email, user_info.name, otp);
+
+        res.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Error sending otp:', err);
+        sendError(res, 500);
+    }
+});
+
+app.post('/resetPassword', async (req, res) => {
+    try {
+        if(!req.body || !req.body.otp || !isBodyString(req.body.otp, true)
+        || !req.body.email || !isBodyString(req.body.email, true)
+        || !req.body.password || !isBodyString(req.body.password, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { email, otp, password } = req.body;
+
+        const user_info = await pool.query('SELECT "ID", name FROM users WHERE email = $1', [email]);
+
+        if(user_info.rowCount <= 0) {
+            sendError(res, 515);
+            return;
+        }
+
+        const user_id = user_info.rows[0].ID;
+
+        let sql_res = await pool.query('SELECT timestamp_creation FROM email_otp WHERE id_user = $1 AND otp_code = $2', [user_id, otp]);
+
+        //non è stata trovata la coppia (id_user, otp_code), probabilmente l'otp è sbagliato
+        if(sql_res.rowCount <= 0) {
+            sendError(res, 403);
+            return;
+        }
+
+        //otp scaduto
+        if(new Date() - new Date(sql_res.rows[0].timestamp_creation) > 15 * 60 * 1000) {
+            sendError(res, 526);
+            return;
+        }
+
+        //password non corretta
+        if (!checkPasswordFormat(password)) {
+            sendError(res, 516);
+            return;
+        }
+
+        //a questo punto sappiamo che l'utente ha inserito l'otp corretto
+        const new_pass = generatePasswordHash(password);
+
+        await pool.query('UPDATE users SET password = $1 WHERE "ID" = $2', [new_pass, user_id]);
+
+        res.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Error sending otp:', err);
         sendError(res, 500);
     }
 });
