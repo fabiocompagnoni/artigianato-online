@@ -27,6 +27,7 @@ export const loadProducts=async(page)=>{
         if(requestProducts.error!=null){
             throw new Error(requestProducts.error);
         }
+        tbody.innerHTML=``;
         requestProducts.products.forEach(product=>{
             let tr=document.createElement("tr");
             let categoriesString = product.categories.map(cat => cat.name).join(", ");
@@ -54,6 +55,9 @@ export const loadProducts=async(page)=>{
             tbody.appendChild(tr);
 
         });
+        if(requestProducts.products.length==0){
+            tbody.innerHTML=`<tr><td colspan='7'>Nessun prodotto ancora caricato</td></tr>`;
+        }
         makePagination(page, requestProducts.pages);
 
     }catch(err){
