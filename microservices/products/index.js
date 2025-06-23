@@ -933,6 +933,17 @@ app.get("/:page",async(req,res)=>{
             }
 
         }
+        if(filter.categories!=null){
+            let categories = filter.categories.split(",");
+            let placeholders = categories.map((_, idx) => `$${query_placeholder_num + idx}`).join(", ");
+            queryStandard += `AND p."ID" IN (
+                SELECT product_categories."ID_product" FROM product_categories 
+                INNER JOIN categories ON categories."ID" = product_categories."ID_category"
+                WHERE categories.slug IN (${placeholders})
+            ) `;
+            query_placeholder_values.push(...categories);
+            query_placeholder_num += categories.length;
+        }
         if(filter.queryString!=null){
             queryStandard+=`AND p.name LIKE $${query_placeholder_num++} `;
             query_placeholder_values.push('%' + filter.queryString + '%');
@@ -940,8 +951,20 @@ app.get("/:page",async(req,res)=>{
         
     }
     if(req.query.order){
-        queryStandard+=`ORDER BY $${query_placeholder_num++} `;
-        query_placeholder_values.push(req.query.order);
+        // Applica direttamente la stringa di ordinamento solo se è tra quelle consentite
+        let order = req.query.order;
+        let orderClause = "timestamp_last_update DESC";
+        if (
+            order === "timestamp_creation DESC" ||
+            order === "timestamp_creation ASC" ||
+            order === "price ASC" ||
+            order === "price DESC" ||
+            order === "pname ASC" ||
+            order === "pname DESC"
+        ) {
+            orderClause = order;
+        }
+        queryStandard += `ORDER BY ${orderClause} `;
     }else{
         queryStandard+=`ORDER BY timestamp_last_update DESC `;
     }

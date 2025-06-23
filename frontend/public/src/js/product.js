@@ -72,7 +72,9 @@ const loadProductInfo=async()=>{
             });
 
         }
-
+        if(window.innerWidth<=768){
+            handleImageMobile(request.images);
+        }
         //informazioni artigiano
         document.querySelectorAll(".artisanProfilePicture").forEach(img=>{
             //TODO: mettere foto profilo img.dataset.src=request.artisan.
@@ -99,6 +101,12 @@ const loadProductInfo=async()=>{
         });
         initAddToCart();
         loadReviews(request.artisan);
+        otherProdArtisanLoad(slugArtisan, slugProd);
+        similarProductsLoad(slugProd);
+
+        document.getElementById("btnHandleSegnalazione").addEventListener("click",()=>{
+        handleProblem(slugArtisan, slugProd);
+    });
     }catch(err){
         console.error(err);
     }
@@ -157,6 +165,95 @@ const loadReviewsList=async(page, artisanSlug)=>{
     //TODO: mettere pagination
 }
 
+const makeProdCard=(prodotto)=>{
+    let linkProd=document.createElement("a");
+    linkProd.href=prodotto.link;
+    linkProd.classList.add("product");
+
+    let thumbnail=document.createElement("img");
+    thumbnail.dataset.src=prodotto.thumbnail;
+    thumbnail.classList.add("lazyImages","thumbnailProd");
+    loadImage(thumbnail);
+    linkProd.appendChild(thumbnail);
+    
+    let bodyProd=document.createElement("div");
+    bodyProd.classList.add("bodyProd");
+
+    let title=document.createElement("div");
+    title.classList.add("titleProd");
+    title.textContent=prodotto.name;
+    bodyProd.appendChild(title);
+
+    let desc=document.createElement("div");
+    desc.classList.add("descProd");
+    desc.textContent=prodotto.description;
+    bodyProd.appendChild(desc);
+
+    if(prodotto.artisan!=null){
+        let artisanCont=document.createElement("a");
+        artisanCont.classList.add("artisanCont");
+        artisanCont.href=prodotto.artisan.link;
+        
+        let profilePicture=document.createElement("img");
+        profilePicture.dataset.src=prodotto.artisan.photoProfile;
+        profilePicture.classList.add("profilePicture","lazyImages");
+        loadImage(profilePicture);
+        artisanCont.appendChild(profilePicture);
+        let nameArtisan=document.createElement("div")
+        nameArtisan.innerHTML=`${prodotto.artisan.name} ${prodotto.artisan.surname}`;
+        nameArtisan.classList.add("nameArtisan");
+        artisanCont.appendChild(nameArtisan);
+        bodyProd.appendChild(artisanCont);
+    }
+
+    let rowPrice=document.createElement("div");
+    rowPrice.classList.add("rowPrice");
+
+    let price=document.createElement("div");
+    price.classList.add("price");
+    price.innerHTML=parseFloat(prodotto.price).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+    rowPrice.appendChild(price);
+
+    let btnAddToCart=document.createElement("button");
+    btnAddToCart.classList.add("btnAddToCart");
+    btnAddToCart.innerHTML=`<i class="fa-solid fa-cart-plus"></i><div>Aggiungi al carrello</div>`;
+    btnAddToCart.addEventListener("click",(e)=>{
+        e.preventDefault();
+        addToCart(prodotto.id,1);
+    });
+
+    rowPrice.appendChild(btnAddToCart);
+    bodyProd.appendChild(rowPrice);
+    linkProd.appendChild(bodyProd);
+    
+    return linkProd;
+}
+
+const otherProdArtisanLoad=async(slug_artisan, slug_product)=>{
+    let cont=document.getElementById("otherProdList");
+    const req=await ajax(`https://localhost:3000/products/correlated/${slug_artisan}/${slug_product}`);
+    if(req.error!=null){
+        cont.innerHTML="Si è verificato un errore nel caricamento dei prodotti correlati";
+        return;
+    }
+    cont.innerHTML="";
+    req.products.forEach(product=>{
+        cont.appendChild(makeProdCard(product));
+    });
+}
+
+const similarProductsLoad=async(slug_prod)=>{
+    let cont=document.getElementById("similarProductsList");
+    const req=await ajax(`https://localhost:3000/products/similar/${slug_prod}`);
+    if(req.error!=null){
+        cont.innerHTML="Si è verificato un errore nel caricamento dei prodotti simili";
+        return;
+    }
+    cont.innerHTML="";
+    req.products.forEach(product=>{
+        cont.appendChild(makeProdCard(product));
+    });
+}
 const loadReviews=async(artisan)=>{
     let contReviews=document.querySelector(".artisanReviewsCont");
     let reviewLists=document.getElementById("reviewsList");
@@ -185,8 +282,118 @@ const loadReviews=async(artisan)=>{
         reviewLists.innerHTML="Questo artigiano non ha ancora ricevuto recensioni. Fai un acquisto e recensisci il tuo artigiano preferito!";
         return;
     }
-    loadReviewsList(1);
+    let slugArtisan=artisan.link.split("/").pop();
     
+    loadReviewsList(1, slugArtisan);
 }
 
 document.addEventListener("DOMContentLoaded",loadProductInfo);
+
+// Scroll amount in pixels
+const SCROLL_AMOUNT = "5rem";
+
+document.getElementById("scrollTopBtn").addEventListener("click", (event) => {
+    let cont = document.querySelector(".lateralPreviews");
+    cont.scrollBy({ top: -SCROLL_AMOUNT, behavior: "smooth" });
+});
+
+document.getElementById("scrollBottonBtn").addEventListener("click", (event) => {
+    let cont = document.querySelector(".lateralPreviews");
+    cont.scrollBy({ top: SCROLL_AMOUNT, behavior: "smooth" });
+});
+
+const handleImageMobile=(arrayFoto)=>{
+    let currentIndex = 0;
+    const primaryImage = document.querySelector(".primaryImage");
+
+    const showImage = (index) => {
+        if (index < 0) index = 0;
+        if (index >= arrayFoto.length) index = arrayFoto.length - 1;
+        currentIndex = index;
+        primaryImage.dataset.src = arrayFoto[currentIndex].url;
+        loadImage(primaryImage);
+    };
+
+    // Touch events
+    let startX = null;
+    primaryImage.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+    });
+    primaryImage.addEventListener("touchend", (e) => {
+        if (startX === null) return;
+        let endX = e.changedTouches[0].clientX;
+        if (endX - startX > 50) {
+            // swipe right
+            showImage(currentIndex - 1);
+        } else if (startX - endX > 50) {
+            // swipe left
+            showImage(currentIndex + 1);
+        }
+        startX = null;
+    });
+
+    // Mouse events
+    let mouseDownX = null;
+    primaryImage.addEventListener("mousedown", (e) => {
+        mouseDownX = e.clientX;
+    });
+    primaryImage.addEventListener("mouseup", (e) => {
+        if (mouseDownX === null) return;
+        let mouseUpX = e.clientX;
+        if (mouseUpX - mouseDownX > 50) {
+            // drag right
+            showImage(currentIndex - 1);
+        } else if (mouseDownX - mouseUpX > 50) {
+            // drag left
+            showImage(currentIndex + 1);
+        }
+        mouseDownX = null;
+    });
+}
+
+let mobileHandlerInitialized = false;
+let mobileImages = [];
+
+const initMobileImageHandler = (images) => {
+    if (!mobileHandlerInitialized) {
+        handleImageMobile(images);
+        mobileHandlerInitialized = true;
+    }
+};
+
+const destroyMobileImageHandler = () => {
+    // No-op: handleImageMobile only adds listeners, so page reload or DOM changes will reset
+    mobileHandlerInitialized = false;
+};
+
+const checkAndInitMobileImageHandler = () => {
+    const images = Array.from(document.querySelectorAll(".lateralPreviews img")).map(img => img.dataset.src).filter(Boolean);
+    if (window.innerWidth <= 768 && images.length > 0) {
+        initMobileImageHandler(images);
+    } else {
+        destroyMobileImageHandler();
+    }
+};
+
+
+
+const handleProblem=async(artisanSlug, productSlug)=>{
+    let text=document.getElementById("segnalazioneText").value;
+    const req=await ajax(`https://localhost:3000/products/report/${artisanSlug}/${productSlug}`,"POST",{
+        note:text
+    });
+    if(req.error!=null){
+        if(req.error.message=="Unauthorized"){
+            document.getElementById("respSegnalazione").innerHTML="Devi aver prima fatto l'accesso per poter inviare una segnalazione";
+        }else{
+            document.getElementById("respSegnalazione").innerHTML="Si è verificato un errore durante la segnalazione. Riprova più tardi";
+        }
+    }else if(req.ticket_id!=null){
+        document.getElementById("respSegnalazione").innerHTML=`La tua segnalazione è stata presa in carico. L'identificativo della tua richiesta è: ${req.ticket_id}`;
+    }
+}
+
+
+
+window.addEventListener("resize", checkAndInitMobileImageHandler);
+document.addEventListener("DOMContentLoaded", checkAndInitMobileImageHandler);

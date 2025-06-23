@@ -7,7 +7,7 @@ import {loadImage} from "/src/js/modules/loadImageModule.js";
 import {ajax} from "/src/js/modules/fetchWorkerModule.js";
 import { addToCart } from "/src/js/modules/cart.js";
 let filter={};
-let orderBy={};
+let orderBy=null;
 
 const initPage=async()=>{
   if(window.artisanPage){
@@ -19,133 +19,16 @@ const initPage=async()=>{
     document.getElementById("pageTitle").innerHTML="";
     document.getElementById("pageDesc").innerHTML="";
   }
+  // Se il pathname contiene /categorie/slug categoria
+  const pathParts = window.location.pathname.split("/");
+  const catIndex = pathParts.indexOf("categorie");
+  if (catIndex !== -1 && pathParts[catIndex + 1]) {
+    filter.categories = [pathParts[catIndex + 1]];
+  }
   //loadProducts();
 }
 
 document.addEventListener("DOMContentLoaded",initPage);
-
-let mockupResponse=[
-  {
-    "id": 101,
-    "name": "Vaso in Ceramica Dipinto a Mano - Motivi Floreali",
-    "link": "/prodotti/elena-rossi/vaso-ceramica-dipinto-a-mano-motivi-floreali",
-    "thumbnail": "https://via.placeholder.com/150/f0f0f0/000000?Text=Vaso+Ceramica",
-    "description": "Elegante vaso in ceramica realizzato a mano con delicati motivi floreali. Perfetto per decorare la tua casa o come regalo speciale.",
-    "price": 35.00,
-    "categories": [
-      {
-        "name": "Ceramiche",
-        "link": "/categorie/ceramiche"
-      },
-      {
-        "name": "Decorazioni per la casa",
-        "link": "/categorie/decorazioni-casa"
-      }
-    ],
-    "artisan": {
-      "name": "Elena",
-      "surname": "Rossi",
-      "photoProfile": "https://via.placeholder.com/50/808080/ffffff?Text=ER",
-      "link": "/artigiani/elena-rossi"
-    }
-  },
-  {
-    "id": 102,
-    "name": "Collana in Argento 925 con Pietra Ametista",
-    "link": "/prodotti/marco-bianchi/collana-argento-925-pietra-ametista",
-    "thumbnail": "https://via.placeholder.com/150/e0e0e0/000000?Text=Collana+Argento",
-    "description": "Raffinata collana in argento sterling 925 con una splendida pietra di ametista. Un gioiello unico per ogni occasione.",
-    "price": 55.00,
-    "categories": [
-      {
-        "name": "Gioielli",
-        "link": "/categorie/gioielli"
-      },
-      {
-        "name": "Collane",
-        "link": "/categorie/collane"
-      }
-    ],
-    "artisan": {
-      "name": "Marco",
-      "surname": "Bianchi",
-      "photoProfile": "https://via.placeholder.com/50/707070/ffffff?Text=MB",
-      "link": "/artigiani/marco-bianchi"
-    }
-  },
-  {
-    "id": 103,
-    "name": "Tagliere in Legno d'Olivo Fatto a Mano",
-    "link": "/prodotti/giulia-verdi/tagliere-legno-olivo-fatto-a-mano",
-    "thumbnail": "https://via.placeholder.com/150/d0d0d0/000000?Text=Tagliere+Legno",
-    "description": "Tagliere unico in legno d'olivo massello, ideale per servire formaggi, salumi o come elemento decorativo in cucina.",
-    "price": 40.00,
-    "categories": [
-      {
-        "name": "Articoli per la cucina",
-        "link": "/categorie/articoli-cucina"
-      },
-      {
-        "name": "Legno",
-        "link": "/categorie/legno"
-      }
-    ],
-    "artisan": {
-      "name": "Giulia",
-      "surname": "Verdi",
-      "photoProfile": "https://via.placeholder.com/50/606060/ffffff?Text=GV",
-      "link": "/artigiani/giulia-verdi"
-    }
-  },
-  {
-    "id": 104,
-    "name": "Sciarpa in Lana Merinos Lavorata a Maglia",
-    "link": "/prodotti/luca-neri/sciarpa-lana-merinos-lavorata-a-maglia",
-    "thumbnail": "https://via.placeholder.com/150/c0c0c0/000000?Text=Sciarpa+Lana",
-    "description": "Calda e morbida sciarpa in pura lana merinos, lavorata a mano con una delicata trama. Perfetta per le giornate fredde.",
-    "price": 60.00,
-    "categories": [
-      {
-        "name": "Accessori",
-        "link": "/categorie/accessori"
-      },
-      {
-        "name": "Abbigliamento",
-        "link": "/categorie/abbigliamento"
-      }
-    ],
-    "artisan": {
-      "name": "Luca",
-      "surname": "Neri",
-      "photoProfile": "https://via.placeholder.com/50/505050/ffffff?Text=LN",
-      "link": "/artigiani/luca-neri"
-    }
-  },
-  {
-    "id": 105,
-    "name": "Candela Profumata Artigianale alla Lavanda",
-    "link": "/prodotti/sofia-gialli/candela-profumata-artigianale-alla-lavanda",
-    "thumbnail": "https://via.placeholder.com/150/b0b0b0/000000?Text=Candela+Lavanda",
-    "description": "Candela profumata realizzata a mano con cera naturale e olio essenziale di lavanda. Ideale per creare un'atmosfera rilassante.",
-    "price": 18.50,
-    "categories": [
-      {
-        "name": "Candele e Profumi per la Casa",
-        "link": "/categorie/candele-profumi"
-      },
-      {
-        "name": "Benessere",
-        "link": "/categorie/benessere"
-      }
-    ],
-    "artisan": {
-      "name": "Sofia",
-      "surname": "Gialli",
-      "photoProfile": "https://via.placeholder.com/50/404040/ffffff?Text=SG",
-      "link": "/artigiani/sofia-gialli"
-    }
-  }
-];
 
 const makeProductDiv=(prodotto)=>{
     let linkProd=document.createElement("a");
@@ -223,7 +106,7 @@ const mapFilter=()=>{
 const initPagination=(currentPage, numPages)=>{
   let cont=document.getElementById("paginationContainer");
   cont.innerHTML="";
-  for(let i=1;i<=pages;i++){
+  for(let i=1;i<=numPages;i++){
       let a=document.createElement("a");
       a.href="#pagina"+i;
       if(i==currentPage){
@@ -241,6 +124,15 @@ document.addEventListener("DOMContentLoaded",()=>{
         page = parseInt(url.hash.substring(url.hash.lastIndexOf("a")+1));
     }
     loadProducts(page);
+    loadCategory();
+    window.addEventListener("hashchange", () => {
+      let url = new URL(window.location.href);
+      let page = 1;
+      if (url.hash !== "" && url.hash.includes("pagina")) {
+        page = parseInt(url.hash.substring(url.hash.lastIndexOf("a") + 1));
+      }
+      loadProducts(page);
+    });
 });
 
 const loadProducts=async(page=1)=>{
@@ -250,20 +142,15 @@ const loadProducts=async(page=1)=>{
         console.log(baseURL);
         if(Object.keys(filter).length > 0){
           baseURL+=`?${mapFilter()}`;
-          if(Object.keys(orderBy).length > 0){
+          if(orderBy!=null){
             baseURL+=`&order=${orderBy}`;
           }
-        }else if(Object.keys(orderBy).length > 0){
+        }else if(orderBy!=null){
             baseURL+=`?order=${orderBy}`;
         }
         const response=await ajax(baseURL,"GET");
         if(response.error!=null)
           throw new Error(response.error);
-
-        //aggiungere anche filtri e ordinamento
-        //aggiungere filtro artigiano
-        //TODO: fare pagination
-        //const products=mockupResponse;
         if(response.products.length==0){
             containerProducts.innerHTML="Nessun prodotto disponibile. Contatta il tuo artigiano di fiducia e fagli inserire i suoi prodotti!";
             return;
@@ -283,24 +170,51 @@ const loadCategory=async()=>{
     const listCategory=document.getElementById("categoryList");
     const listCategoryMobile=document.getElementById("categoryListMobile");
     try{
-        const request=await ajax("https://localhost:4000/category","GET");
-        const categories=await request.json();
-        categories.forEach((category)=>{
+      const request=await ajax("https://localhost:3000/products/categories","GET");
+      if(request.error!=null)
+        throw new Error(request.error);
+      listCategory.innerHTML="";
+      listCategoryMobile.innerHTML="";
+      request.categories.forEach(category=>{
+        let div=document.createElement("div");
+        div.classList.add("form-check");
+        div.innerHTML=`<input class='form-check-input' type='checkbox' name='productCategory' value='${category.slug}'>
+        <label class='form-check-label'>${category.name}</label>`;
+        let divCopy = div.cloneNode(true);
+        listCategory.appendChild(divCopy);
+        listCategoryMobile.appendChild(div);
+      });
+
+      document.querySelectorAll("input[name='productCategory']").forEach(category => {
+        category.addEventListener("change", (event) => {
+          console.log(event.target.value);
+          if (!filter.categories) {
+            filter.categories = [];
+          }
+          if (event.target.checked) {
+            if (!filter.categories.includes(event.target.value)) {
+              filter.categories.push(event.target.value);
+            }
+          } else {
+            filter.categories = filter.categories.filter(cat => cat !== event.target.value);
+          }
+          loadProducts();
         });
+      });
     }catch(err){
         console.error(err);
     }
 }
 
-const mapOrder=(value)=>{
-  switch(value){
-    case 0:"timestamp_creation DESC"; break;
-    case 1:"timestamp_creation ASC"; break;
-    case 2:"price DESC"; break;
-    case 3:"price ASC"; break;
-    case 4:"name ASC"; break;
-    case 5:"name DESC"; break;
-    default:
+const mapOrder = (value) => {
+  switch (parseInt(value)) {
+    case 0: return "timestamp_creation DESC";
+    case 1: return "timestamp_creation ASC";
+    case 2: return "price ASC";
+    case 3: return "price DESC";
+    case 4: return "pname ASC";
+    case 5: return "pname DESC";
+    default: return null;
   }
 }
 
@@ -344,6 +258,7 @@ document.querySelectorAll("[name='orderMobile']").forEach((radio) => {
 //ordinamento desktop
 document.getElementById("selectOrdinamentoMobile").addEventListener("change",(event)=>{
   orderBy=mapOrder(event.target.value);
+  loadProducts(1);
 });
 
 //disponibilità desktop
@@ -370,6 +285,7 @@ document.getElementById("priceMin").addEventListener("change",(event)=>{
     filter.prezzi={};
   }
   filter.prezzi.min=event.target.value;
+  loadProducts(1);
 });
 
 document.getElementById("priceMax").addEventListener("change",(event)=>{
@@ -377,6 +293,7 @@ document.getElementById("priceMax").addEventListener("change",(event)=>{
     filter.prezzi={};
   }
   filter.prezzi.max=event.target.value;
+  loadProducts(1);
 });
 
 //ricerca

@@ -212,7 +212,8 @@ app.post('/logout', async (req, res) => {
     res.clearCookie('jwt', {
         httpOnly: true,
         secure: true,
-        sameSite: 'None'
+        sameSite: 'None',
+        path: '/' // Assicurati che il path corrisponda a quello usato in res.cookie
     });
     res.sendStatus(200);
 });
