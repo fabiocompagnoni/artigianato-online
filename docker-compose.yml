@@ -1,4 +1,11 @@
 services:
+  certs_generator:
+    build:
+      context: ./certs_generator # Specifica il percorso del Dockerfile del generatore
+      dockerfile: Dockerfile     # Il nome del Dockerfile nella directory (se diverso)
+    volumes:
+      - certs_data:/output
+    entrypoint: ["sh", "-c", "cp /output/server.key /output/server.crt /output/ && true"]
   #frontend container (NGINX)
   frontend:
     build:
@@ -9,7 +16,7 @@ services:
       - "443:443"
     volumes:
       #https certificates
-      - ./certs:/etc/nginx/certs:ro
+      - certs_data:/etc/nginx/certs/:ro
       - ./frontend/public:/usr/share/nginx/html:ro
     depends_on:
       - backend
@@ -37,7 +44,7 @@ services:
     networks:
       - artigianato-network
     volumes:
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
 
   #database container (PostgreSQL)
   db:
@@ -69,7 +76,7 @@ services:
       GOOGLE_EMAIL: ${GOOGLE_EMAIL}
       GOOGLE_EMAIL_TOKEN: ${GOOGLE_EMAIL_TOKEN}
     volumes:
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
   
     depends_on:
       - db
@@ -84,7 +91,7 @@ services:
         - SERVICE_NAME=images
     volumes:
       - images_uploads:/app/uploads
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -101,7 +108,7 @@ services:
       args:
         SERVICE_NAME: products
     volumes:
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -121,7 +128,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
     volumes:
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
   
     depends_on:
       - db
@@ -135,7 +142,7 @@ services:
       args:
         SERVICE_NAME: tickets
     volumes:
-      - ./certs:/certs:ro
+      - certs_data:/certs:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -148,6 +155,7 @@ services:
 volumes:
   db_data:
   images_uploads:
+  certs_data: 
 
 networks:
   artigianato-network:
