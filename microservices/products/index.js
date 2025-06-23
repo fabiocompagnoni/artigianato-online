@@ -100,6 +100,8 @@ const outputProduct=async(dbRow, single_product=false)=>{
         description:dbRow.description,
         price: (dbRow.price / 100),
         categories: categories,
+        timestamp_update: dbRow.timestamp_update,
+        timestamp_creation: dbRow.timestamp_creation,
         artisan: {
             name: dbRow.aname,
             surname: dbRow.surname,
@@ -129,7 +131,7 @@ const outputProduct=async(dbRow, single_product=false)=>{
 const base_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE 1 = 1 ';
 
 //come la query sopra ma con l'aggiunta di "description"
-const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
+const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, timestamp_last_update, timestamp_creation, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
 
 //per ottenere i prodotti più recenti
 app.get('/', async (req, res) => {

@@ -164,3 +164,54 @@
 @media print{
 
 }
+.productDispponibility {
+    display:flex;
+    flex-direction: row;
+    align-items:center;
+    justify-content: flex-start;
+    gap:0.5rem;
+}
+.pillDisponibility{
+    width:1rem;
+    height:1rem;
+    border-radius: 100%;
+}
+
+.categoriesProduct{
+    display:flex;
+    flex-direction:row;
+    flex-wrap:wrap;
+    gap:0.5rem;
+    margin-top:1rem;
+    margin-bottom:1rem;
+}
+.categoriesProduct a{
+    padding:0.5rem;
+    border-radius:var(--bs-border-radius-xl);
+    background:var(--second-color);
+    color:#2E5A39;
+    text-decoration: none;
+    transition:all 300ms ease-in-out;
+}
+.categoriesProduct a:hover{
+    background:#2E5A39;
+    color:white;
+}
+#starReviewResume{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.1rem;
+    position:relative;
+}
+.resumeReviewCont{
+    display:flex;
+    flex-direction: column;
+    gap:0.5rem;
+    justify-content: center;
+    align-items:center;
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
