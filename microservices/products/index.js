@@ -103,7 +103,7 @@ const outputProduct=async(dbRow, single_product=false)=>{
         artisan: {
             name: dbRow.aname,
             surname: dbRow.surname,
-            photoProfile: dbRow.artisan_propic_link,
+            photoProfile: dbRow.id_profile_picture ? 'https://localhost:3000/images/' + dbRow.id_profile_picture : null,
             link: `/artigiani/${dbRow.aslug}`,
             reviews_total: artisan_reviews.reviews_total,
             reviews_avg: artisan_reviews.reviews_avg

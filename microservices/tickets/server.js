@@ -17,6 +17,8 @@ const app = express();
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
 const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
 
+const PER_PAGE = 20;
+
 const credentials = {
   key: privateKey,
   cert: certificate
@@ -82,8 +84,15 @@ function makeTicket(row, type) {
 }
 
 //per ottenere tutti i ticket
-app.get('/fetchTickets', authJWT, async (req, res) => {
+app.get('/fetchTickets/:page', authJWT, async (req, res) => {
     try {
+        if(!req.params || !req.params.page || !isBodyInt(req.params.page, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { page } = req.params;
+
         //controllo che l'utente sia un admin
         const ADMIN_ROLE_ID = await getRoleID('admin', pool);
         if(req.user.user_role_id !== ADMIN_ROLE_ID) {
@@ -93,24 +102,33 @@ app.get('/fetchTickets', authJWT, async (req, res) => {
 
         const tickets = [];
 
+        const query_products = 'SELECT tp.*, name AS status_name FROM ticket_products tp JOIN ticket_status ts ON status = ts."ID"';
+        const query_orders = 'SELECT t_o.*, name AS status_name FROM ticket_orders t_o JOIN ticket_status ts ON status = ts."ID"';
+        const limit = PER_PAGE / 2;
+        const offset = (page - 1) * limit;
+
         //ticket dei prodotti
-        const products_res = await pool.query(
-            'SELECT tp.*, name AS status_name FROM ticket_products tp JOIN ticket_status ts ON status = ts."ID"'
-        );
+        const products_pages_res = await pool.query(query_products);
+        const products_res = await pool.query(query_products + ' LIMIT 10 OFFSET $1', [offset]);
 
         for(const row of products_res.rows)
             tickets.push(makeTicket(row, 'product'));
 
+        let num_tickets = products_pages_res.rowCount;
+
 
         //ticket degli ordini
-        const orders_res = await pool.query(
-            'SELECT t_o.*, name AS status_name FROM ticket_orders t_o JOIN ticket_status ts ON status = ts."ID"'
-        );
+        const orders_pages_res = await pool.query(query_orders);
+        const orders_res = await pool.query(query_orders + ' LIMIT 10 OFFSET $1', [offset]);
 
         for(const row of orders_res.rows)
             tickets.push(makeTicket(row, 'order'));
+
+        num_tickets += orders_pages_res.rowCount;
+
+        const pages = Math.ceil(num_tickets / PER_PAGE);
         
-        res.json(tickets);
+        res.json({tickets, pages, num_tickets});
     } catch(err) {
         console.error('Error fetching tickets: ' + err);
         sendError(res, 500);
