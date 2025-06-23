@@ -214,14 +214,19 @@ app.post('/product', authJWT, async (req, res) => {
             return;
         }
 
-        const user_id = req.user.user_id;
-        const { name, description, short_description, price, categories, images, quantity } = req.body;
-
-        //validazione body
-        if (!isBodyString(name, true) || !isBodyString(description, false) || !isBodyString(short_description, true) || !isPrice(price, false) || !isBodyInt(quantity, true)) {
+        if(!req.body || !req.body.name || !isBodyString(req.body.name, true)
+        || !req.body.description || !isBodyString(req.body.description, false)
+        || !req.body.short_description || !isBodyString(req.body.short_description, true)
+        || !req.body.price || !isPrice(req.body.price, true)
+        || !req.body.categories || !Array.isArray(req.body.categories)
+        || !req.body.images || !Array.isArray(req.body.images)
+        || !req.body.quantity || !isBodyInt(req.body.quantity, true)) {
             sendError(res, 400);
             return;
         }
+
+        const user_id = req.user.user_id;
+        const { name, description, short_description, price, categories, images, quantity } = req.body;
 
         //conversione del prezzo in centesimi
         const adjusted_price = Math.round(price * 100);
