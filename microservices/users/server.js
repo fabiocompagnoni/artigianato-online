@@ -19,6 +19,8 @@ import passport from 'passport';
 import configurePassport from "./passportSetup.js";
 import session from "express-session";
 
+const PER_PAGE = 20;
+
 const emailer = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -250,6 +252,46 @@ app.get('/user', authJWT, async (req, res) => {
         res.status(200).json(response);
     } catch (err) {
         console.error('Error getting user data:', err);
+        sendError(res, 500);
+    }
+});
+
+//per ottenere gli artisans
+app.get('/artisans/:page', async (req, res) => {
+    try {
+        const page = req.params.page;
+
+        //verifica della correttezza della richiesta
+        if(!isBodyInt(page, true)) {
+            sendError(res, 404);
+            return;
+        }
+
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+
+        const query = 'SELECT "ID", name, surname, id_profile_picture, slug FROM users WHERE id_role = $1';
+        const pages_res = await pool.query(query, [ARTISAN_ROLE_ID]);
+        const num_artisans = pages_res.rowCount;
+        const pages = Math.ceil(num_artisans / PER_PAGE);
+
+        let sql_res = await pool.query(query + ` LIMIT ${PER_PAGE} OFFSET $2`, [ARTISAN_ROLE_ID, (pages - 1) * PER_PAGE]);
+
+        const artisans = [];
+        for(const row of sql_res.rows) {
+            const artisan_reviews = await getArtisanReviews(row.ID, pool);
+            artisans.push({
+                name: row.name,
+                surname: row.surname,
+                photoProfile: row.id_profile_picture ? 'https://localhost:3000/images/' + row.id_profile_picture : null,
+                link: `/artigiani/${row.slug}`,
+                reviews_total: artisan_reviews.reviews_total,
+                reviews_avg: artisan_reviews.reviews_avg
+            });
+        }
+
+        res.json({artisans, pages, num_artisans});
+    } catch (err) {
+        console.error('Error getting artisans:', err);
         sendError(res, 500);
     }
 });
