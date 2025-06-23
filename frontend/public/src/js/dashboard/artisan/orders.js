@@ -13,13 +13,13 @@ export const showOrders=async()=>{
         return;
     }
     ordersRequest = ordersRequest.orders;
-    console.log(ordersRequest)
     if(ordersRequest.length==0){
         cont.innerHTML=`Non hai ricevuto ancora nessun ordine. Ci dispiace 🥲`;
         return;
     }
+    cont.innerHTML = '';
     ordersRequest.forEach(order=>{
-        let dataOrdine=new Date(order.timestamp).toLocaleDateString();
+        let dataOrdine=new Date().toLocaleDateString();
 
         let itm=document.createElement("div");
         itm.classList.add("order","d-flex","flex-column", "flex-gap");
@@ -32,52 +32,48 @@ export const showOrders=async()=>{
         img.classList.add("orderThumbnail","lazyImages");
         let txtInfo=document.createElement("div");
         txtInfo.classList.add("d-flex","flex-column","gap-1");
-        txtInfo.innerHTML=`<div class='orderTitle'>Ordine #${order.id} del ${dataOrdine} di ${order.name} ${order.surname}</div>
-        <div class='orderPrice'>${parseFloat(order.amount_paid).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</div>
-        <div class='text-muted'>Contiene ${order.products.length} prodotti</div>`;
+        txtInfo.innerHTML=`<div class='orderTitle'>Ordine #${order.order_id} del ${dataOrdine}</div>
+        <div class='orderPrice'>${parseFloat(order.single_product_price * order.quantity / 100).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</div>
+        <div class='text-muted'>Contiene ${order.product_name} x ${order.quantity}</div>`;
         c1.appendChild(img);
         c1.appendChild(txtInfo);
         r1.appendChild(c1);
-        let c2=document.createElement("div");
-        c2.classList.add("btnCont")
-        let btn=document.createElement("button");
-        btn.classList.add("btn","btn-secondary","rounded-4", "btnAction");
-        btn.innerHTML="Dettagli dell'ordine";
-        btn.addEventListener("click",(event)=>{
-            event.preventDefault();
-            window.history.pushState({}, '', "/artigiani/area-riservata/ordini/"+order.id);
-            handlePageUrl({
-                home: document.querySelector("#home"),
-                ordini: document.querySelector("#orders"),
-                ordine: document.querySelector("#order"),
-                prodotti: document.querySelector("#products"),
-                prodotto: document.querySelector("#product"),
-                clienti: document.querySelector("#customers"),
-                rimborsi: document.querySelector("#refounds")
+        if(order.status === 'Pagato') {
+            let c2=document.createElement("div");
+            c2.classList.add("btnCont")
+            let btn=document.createElement("button");
+            btn.classList.add("btn","btn-secondary","rounded-4", "btnAction");
+            btn.innerHTML="Spedisci";
+            console.log(JSON.stringify({
+                        order: order.order_id,
+                        product: order.product_id,
+                        item_status: 'Spedito'
+                    }));
+            btn.addEventListener("click",async(event)=>{
+                event.preventDefault();
+                if(confirm('Sei sicuro di voler spedire questo articolo?')) {
+                    await fetch('https://localhost:3000/purchases/itemStatus/', {
+                        method: 'PUT',
+                        credentials: 'include',
+                        headers: {"Content-Type": "application/json; charset=utf-8"},
+                        body: JSON.stringify({
+                            order_id: order.order_id,
+                            item_id: order.product_id,
+                            item_status: 'Spedito'
+                        })
+                    });
+                    location.reload();
+                }
             });
-        });
-        c2.appendChild(btn);
-        r1.appendChild(c2);
+            c2.appendChild(btn);
+            r1.appendChild(c2);
+        }
         itm.appendChild(r1);
 
         let r2=document.createElement("div");
         r2.classList.add("d-flex","flex-row","align-items-center","justify-content-between","flex-wrap","gap-2");
         let c3=document.createElement("div");
         c3.classList.add("d-flex","flex-row","gap-1","flex-wrap","align-items-center","orderProducts");
-        order.products.forEach(product=>{
-            let prod=document.createElement("div");
-            prod.classList.add("d-flex","flex-column","gap-1", "prodPreview");
-            let imgProd=document.createElement("img");
-            imgProd.classList.add("prodThumbnail","lazyImages");
-            loadImage(imgProd);
-            prod.appendChild(imgProd);
-            let titleProd=document.createElement("div");
-            titleProd.classList.add("prodTitle");
-            titleProd.innerHTML=product.name;
-            prod.appendChild(titleProd);
-            c3.appendChild(prod);
-            
-        });
         let c4=document.createElement("div");
         c4.classList.add("pillStatus", order.status.toLowerCase().replaceAll(" ","-"));
         c4.innerHTML=order.status;
@@ -87,7 +83,7 @@ export const showOrders=async()=>{
 
         cont.appendChild(itm);
         
-        loadImage(img);
+        img.src = order.product_thumbnail;
         
     });
 }
