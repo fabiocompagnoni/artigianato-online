@@ -100,6 +100,8 @@ const outputProduct=async(dbRow, single_product=false)=>{
         description:dbRow.description,
         price: (dbRow.price / 100),
         categories: categories,
+        timestamp_update: dbRow.timestamp_update,
+        timestamp_creation: dbRow.timestamp_creation,
         artisan: {
             name: dbRow.aname,
             surname: dbRow.surname,
@@ -129,7 +131,7 @@ const outputProduct=async(dbRow, single_product=false)=>{
 const base_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE 1 = 1 ';
 
 //come la query sopra ma con l'aggiunta di "description"
-const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
+const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, timestamp_last_update, timestamp_creation, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
 
 //per ottenere i prodotti più recenti
 app.get('/', async (req, res) => {
@@ -476,34 +478,45 @@ app.post("/restock/:slugProduct",authJWT, async(req, res)=>{
 });
 
 //delete product (lo marchia come eliminato nel db)
-app.delete('/product/:product_id', authJWT, async (req, res) => {
+app.delete('/product/:product_slug', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
         const ADMIN_ROLE_ID = await getRoleID('admin', pool);
-        if(req.user.user_role_id !== ARTISAN_ROLE_ID && req.user.user_role_id !== ADMIN_ROLE_ID) {
+        if (req.user.user_role_id !== ARTISAN_ROLE_ID && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
-        if(!isBodyInt(req.params.product_id, true)) {
+        const { product_slug } = req.params;
+        if (!isBodyString(product_slug, true)) {
             sendError(res, 400);
             return;
         }
 
-        let query = 'UPDATE products SET removed = true WHERE "ID" = $1 AND removed = false';
-        const params = [req.params.product_id];
+        // Recupera l'ID del prodotto tramite slug
+        let productQuery = 'SELECT "ID", artisan FROM products WHERE slug = $1 AND removed = false';
+        const productRes = await pool.query(productQuery, [product_slug]);
+        if (productRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const productId = productRes.rows[0].ID;
+        const productArtisan = productRes.rows[0].artisan;
 
-        //se l'utente non è admin, verifica che abbia accesso al prodotto
-        if(req.user.user_role_id === ARTISAN_ROLE_ID) {
-            query += ' AND artisan = $2';
-            params.push(req.user.user_id);
+        // Se l'utente non è admin, verifica che abbia accesso al prodotto
+        if (req.user.user_role_id === ARTISAN_ROLE_ID && req.user.user_id !== productArtisan) {
+            sendError(res, 403);
+            return;
         }
 
-        const sql_res = await pool.query(query, params);
+        const sql_res = await pool.query(
+            'UPDATE products SET removed = true WHERE "ID" = $1 AND removed = false',
+            [productId]
+        );
 
-        if(sql_res.rowCount > 0) //il prodotto è stato eliminato
-            res.json({status: 'ok'});
-        else //il prodotto non è stato elminato perché non esiste una coppia (id, utente) che combaci con la richiesta
+        if (sql_res.rowCount > 0)
+            res.json({ status: 'ok' });
+        else
             sendError(res, 401);
     } catch (err) {
         console.error('Error deleting product: ' + err);
@@ -958,6 +971,137 @@ app.get("/:page",async(req,res)=>{
     }catch(err){
         console.error('Error fetching products:',err);
         sendError(res,500);
+    }
+});
+
+/**
+ * API per ottenere prodotti dello stesso artigiano ma diversi da quello corrente
+ */
+
+app.get("/correlated/:slugArtisan/:slugProduct",async(req,res)=>{
+    try {
+        const { slugArtisan, slugProduct } = req.params;
+        if (!isBodyString(slugArtisan, true) || !isBodyString(slugProduct, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const sql_res = await pool.query(
+            base_query +
+            'AND u.slug = $1 AND p.slug <> $2 ORDER BY timestamp_last_update DESC LIMIT 4',
+            [slugArtisan, slugProduct]
+        );
+
+        const products = await Promise.all(sql_res.rows.map(async dbRow => {
+            const categories = await getCategories(dbRow.id);
+            return {
+                id: dbRow.id,
+                name: dbRow.pname,
+                short_description: dbRow.short_description,
+                description: dbRow.description,
+                price: (dbRow.price / 100),
+                categories: categories,
+                timestamp_update: dbRow.timestamp_update,
+                timestamp_creation: dbRow.timestamp_creation,
+                link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`
+            };
+        }));
+        res.json({ products });
+    } catch (err) {
+        console.error('Error fetching correlated products:', err);
+        sendError(res, 500);
+    }
+});
+
+/**
+ * API per ottenere prodotti simili
+ */
+app.get("/similar/:slugProduct", async (req, res) => {
+    try {
+        const { slugProduct } = req.params;
+        if (!isBodyString(slugProduct, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        // 1. Ottieni info prodotto di riferimento
+        const productRes = await pool.query(
+            'SELECT "ID", price FROM products WHERE slug = $1 AND removed = false',
+            [slugProduct]
+        );
+        if (productRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const { ID: productId, price } = productRes.rows[0];
+
+        // 2. Ottieni categorie del prodotto
+        const catRes = await pool.query(
+            'SELECT "ID_category" FROM product_categories WHERE "ID_product" = $1',
+            [productId]
+        );
+        const categoryIds = catRes.rows.map(row => row.ID_category);
+        if (categoryIds.length === 0) {
+            // Se non ha categorie, cerca solo per prezzo simile
+            categoryIds.push(-1); // Nessuna categoria, non troverà nulla con IN
+        }
+
+        // 3. Trova prodotti simili per categoria o prezzo (±20%)
+        const minPrice = Math.round(price * 0.8);
+        const maxPrice = Math.round(price * 1.2);
+
+        const similarRes = await pool.query(
+            `
+            ${base_query}
+            AND p."ID" <> $1
+            AND (
+                p."ID" IN (
+                    SELECT "ID_product" FROM product_categories WHERE "ID_category" = ANY($2)
+                )
+                OR (p.price BETWEEN $3 AND $4)
+            )
+            ORDER BY
+                (
+                    SELECT COUNT(*) FROM product_categories pc
+                    WHERE pc."ID_product" = p."ID" AND pc."ID_category" = ANY($2)
+                ) DESC,
+                ABS(p.price - $5) ASC,
+                timestamp_last_update DESC
+            LIMIT 8
+            `,
+            [productId, categoryIds, minPrice, maxPrice, price]
+        );
+
+        // Per ogni prodotto, restituisci solo i campi richiesti
+        const products = await Promise.all(similarRes.rows.map(async row => {
+            // Ottieni categorie
+            const categories = await getCategories(row.id);
+            // Ottieni recensioni artigiano
+            const artisan_reviews = await getArtisanReviews(row.id, pool);
+            return {
+                id: row.id,
+                name: row.pname,
+                short_description: row.short_description,
+                description: row.description,
+                price: (row.price / 100),
+                categories: categories,
+                timestamp_update: row.timestamp_update,
+                timestamp_creation: row.timestamp_creation,
+                artisan: {
+                    name: row.aname,
+                    surname: row.surname,
+                    photoProfile: row.id_profile_picture ? 'https://localhost:3000/images/' + row.id_profile_picture : null,
+                    link: `/artigiani/${row.aslug}`,
+                    reviews_total: artisan_reviews.reviews_total,
+                    reviews_avg: artisan_reviews.reviews_avg
+                },
+                link: `/prodotti/${row.aslug}/${row.pslug}`
+            };
+        }));
+        res.json({ products });
+    } catch (err) {
+        console.error('Error fetching similar products:', err);
+        sendError(res, 500);
     }
 });
 
