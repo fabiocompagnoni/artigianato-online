@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import cookieParser from 'cookie-parser';
+import nodemailer from 'nodemailer';
 
 import https from 'https';
 import fs from 'fs';
@@ -13,6 +14,32 @@ import { getRoleID, getArtisanReviews } from './common_scripts/utils.js';
 import { sendUserData } from './scripts/userScripts.js';
 import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 
+const emailer = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.GOOGLE_EMAIL,
+        pass: process.env.GOOGLE_EMAIL_TOKEN
+    },
+	tls: {
+        // DO NOT DO THIS IN PRODUCTION
+        rejectUnauthorized: false
+    }
+});
+
+async function sendRecoveryEmail(user_email, user_name, otp) {
+    await emailer.sendMail({
+        to: user_email,
+        subject: 'Artigianto Online - OTP Recupero password',
+        html: `Gentile ${user_name},<br>
+        Le inviamo questa email a seguito della sua richiesta di recupero password,
+        se non ha effettuato questa richiesta può ignorare l'email.<br><br>
+        <h3>Codice OTP: ${otp}</h3>
+        Questo codice sarà valido per i prossimi 15 minuti.<br><br><br>
+        Il team di Artigianato Online`
+    });
+};
 
 const app = express();
 const port = 4000;
@@ -345,7 +372,7 @@ app.get('/reviews/:artisan_slug/:page', async (req, res) => {
 
         const response = {page: parseInt(page), reviews: []};
 
-        sql_res = await pool.query('SELECT * FROM artisan_reviews WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
+        sql_res = await pool.query('SELECT ar.*, u.name, u.surname FROM artisan_reviews ar JOIN users u ON u."ID" = id_reviewer WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
 
         response.reviews_this_page = sql_res.rowCount;
 
@@ -354,7 +381,9 @@ app.get('/reviews/:artisan_slug/:page', async (req, res) => {
                 reviewer: row.id_reviewer,
                 rating: row.rating,
                 review_text: row.review_text,
-                timestamp: row.timestamp_review
+                timestamp: row.timestamp_review,
+                reviewer_name: row.name,
+                reviewer_surname: row.surname
             });
 
         res.json(response);
@@ -413,6 +442,84 @@ app.post('/reviewArtisan/:artisan_slug', authJWT, async (req, res) => {
         sendError(res, 500);
     }
 });
+
+function generateOTP() {
+    let otp = '';
+    for(let i = 0; i < 6; i++)
+        otp += Math.floor(Math.random() * 10);
+
+    return otp;
+}
+
+//per richiedere un OTP
+app.post('/requestOTP', async (req, res) => {
+    try {
+        if(!req.body || !req.body.email || !isBodyString(req.body.email, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { email } = req.body;
+
+        const user_info = await pool.query('SELECT "ID", name FROM users WHERE email = $1', [email]);
+
+        if(user_info.rowCount <= 0) {
+            sendError(res, 515);
+            return;
+        }
+
+        const otp = generateOTP();
+
+        await pool.query('INSERT INTO email_otp(id_user, otp_code) VALUES($1, $2)', [user_info.rows[0].ID, otp]);
+
+        await sendRecoveryEmail(email, user_info.name, otp);
+
+        res.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Error sending otp:', err);
+        sendError(res, 500);
+    }
+});
+
+/*app.post('/resetPassword', async (req, res) => {
+    try {
+        if(!req.body || !req.body.otp || !isBodyString(req.body.otp, true)
+        || !req.body.email || !isBodyString(req.body.email, true)
+        || !req.body.password || !isBodyString(req.body.password, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { email, otp } = req.body;
+
+        const user_info = await pool.query('SELECT "ID", name FROM users WHERE email = $1', [email]);
+
+        if(user_info.rowCount <= 0) {
+            sendError(res, 515);
+            return;
+        }
+
+        let sql_res = await pool.query('SELECT timestamp_creation FROM email_otp WHERE id_user = $1 AND otp_code = $2', [user_info.rows[0].ID, otp]);
+
+        //non è stata trovata la coppia (id_user, otp_code), probabilmente l'otp è sbagliato
+        if(sql_res.rowCount <= 0) {
+            sendError(res, 403);
+            return;
+        }
+
+        if(sql_res.rows[0].timestamp_creation)
+
+        //a questo punto sappiamo che l'utente ha inserito l'otp corretto
+        const new_pass = generatePasswordHash(password);
+
+        await pool
+
+        res.json({ status: 'ok' });
+    } catch (err) {
+        console.error('Error sending otp:', err);
+        sendError(res, 500);
+    }
+});*/
 
 /**
  * API per ottenere il link della dashboard in base al ruolo dell'utente

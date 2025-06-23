@@ -171,3 +171,11 @@ CREATE TABLE IF NOT EXISTS ticket_orders (
 	note TEXT NOT NULL,
 	id_admin INTEGER REFERENCES users("ID")
 );
+
+CREATE TABLE IF NOT EXISTS email_otp (
+	"ID" SERIAL PRIMARY KEY,
+	id_user INTEGER NOT NULL REFERENCES users("ID"),
+	otp_code CHAR(6) NOT NULL,
+	timestamp_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT unique_user_otp UNIQUE (id_user, otp_code)
+);
