@@ -422,6 +422,8 @@ app.get('/isLoggedIn', (req, res) => {
     const token = req.cookies && req.cookies.jwt;
     if (!token) {
         return res.status(200).json({ loggedIn: false });
+    }else{
+        return res.status(200).json({ loggedIn: true });
     }
 });
 
