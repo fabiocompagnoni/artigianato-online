@@ -127,9 +127,10 @@ const base_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, short
 //come la query sopra ma con l'aggiunta di "description"
 const single_product_query = 'SELECT p."ID" AS id, p.name AS pname, p.slug AS pslug, description, short_description, price, quantity AS availability, visits, u.name AS aname, surname, id_profile_picture, u.slug AS aslug FROM products_view p JOIN users u ON artisan = u."ID" WHERE u.slug = $1 AND p.slug = $2';
 
+//per ottenere i prodotti più recenti
 app.get('/', async (req, res) => {
     try {
-        const sql_res = await pool.query(base_query);
+        const sql_res = await pool.query(base_query + 'LIMIT 20');
 
         const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
 
