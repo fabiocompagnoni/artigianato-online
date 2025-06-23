@@ -114,13 +114,19 @@ const loadReviewsList=async(page, artisanSlug)=>{
     Array.from(req.reviews).forEach(review=>{
         let revCont=document.createElement("div");
         revCont.classList.add("review");
-        //todo mettere nome reviewer quando api completa
-        //let rName=
+
+        let rName=document.createElement("div");
+        rName.classList.add("fw-bold");
+        rName.innerHTML=`${review.reviewer_name} ${review.reviewer_surname}`;
+        
+        let rDate=document.createElement("div");
+        rDate.classList.add("text-muted");
         let date=new Date(review.timestamp).toLocaleDateString('it-IT', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
         });
+        rDate.innerHTML=date;
 
         let starsCont=document.createElement("div");
         let avg = parseFloat(review.rating) || 0;
@@ -142,9 +148,10 @@ const loadReviewsList=async(page, artisanSlug)=>{
         
         let recText=document.createElement("p");
         recText.innerHTML=review.review_text;
+        revCont.appendChild(rName);
+        revCont.appendChild(rDate);
         revCont.appendChild(starsCont);
         revCont.appendChild(recText);
-        revCont.appendChild(date);
         reviewLists.appendChild(revCont);
     });
     //TODO: mettere pagination

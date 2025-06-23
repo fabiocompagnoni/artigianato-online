@@ -215,3 +215,29 @@
     padding:1rem;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
+
+#reviewsList{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+
+#reviewPagination{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content:center;
+    gap:0.25rem;
+}
+#reviewPagination button{
+    background:var(--second-color);
+    color:white;
+    padding:0.2rem;
+    border-radius:var(--bs-border-radius-xl);
+}
+#reviewPagination button:selected{
+    background:var(--first-color);
+}
+#reviewPagination button:hover{
+    background:#2E5A39;
+}
