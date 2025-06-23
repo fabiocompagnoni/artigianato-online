@@ -19,6 +19,7 @@
         margin-left: -0.75rem;
         margin-right: -0.75rem;
         width: calc(100% + 1.5rem);
+        height:100%;
     }
     .productInfo{
         margin-top:1.5rem;
@@ -46,11 +47,13 @@
         display:flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         overflow: hidden;
         gap:0.5rem;
         position: relative;
         width:10rem;
         height:20rem;
+        overflow:hidden;
     }
     .lateralPreviews #scrollTopBtn{
         position:absolute;
@@ -67,6 +70,8 @@
         height:3rem;
         border-radius:100%;
         z-index:1;
+        border:none;
+        position:absolute;
     }
     .contProductCarouselImage .primaryImage{
         width:calc(100% - 11rem);
@@ -80,6 +85,7 @@
         border-radius:var(--bs-border-radius-xl);
     }
 }
+
 
 .productActions{
     display:flex;
@@ -139,6 +145,7 @@
     color:var(--bs-body-color);
     text-align:center;
     padding:0.25rem;
+    width:calc(100% - 5rem);
 }
 
 .otherProductCont{
@@ -240,4 +247,98 @@
 }
 #reviewPagination button:hover{
     background:#2E5A39;
+}
+
+
+.product{
+    flex:1;
+    min-height:20rem;
+    flex-basis:20rem;
+    border-radius:var(--bs-border-radius-xl);
+    text-decoration: none;
+    color:var(--bs-body-color);
+    overflow: none;
+}
+.product .thumbnailProd{
+    width:100%;
+    height:10rem;
+    object-fit:cover;
+    border-top-left-radius:var(--bs-border-radius-xl);
+    border-top-right-radius:var(--bs-border-radius-xl);
+    transition:all 300ms ease-in-out;
+}
+
+
+.product .bodyProd{
+    padding:0.5rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+    height:calc(100% - 10rem);
+    justify-content: space-between;
+}
+.product .artisanCont{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:0.5rem;
+    justify-content: flex-start;
+}
+.artisanCont .profilePicture{
+    width:2rem;
+    height:2rem;
+    border-radius:100%;
+}
+.rowPrice{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content: space-between;
+    gap:0.5rem;
+    flex-wrap:wrap;
+}
+.product .price{
+    font-weight: 800;
+    font-size:1.5rem;
+}
+.product .titleProd{
+    font-weight: 600;
+    font-size:1.25rem;
+    transition: all 300ms ease-in-out;
+}
+.product .titleProd:hover{
+    color:var(--first-color);
+}
+
+
+.product .artisanCont{
+    text-decoration:none;
+    color:var(--bs-body-color);
+}
+.product .btnAddToCart{
+    background:var(--cta-color);
+    color:white;
+    border:none;
+    border-radius:var(--bs-border-radius-xl);
+    padding:0.5rem;
+    transition:all 300ms ease-in-out;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.5rem;
+}
+.product .btnAddToCart:hover{
+    background:var(--first-color);
+}
+
+#otherProdList, #similarProductsList{
+    display:flex;
+    flex-direction: row;
+    gap:0.5rem;
+    align-items:stretch;
+    flex-wrap:wrap;
+}
+
+.product.placeholder{
+    height:10rem;
 }
