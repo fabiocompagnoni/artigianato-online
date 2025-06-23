@@ -136,7 +136,7 @@ const initRefounds=async()=>{
 
 }
 const initProducts=async()=>{
-    const {loadProducts} = await import("/src/js/dashboard/artisan/products.js");
+    const {loadProducts, deleteProduct} = await import("/src/js/dashboard/artisan/products.js");
     let url=new URL(window.location.href);
     let page=1;
     if(url.hash!=""&&url.hash.search("pagina")){
@@ -157,22 +157,45 @@ const initProducts=async()=>{
             clienti: document.querySelector("#customers"),
             rimborsi: document.querySelector("#refounds")
         });
-    })
+    });
+
+    window.editProdToggle=async(slug)=>{
+        window.history.pushState({}, '', `/artigiani/area-riservata/prodotti/${slug}`);
+        handlePageUrl({
+            home: document.querySelector("#home"),
+            ordini: document.querySelector("#orders"),
+            ordine: document.querySelector("#order"),
+            prodotti: document.querySelector("#products"),
+            prodotto: document.querySelector("#product"),
+            clienti: document.querySelector("#customers"),
+            rimborsi: document.querySelector("#refounds")
+        });
+
+    }
+    window.deleteProdToggle=async(slug)=>{
+        deleteProduct(slug);
+        loadProducts(page);
+    }
 }
 
 const initProduct=async(slugProduct=null)=>{
-    const {loadCategories, uploadImage, addNewCategory, addNewQuantity, saveProduct, updateProduct, deleteFoto} = await import("/src/js/dashboard/artisan/products.js");
+    const {loadCategories, uploadImage, addNewCategory, addNewQuantity, saveProduct, updateProduct, deleteFoto, preloadProductInfo} = await import("/src/js/dashboard/artisan/products.js");
     let btnAction=document.getElementById("btnActionProduct");
     if(slugProduct==null){
         //nuovo prodotto
         btnAction.onclick=()=>{
             saveProduct();
         }
+        document.getElementById("pruductDisponibility").removeAttribute("disabled");
+        document.getElementById("btnToggleProductRestock").disabled=true;
     }else{
         //modifica prodotto esistente
         btnAction.onclick=()=>{
             updateProduct(slugProduct);
         }
+        document.getElementById("pruductDisponibility").disabled=true;
+        document.getElementById("btnToggleProductRestock").removeAttribute('disabled');
+        preloadProductInfo(slugProduct, window.artisanSlug);
     }
     loadCategories(slugProduct);
     document.querySelector(".selectImgBtn").addEventListener("click",(event)=>{

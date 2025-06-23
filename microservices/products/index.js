@@ -267,7 +267,7 @@ app.post('/product', authJWT, async (req, res) => {
 
                 await client.query('COMMIT');
 
-                res.json({
+                res.status(200).json({
                     id: product_info.ID,
                     name: product_info.name,
                     description: product_info.short_description,
@@ -275,7 +275,7 @@ app.post('/product', authJWT, async (req, res) => {
                     category: categories,
                     product_image: images[0],
                     quantity: quantity,
-                    slug:slug
+                    slug: slug
                 });
             } catch (err) {
                 await client.query('ROLLBACK');
@@ -409,7 +409,7 @@ app.put('/product/:slug', authJWT, async (req, res) => {
 
             await client.query('COMMIT'); // Commette la transazione
 
-            res.json(response);
+            res.status(200).json(response);
         } catch (err) {
             console.error('Error updating product: ', err);
             sendError(res, 500);
@@ -594,10 +594,10 @@ app.delete("/productImage/:product_id/:image_id",authJWT, async(req, res)=>{
             sendError(res, 403);
             return;
         }
-
+        console.log(req.params);
         const { product_id, image_id } = req.params;
 
-        if (!isBodyInt(product_id, false) || !isBodyInt(image_id, false)) {
+        if (!isBodyInt(product_id, false) || image_id==undefined) {
             sendError(res, 400);
             return;
         }

@@ -22,18 +22,19 @@ const makePagination=(currentPage, pages)=>{
 export const loadProducts=async(page)=>{
     let tbody=document.getElementById("productsTbContent");
     try{
-        const userSlug=await getArtisanSlug();
+        const userSlug=window.artisanSlug;
         const requestProducts=await ajax(`https://localhost:3000/products/${page}?filter.artisan=${userSlug}`);
         if(requestProducts.error!=null){
             throw new Error(requestProducts.error);
         }
         requestProducts.products.forEach(product=>{
             let tr=document.createElement("tr");
-            let categoriesString=product.categories.join(", ");
+            let categoriesString = product.categories.map(cat => cat.name).join(", ");
+            let slug=product.link.split('/').pop();
             tr.innerHTML=`
                 <td>${product.id}</td>
                 <td>${product.name}</td>
-                <td><span class='badge text-bg-${product.quantity>0?"success":"danger"}'>${product.quantity}</span></td>
+                <td class='text-center'><span class='badge text-bg-${product.quantity>0?"success":"danger"}'>${product.quantity}</span></td>
                 <td>${categoriesString}</td>
                 <td>${parseFloat(product.price).toLocaleString('it-IT', {style: 'currency', currency: 'EUR'})}</td>
                 <td>${product.visits}</td>
@@ -43,14 +44,14 @@ export const loadProducts=async(page)=>{
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <ul class="dropdown-menu">
-                            <li><button class='dropdown-item' onclick='window.editProdToggle(${product.id})'><i class="fas fa-edit"></i> Modifica</button></li>
-                            <li><button class='dropdown-item' onclick='window.deleteProdToggle(${product.id})'><i class="fas fa-trash"></i> Elimina</button></li>
+                            <li><button class='dropdown-item' onclick='window.editProdToggle("${slug}")'><i class="fas fa-edit"></i> Modifica</button></li>
+                            <li><button class='dropdown-item' onclick='window.deleteProdToggle("${slug}")'><i class="fas fa-trash"></i> Elimina</button></li>
                             <li><a href='${product.link}' class='dropdown-item' target='_blank'><i class="fas fa-eye"></i>Visualizza</a></li>
                         </ul>
                     </div>
                 </td>
-
             `;
+            tbody.appendChild(tr);
 
         });
         makePagination(page, requestProducts.pages);
@@ -66,6 +67,14 @@ export const loadProducts=async(page)=>{
 
 }
 
+const listenerCategory=(checkbox)=>{
+    if(checkbox.checked){
+        addCategory(checkbox.dataset.name);
+    }else{
+        removeCategory(checkbox.dataset.name);
+    }
+}
+
 export const loadCategories=async(productSlug=null)=>{
     let cont=document.getElementById("categoryList");
     const req=await ajax("https://localhost:3000/products/categories"+(productSlug!=null ? "?product_slug="+productSlug: ""));
@@ -76,23 +85,33 @@ export const loadCategories=async(productSlug=null)=>{
     req.categories.forEach((category, i)=>{
         let r=document.createElement("div");
         r.classList.add("form-check");
-        r.innerHTML=`<input class='form-check-input' type='checkbox' name='productCategory' id='cat${i}' data-slug='${category.slug}' ${category.selected ? "checked" : ""}>
-        <label class='form-check-label' for='cat${i}'>${category.name}</label>`;
+        let checkbox=document.createElement("input");
+        checkbox.type="checkbox";
+        checkbox.classList.add("form-check-input");
+        checkbox.name="productCategory";
+        checkbox.id="cat"+i;
+        checkbox.dataset.name=category.name;
+        checkbox.checked=category.selected;
+        checkbox.addEventListener("change",()=>{listenerCategory(checkbox)});
+        r.appendChild(checkbox);
+        let label=document.createElement("label");
+        label.classList.add("form-check-label");
+        label.htmlFor="cat"+i;
+        label.innerHTML=category.name;
+        r.appendChild(label);
         cont.appendChild(r);
     });
 
     document.querySelectorAll("[productCategory]").forEach(checkbox=>{
         checkbox.addEventListener("change",(event)=>{
-            if(checkbox.checked){
-                addCategory(checkbox.dataset.slug);
-            }else{
-                removeCategory(checkbox.dataset.slug);
-            }
+            console.log(event.target);
+            
         });
     });
 }
 
 export const preloadProductInfo=async(slug, artisanSlug)=>{
+    console.log(slug, preloadProductInfo);
     const req=await ajax(`https://localhost:3000/products/product/${artisanSlug}/${slug}`);
     if(req.error!=null){
 
@@ -101,11 +120,13 @@ export const preloadProductInfo=async(slug, artisanSlug)=>{
     document.getElementById("productPrice").value=req.price;
     document.getElementById("productShortDescription").value=req.short_description;
     document.getElementById("productDescription").value=req.description;
+    document.getElementById("pruductDisponibility").value=req.quantity;
     req.images.forEach(img=>{
         let imgEl=document.createElement("img");
         imgEl.classList.add("lazyImages", "line-items");
         imgEl.dataset.src=img.url;
         imgEl.dataset.id=img.id;
+        imgEl.dataset.productId=req.id;
         addListenerDelete(img.id, req.id, imgEl);
         loadImage(imgEl);
         document.getElementById("imgProdUploaded").appendChild(imgEl);
@@ -194,6 +215,7 @@ export const uploadImage=async()=>{
                     addListenerDelete(data.file_id, null, imgEl);
                     document.getElementById("imgProdUploaded").appendChild(imgEl);
                     initDragAndDrop(document.getElementById("imgProdUploaded"),swapFoto);
+                    selectedImages.push(data.file_id);
                 } else {
                     alert("Errore durante il caricamento dell'immagine");
                 }
@@ -210,30 +232,42 @@ export const updateProduct=async(slug)=>{
     const request=await ajax("https://localhost:3000/products/product/"+slug,
         "PUT",
         getProductInfo(),
+        {"Content-Type": "application/json"}
     );
     if(request.error!=null){
         showUpdate(false, "Si è verificato un problema nell'aggiornamento del prodotto");
         console.log(request.error);
         return;
     }
-    showUpdate(success, "Prodotto aggiornato con successo");
+    document.querySelectorAll("[productCategory]").forEach(checkbox=>{
+        if(checkbox.checked)
+            selectedCategories.push(checkbox.dataset.name);
+        else if(selectedCategories.includes(checkbox.dataset.name))
+            selectedCategories.splice(selectedCategories.indexOf(checkbox.dataset.name), 1);
+    });
+    showUpdate(true, "Prodotto aggiornato con successo");
 }
 
-export const addCategory=async(slug)=>{
-    if(!selectedCategories.includes(slug)){
-        selectedCategories.push(slug);
+export const addCategory=async(name)=>{
+    if(!selectedCategories.includes(name)){
+        selectedCategories.push(name);
+        console.log(name+" aggiunta");
     }
 }
-export const removeCategory=async(slug)=>{
-    let index=selectedCategories.indexOf(slug);
+export const removeCategory=async(name)=>{
+    let index=selectedCategories.indexOf(name);
     if(index!=-1){
-        selectedCategories.splice(index, 1);
+        selectedCategories.splice(name, 1);
+        console.log(name+" rimossa");
     }
 }
 export const saveProduct=async()=>{
+    let data=getProductInfo();
+    data.quantity=document.getElementById("pruductDisponibility").value;
     const request=await ajax("https://localhost:3000/products/product",
         "POST",
-        getProductInfo(),
+        data,
+        {"Content-Type": "application/json"}
     );
     if(request.error!=null){
         showUpdate(false, "Si è verificato un problema nell'inserimento del prodotto");
@@ -247,10 +281,12 @@ export const saveProduct=async()=>{
     document.getElementById("btnActionProduct").onclick=()=>{
         updateProduct(slug);
     }
+    document.getElementById("pruductDisponibility").disabled=true;
+    document.getElementById("btnToggleProductRestock").removeAttribute("disabled");
 }
 
 export const addNewCategory=async(name, productSlug=null)=>{
-    const request=await ajax("https://localhost:3000/products/category","POST",{name:name});
+    const request=await ajax("https://localhost:3000/products/category","POST",{name:name},{"Content-Type": "application/json"});
     if(request.error!=null){
         console.error(request.error);
         return false;
@@ -260,7 +296,7 @@ export const addNewCategory=async(name, productSlug=null)=>{
 }
 
 export const addNewQuantity=async(quantity, slugProd)=>{
-    const req=await ajax("https://localhost:3000/products/restock/"+slugProd,"POST",{quantity:quantity});
+    const req=await ajax("https://localhost:3000/products/restock/"+slugProd,"POST",{quantity:quantity},{"Content-Type": "application/json"});
     if(req.error!=null){
         console.error(req.error);
         return false;
@@ -280,7 +316,8 @@ const swapFoto=async(id, pos, idProd)=>{
             product_id:idProd,
             image_id:id,
             new_position:pos
-        }
+        },
+        {"Content-Type": "application/json"}
     );
     if(request.error!=null){
         alert("Si è verificato un errore nell'aggiornamento dell'ordine");
@@ -307,7 +344,7 @@ export const deleteFoto=async(id, idProd)=>{
         console.error(request.error);
         return;
     }
-    let images=document.querySelector(".productImgCont .list-item");
+    let images=document.querySelectorAll("#imgProdUploaded img.line-items");
     //cerco quella con quell'id
     images.forEach(img=>{
         if(img.dataset.id==id){
@@ -362,14 +399,15 @@ function initDragAndDrop(list, swapFunction) {
                 
                 const draggedIndex = Array.from(list.children).indexOf(draggedItem);
                 const targetIndex = Array.from(list.children).indexOf(target);
-                console.log(draggedIndex, targetIndex);
+                
                 let id=draggedItem.dataset.id;
+                let productId=draggedItem.dataset.productId;
                 if (draggedIndex > targetIndex) {
                     list.insertBefore(draggedItem, target);
                 } else {
                     list.insertBefore(draggedItem, target.nextSibling);
                 }
-                swapFunction(id, targetIndex);
+                swapFunction(id, targetIndex, productId);
             }
         });
     });

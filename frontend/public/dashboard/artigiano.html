@@ -203,7 +203,7 @@
                             <label>Disponibilità</label>
                             <div class="d-flex flex-row gap-2 align-items-center flex-wrap">
                                 <input type="number" id="pruductDisponibility" class="form-control rounded-4" disabled/>
-                                <button class="btn btn-secondary rounded-4" style="flex:1;white-space: no-wrap;" data-bs-toggle="modal" data-bs-target="#modalRestock">Aggiungi disponibilità</button>
+                                <button class="btn btn-secondary rounded-4" style="flex:1;white-space: no-wrap;" data-bs-toggle="modal" data-bs-target="#modalRestock" id="btnToggleProductRestock">Aggiungi disponibilità</button>
                             </div>
                         </div>
                     </div>
@@ -354,9 +354,14 @@
     
     <script type="module">
         //gestione delle pagine
-        import {handlePageUrl, handleNavigation} from "/src/js/dashboard/artisan/index.js";
+        import {handlePageUrl, handleNavigation, getArtisanSlug} from "/src/js/dashboard/artisan/index.js";
         
         document.addEventListener("DOMContentLoaded",async()=>{
+            let artisanReq=await getArtisanSlug()
+            window.artisanSlug=artisanReq ?? null;
+            if(window.artisanSlug==null){
+                window.location.href="/accedi";
+            }
             handlePageUrl({
                 home: document.querySelector("#home"),
                 ordini: document.querySelector("#orders"),

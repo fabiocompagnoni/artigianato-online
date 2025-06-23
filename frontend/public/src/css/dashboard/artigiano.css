@@ -323,6 +323,12 @@
     border-radius:var(--bs-border-radius-xl);
     cursor: pointer;
 }
+.productImgCont img{
+    width:5rem;
+    height:5rem;
+    object-fit:cover;
+    border-radius:var(--bs-border-radius-xl);
+}
 .releaseTrash{
     background:#842029;
     color:white;
@@ -372,4 +378,17 @@
 #updates #progress #active{
     height:100%;
     border-radius:1rem;
+}
+
+.list-item{
+    cursor:move;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+    user-select: none;
+}
+.list-item:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
 }
