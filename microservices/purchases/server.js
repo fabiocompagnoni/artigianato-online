@@ -18,6 +18,8 @@ const app = express();
 const privateKey = fs.readFileSync('/certs/server.key', 'utf8');
 const certificate = fs.readFileSync('/certs/server.crt', 'utf8');
 
+const PER_PAGE = 20;
+
 const credentials = {
   key: privateKey,
   cert: certificate
@@ -149,10 +151,17 @@ app.get('/cart', authJWT, async (req, res) => {
     }
 });
 
-async function artisanOrdersHandler(req, res) {
+async function artisanOrdersHandler(req, res, page) {
+    const query = 'SELECT "ID_order", "ID_product", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1';
+
+    const pages_res = await pool.query(query, [req.user.user_id]);
+
+    const num_orders = pages_res.rowCount;
+    const pages = Math.ceil(num_orders / PER_PAGE);
+
     const sql_res = await pool.query(
-        'SELECT "ID_order", "ID_product", quantity, single_product_price, p.name, os.name AS status FROM products_order JOIN products p ON "ID_product" = p."ID" JOIN order_status os ON os."ID" = status WHERE artisan = $1',
-        [req.user.user_id]
+        query + ` LIMIT ${PER_PAGE} OFFSET $2`,
+        [req.user.user_id, (page - 1) * PER_PAGE]
     );
 
     const result = await Promise.all(sql_res.rows.map(async row => ({
@@ -165,32 +174,47 @@ async function artisanOrdersHandler(req, res) {
         product_thumbnail: await getProductThumbnail(row.ID_product, pool)
     })));
 
-    res.json(result);
+    res.json({orders: result, pages, num_orders});
 }
 
 //per verificare gli ordini effettuati o quelli ricevuti (se si è un artisan)
-app.get('/orders', authJWT, async (req, res) => {
+app.get('/orders/:page', authJWT, async (req, res) => {
     try {
+        if(!req.params || !req.params.page || !isBodyInt(req.params.page, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { page } = req.params;
+
         const CUSTOMER_ROLE_ID = await getRoleID('customer', pool);
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
         const ADMIN_ROLE_ID = await getRoleID('admin', pool);
         const response = [];
 
         if(req.user.user_role_id === ARTISAN_ROLE_ID) {
-            await artisanOrdersHandler(req, res);
+            await artisanOrdersHandler(req, res, page);
             return;
         }
 
         let query = 'SELECT "ID", timestamp_order, payment_intent FROM orders';
         let params = [];
+        let params_counter = 1;
         if(req.user.user_role_id === CUSTOMER_ROLE_ID) {
-            query += ' WHERE id_user = $1';
+            query += ' WHERE id_user = $' + params_counter++;
             params = [req.user.user_id];
         }
         else if(req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
+
+        const pages_query = await pool.query(query, params);
+        const num_orders = pages_query.rowCount;
+        const num_pages = Math.ceil(num_orders / PER_PAGE);
+
+        query += ` LIMIT ${PER_PAGE} OFFSET $` + params_counter;
+        params.push((page - 1) * PER_PAGE);
 
         const sql_res = await pool.query(query, params);
 
@@ -224,7 +248,7 @@ app.get('/orders', authJWT, async (req, res) => {
             });
         }
 
-        res.json(response);
+        res.json({orders: response, pages: num_pages, num_orders});
     } catch(err) {
         console.error('Error fetching purchases: ' + err);
         sendError(res, 500);
@@ -267,8 +291,15 @@ app.post('/refund', authJWT, async (req, res) => {
 });
 
 //per ottenere info sui propri clienti
-app.get('/customers', authJWT, async (req, res) => {
+app.get('/customers/:page', authJWT, async (req, res) => {
     try {
+        if(!req.params || !req.params.page || !isBodyInt(req.params.page, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const { page } = req.params;
+        
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
         if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
@@ -276,7 +307,7 @@ app.get('/customers', authJWT, async (req, res) => {
             return;
         }
 
-        const query = `SELECT u.name, surname, email, COUNT(*) AS num_orders, SUM(quantity) AS num_products, SUM(quantity * single_product_price) AS total_spent
+        let query = `SELECT u.name, surname, email, COUNT(*) AS num_orders, SUM(quantity) AS num_products, SUM(quantity * single_product_price) AS total_spent
             FROM products_order
             JOIN products p ON "ID_product" = p."ID"
             JOIN orders o ON "ID_order" = o."ID"
@@ -284,7 +315,13 @@ app.get('/customers', authJWT, async (req, res) => {
             WHERE artisan = $1
             GROUP BY u."ID"`;
         
-        const sql_res = await pool.query(query, [req.user.user_id]);
+        const pages_query = await pool.query(query, [req.user.user_id]);
+        const num_customers = pages_query.rowCount;
+        const num_pages = Math.ceil(num_customers / PER_PAGE);
+
+        query += ` LIMIT ${PER_PAGE} OFFSET $2`;
+        
+        const sql_res = await pool.query(query, [req.user.user_id, (page - 1) * PER_PAGE]);
 
         const users = sql_res.rows.map(row => ({
             name: row.name,
@@ -295,7 +332,7 @@ app.get('/customers', authJWT, async (req, res) => {
             amount_paid: row.total_spent / 100
         }));
 
-        res.json(users);
+        res.json({customers: users, pages: num_pages, num_customers});
     } catch(err) {
         console.error('Error fetching customers info: ' + err);
         sendError(res, 500);
