@@ -811,6 +811,95 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /users/artisans/{page}:
+    get:
+      summary: Ottiene un elenco paginato di artigiani
+      description: Restituisce un elenco di artigiani con le loro informazioni di base, inclusi i totali e le medie delle recensioni. La lista è paginata.
+      operationId: getArtisansPaged
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina di artigiani da recuperare (a partire da 1).
+      responses:
+        '200':
+          description: Elenco di artigiani recuperato con successo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artisans:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Nome dell'artigiano.
+                        surname:
+                          type: string
+                          description: Cognome dell'artigiano.
+                        photoProfile:
+                          type: string
+                          format: url
+                          nullable: true
+                          description: URL della foto profilo dell'artigiano.
+                        link:
+                          type: string
+                          format: uri
+                          description: Link alla pagina dettaglio dell'artigiano.
+                        reviews_total:
+                          type: integer
+                          description: Numero totale di recensioni ricevute dall'artigiano.
+                          minimum: 0
+                        reviews_avg:
+                          type: number
+                          format: float
+                          description: Media delle recensioni ricevute dall'artigiano (0.0-5.0).
+                          minimum: 0.0
+                          maximum: 5.0
+                      required:
+                        - name
+                        - surname
+                        - link
+                        - reviews_total
+                        - reviews_avg
+                  pages:
+                    type: integer
+                    description: Il numero totale di pagine disponibili.
+                    minimum: 1
+                  num_artisans:
+                    type: integer
+                    description: Il numero totale di artigiani nel sistema.
+                    minimum: 0
+                required:
+                  - artisans
+                  - pages
+                  - num_artisans
+        '400':
+          description: Richiesta non valida (es. numero di pagina non intero).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pagina non trovata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Errore interno del server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # PRODUCTS MICROSERVICE PATHS
   /products/status:
@@ -1837,54 +1926,120 @@ paths:
           $ref: '#/components/responses/ForbiddenError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /purchases/orders:
+  /purchases/orders/{page}:
     get:
-      summary: Ottiene gli ordini dell'utente o dell'artigiano
+      summary: Ottiene un elenco paginato di ordini per l'utente autenticato
+      description: Recupera un elenco paginato degli ordini. I clienti vedranno solo i propri ordini. Gli artigiani vedranno gli ordini che contengono i loro prodotti. Gli amministratori vedranno tutti gli ordini.
+      operationId: getOrdersPaged
       tags:
         - Purchases
-      description: Recupera gli ordini effettuati dall'utente (se cliente) o ricevuti (se artigiano). Richiede autenticazione.
       security:
-        - cookieAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina degli ordini da recuperare (a partire da 1).
       responses:
         '200':
           description: Elenco di ordini recuperato con successo.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: '#/components/schemas/CustomerOrderSummary'
-                    - $ref: '#/components/schemas/ArtisanOrderItem'
-              examples:
-                customerOrders:
-                  value:
-                    - id: 1
-                      timestamp: "2024-01-20T10:00:00.000Z"
-                      payment_intent: "pi_xxxxxxx"
-                      amount_paid: 50.00
-                      num_products: 3
-                      products:
-                        - name: "Vaso in Ceramica"
-                          thumbnail: "https://localhost:3000/images/thumb_id1"
-                        - name: "Tavolo di Legno"
-                          thumbnail: "https://localhost:3000/images/thumb_id2"
-                      status: "Pagato"
-                artisanOrders:
-                  value:
-                    - order_id: 1
-                      product_id: 101
-                      quantity: 1
-                      single_product_price: 25.00
-                      status: "Pagato"
-                      product_name: "Vaso in Ceramica"
-                      product_thumbnail: "https://localhost:3000/images/thumb_id1"
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID dell'ordine.
+                          format: int64
+                        timestamp:
+                          type: string
+                          format: date-time
+                          description: Data e ora di creazione dell'ordine.
+                        payment_intent:
+                          type: string
+                          description: ID dell'intento di pagamento associato all'ordine.
+                          nullable: true
+                        amount_paid:
+                          type: number
+                          format: float
+                          description: Importo totale pagato per l'ordine.
+                        num_products:
+                          type: integer
+                          description: Numero totale di articoli (quantità aggregata) nell'ordine.
+                        products:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Nome del prodotto nell'ordine.
+                              thumbnail:
+                                type: string
+                                format: url
+                                nullable: true
+                                description: URL della miniatura del prodotto.
+                            required:
+                              - name
+                              - thumbnail
+                          description: Lista dei prodotti inclusi nell'ordine (nome e miniatura).
+                        status:
+                          type: string
+                          description: Stato complessivo dell'ordine (il più "basso" tra gli stati degli articoli).
+                      required:
+                        - id
+                        - timestamp
+                        - payment_intent
+                        - amount_paid
+                        - num_products
+                        - products
+                        - status
+                  pages:
+                    type: integer
+                    description: Il numero totale di pagine disponibili per gli ordini filtrati.
+                    minimum: 0
+                  num_orders:
+                    type: integer
+                    description: Il numero totale di ordini per l'utente/filtro corrente.
+                    minimum: 0
+                required:
+                  - orders
+                  - pages
+                  - num_orders
+        '400':
+          description: Richiesta non valida (es. numero di pagina mancante o non intero).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/ForbiddenError'
+          description: Forbidden (L'utente non ha i permessi per accedere a questi ordini).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Errore interno del server durante il recupero degli ordini.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /purchases/refund:
     post:
       summary: Effettua un rimborso (Admin)
@@ -1938,55 +2093,103 @@ paths:
           $ref: '#/components/responses/ForbiddenError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /purchases/customers:
+  /purchases/customers/{page}:
     get:
-      summary: Ottiene informazioni sui clienti (Artisan)
+      summary: Ottiene un elenco paginato di clienti per un artigiano
+      description: Consente a un artigiano di recuperare un elenco paginato dei clienti che hanno acquistato i suoi prodotti. La risposta include dettagli sugli acquisti totali di ciascun cliente. Richiede il ruolo di Artigiano.
+      operationId: getArtisanCustomersPaged
       tags:
         - Purchases
-      description: Recupera un riepilogo dei clienti che hanno acquistato prodotti dall'artigiano autenticato, con statistiche di acquisto. Richiede il ruolo di Artigiano.
       security:
-        - cookieAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina dei clienti da recuperare (a partire da 1).
       responses:
         '200':
-          description: Informazioni sui clienti recuperate con successo.
+          description: Elenco di clienti recuperato con successo.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      example: Mario
-                    surname:
-                      type: string
-                      example: Rossi
-                    email:
-                      type: string
-                      format: email
-                      example: mario.rossi@example.com
-                    num_orders:
-                      type: integer
-                      description: Numero di ordini totali effettuati dal cliente all'artigiano.
-                      example: 3
-                    num_products:
-                      type: integer
-                      description: Numero totale di prodotti acquistati dal cliente dall'artigiano.
-                      example: 5
-                    amount_paid:
-                      type: number
-                      format: float
-                      description: Importo totale speso dal cliente dall'artigiano.
-                      example: 120.50
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Nome del cliente.
+                        surname:
+                          type: string
+                          description: Cognome del cliente.
+                        email:
+                          type: string
+                          format: email
+                          description: Indirizzo email del cliente.
+                        num_orders:
+                          type: integer
+                          description: Numero totale di ordini effettuati dal cliente con i prodotti dell'artigiano.
+                          minimum: 0
+                        num_products:
+                          type: integer
+                          description: Numero totale di prodotti acquistati dal cliente dall'artigiano (quantità aggregata).
+                          minimum: 0
+                        amount_paid:
+                          type: number
+                          format: float
+                          description: Importo totale speso dal cliente per i prodotti dell'artigiano.
+                          minimum: 0.0
+                      required:
+                        - name
+                        - surname
+                        - email
+                        - num_orders
+                        - num_products
+                        - amount_paid
+                  pages:
+                    type: integer
+                    description: Il numero totale di pagine disponibili per i clienti dell'artigiano.
+                    minimum: 0
+                  num_customers:
+                    type: integer
+                    description: Il numero totale di clienti per l'artigiano.
+                    minimum: 0
+                required:
+                  - customers
+                  - pages
+                  - num_customers
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Richiesta non valida (es. numero di pagina mancante o non intero).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/ForbiddenError'
+          description: Forbidden (L'utente non è un artigiano).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Errore interno del server durante il recupero delle informazioni sui clienti.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /purchases/order/{id_order}:
     get:
       summary: Ottiene i dettagli di un singolo ordine
@@ -2251,53 +2454,104 @@ paths:
                     example: ok
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /tickets/fetchTickets:
+  /tickets/fetchTickets/{page}:
     get:
-      summary: Ottiene tutti i ticket
+      summary: Ottiene tutti i ticket (di prodotto e ordine) con paginazione
+      description: Permette a un amministratore di recuperare un elenco paginato di tutte le segnalazioni (ticket di prodotto e ticket di ordine) presenti nel sistema. Richiede il ruolo di Admin.
+      operationId: fetchAllTicketsPaged
       tags:
-        - Ticket Management
-      description: Recupera un elenco di tutti i ticket aperti e chiusi (ticket di prodotti e ordini). Richiede il ruolo di Amministratore.
+        - Tickets
       security:
-        - cookieAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: Il numero della pagina di ticket da recuperare (a partire da 1).
       responses:
         '200':
           description: Elenco di ticket recuperato con successo.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ticket'
-              example:
-                - type: product
-                  id: 1
-                  product_id: 101
-                  user_id: 5
-                  timestamp_open: "2024-01-15T10:00:00.000Z"
-                  timestamp_resolved: null
-                  status: "Aperto"
-                  note: "Prodotto non funzionante."
-                  resolved_by: null
-                - type: order
-                  id: 2
-                  order_id: 205
-                  user_id: 8
-                  timestamp_open: "2024-01-16T14:30:00.000Z"
-                  timestamp_resolved: "2024-01-17T09:15:00.000Z"
-                  status: "Chiuso"
-                  note: "Ordine incompleto."
-                  resolved_by: 1
+                type: object
+                properties:
+                  tickets:
+                    type: array
+                    items:
+                      type: object # Lo schema esatto di un ticket (prodotto o ordine) dovrebbe essere definito altrove se sono diversi
+                      properties:
+                        id:
+                          type: integer
+                          description: ID del ticket.
+                        type:
+                          type: string
+                          enum: [product, order]
+                          description: Tipo di ticket (prodotto o ordine).
+                        status:
+                          type: string
+                          description: Stato attuale del ticket (es. Aperto, Chiuso).
+                        note:
+                          type: string
+                          description: Descrizione del problema o nota del ticket.
+                        timestamp_creation:
+                          type: string
+                          format: date-time
+                          description: Timestamp di creazione del ticket.
+                        timestamp_resolved:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          description: Timestamp di risoluzione del ticket (se risolto).
+                        # Aggiungere qui altre proprietà specifiche del ticket (es. id_product, id_order, id_user, id_admin)
+                        # A seconda di come makeTicket formatta l'output, potrebbe essere necessario creare schemi distinti
+                        # per ticket di prodotto e ticket di ordine, e usare `oneOf` o `anyOf` qui.
+                        # Per semplicità, qui è un tipo generico.
+                  pages:
+                    type: integer
+                    description: Il numero totale di pagine disponibili per tutti i ticket combinati.
+                    minimum: 0
+                  num_tickets:
+                    type: integer
+                    description: Il numero totale di ticket (di prodotto + di ordine) nel sistema.
+                    minimum: 0
+                required:
+                  - tickets
+                  - pages
+                  - num_tickets
+        '400':
+          description: Richiesta non valida (es. numero di pagina mancante o non intero).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          description: Non autorizzato (token JWT mancante o non valido).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/ForbiddenError'
+          description: Forbidden (L'utente non è un amministratore).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Errore interno del server durante il recupero dei ticket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /tickets/resolve/{ticket_type}/{ticket_id}:
     post:
       summary: Risolve un ticket
       tags:
-        - Ticket Management
+        - Tickets
       description: Chiude un ticket di tipo 'product' o 'order', aggiornandone lo stato a 'Chiuso' e registrando l'amministratore che lo ha risolto. Richiede il ruolo di Amministratore e che il ticket sia attualmente 'Aperto'.
       security:
         - cookieAuth: []

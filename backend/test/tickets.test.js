@@ -152,7 +152,6 @@ beforeAll(async () => {
     global_setup_product_data.images.push(globalUploadedImageId);
 
     // 5. Crea un prodotto di setup globale
-    console.log('Creating global setup product for tickets...');
     const productCreateRes = await request(app)
         .post('/products/product')
         .set('Cookie', globalArtisanJwtCookie)
@@ -161,10 +160,8 @@ beforeAll(async () => {
         .timeout(20000);
     expect(productCreateRes.statusCode).toBe(200);
     globalSetupProductId = productCreateRes.body.id;
-    console.log(`Global setup product created with ID: ${globalSetupProductId}`);
 
     // 6. Aggiungi il prodotto di setup al carrello del cliente globale e acquista per avere un ordine
-    console.log('Adding global setup product to global customer cart and purchasing for order ID...');
     await request(app)
         .post('/purchases/addToCart')
         .set('Cookie', globalCustomerJwtCookie)
@@ -178,10 +175,8 @@ beforeAll(async () => {
         .timeout(20000);
     expect(purchaseRes.statusCode).toBe(200);
     globalSetupOrderId = purchaseRes.body.order_id;
-    console.log(`Global setup order created with ID: ${globalSetupOrderId}`);
 
     // 7. Crea un ticket iniziale per i test di recupero/aggiornamento/eliminazione
-    console.log('Creating initial global ticket by reporting the global product...');
     const reportData = { note: 'Prodotto segnalato per test globali ticket.' };
     // Lo slug dell'artigiano globale è fisso ('globalticket-artisan')
     const artisanSlug = generateArtisanSlug(global_artisan_user_data.name, global_artisan_user_data.surname);
@@ -196,10 +191,6 @@ beforeAll(async () => {
     expect(ticketCreateRes.statusCode).toBe(200);
     expect(ticketCreateRes.body.ticket_id).toBeDefined();
     globalSetupTicketId = ticketCreateRes.body.ticket_id;
-    console.log(`Initial global ticket created with ID: ${globalSetupTicketId}`);
-
-
-    console.log('Global setup complete for Tickets tests.');
 });
 
 // Test health check del microservizio Tickets
@@ -284,7 +275,6 @@ describe('Ticket Creation (Reporting)', () => {
             .timeout(20000);
         expect(productCreateRes.statusCode).toBe(200);
         currentTestProductId = productCreateRes.body.id;
-        console.log(`BeforeEach (Ticket Create): Created product ${currentTestProductId} for new customer/artisan.`);
 
         // Aggiungi il prodotto al carrello e acquista per avere un ordine per la segnalazione ordine
         await request(app)
@@ -300,7 +290,6 @@ describe('Ticket Creation (Reporting)', () => {
             .timeout(20000);
         expect(purchaseRes.statusCode).toBe(200);
         currentTestOrderId = purchaseRes.body.order_id;
-        console.log(`BeforeEach (Ticket Create): Created order ${currentTestOrderId} for new customer.`);
     });
 
     test('POST /products/report/{artisan_slug}/{product_slug} - Should allow a customer to report a product', async () => {
@@ -350,18 +339,20 @@ describe('Ticket Retrieval', () => {
 
     test('GET /tickets - Should allow admin to retrieve all tickets', async () => {
         const res = await request(app)
-            .get('/tickets/fetchTickets')
+            .get('/tickets/fetchTickets/1')
             .set('Cookie', adminJwtCookie)
             .timeout(10000);
         expect(res.statusCode).toBe(200);
-        expect(res.body).toBeInstanceOf(Array);
-        expect(res.body.some(ticket => ticket.id === globalSetupTicketId)).toBe(true);
+        expect(res.body.tickets).toBeInstanceOf(Array);
+        expect(res.body.pages).toBeGreaterThanOrEqual(1);
+        expect(res.body.num_tickets).toBeGreaterThanOrEqual(1);
+        expect(res.body.tickets.some(ticket => ticket.id === globalSetupTicketId)).toBe(true);
     });
 
     test('GET /tickets - Customer shouldn\'t be allowed to retrieve tickets', async () => {
         // Il ticket globale è stato creato dal globalCustomerJwtCookie
         const res = await request(app)
-            .get('/tickets/fetchTickets')
+            .get('/tickets/fetchTickets/1')
             .set('Cookie', globalCustomerJwtCookie)
             .timeout(10000);
         expect(res.statusCode).toBe(403);
@@ -468,7 +459,6 @@ describe('Ticket Status Update', () => {
             .timeout(10000);
         expect(ticketProductCreateRes.statusCode).toBe(200);
         ticketToUpdateProductId = ticketProductCreateRes.body.ticket_id;
-        console.log(`BeforeEach: Created product ticket ${ticketToUpdateProductId}.`);
 
         // 2. Crea un ordine e segnalalo per testare la risoluzione di un ticket 'order'
         const orderProductName = `OrderTicket${generateRandomAlphaSuffix()}`;
@@ -513,7 +503,6 @@ describe('Ticket Status Update', () => {
             .timeout(10000);
         expect(ticketOrderCreateRes.statusCode).toBe(200);
         ticketToUpdateOrderId = ticketOrderCreateRes.body.ticket_id;
-        console.log(`BeforeEach: Created order ticket ${ticketToUpdateOrderId}.`);
     });
 
     test('POST /resolve/product/{ticket_id} - Should allow admin to resolve a product ticket', async () => {
