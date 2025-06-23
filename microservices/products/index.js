@@ -72,7 +72,10 @@ const getProductImages=async(idProduct)=>{
     const product_images = [];
     const product_images_res = await pool.query('SELECT "ID_image" FROM product_images WHERE "ID_product" = $1', [idProduct]);
     for(const image of product_images_res.rows)
-        product_images.push('https://localhost:3000/images/' + image.ID_image);
+        product_images.push({
+            url:'https://localhost:3000/images/' + image.ID_image,
+            id:image.ID_image
+        });
     return product_images;
 }
 const getCategories=async(idProduct)=>{
@@ -271,7 +274,8 @@ app.post('/product', authJWT, async (req, res) => {
                     price: Math.floor(product_info.price / 100),
                     category: categories,
                     product_image: images[0],
-                    quantity: quantity
+                    quantity: quantity,
+                    slug:slug
                 });
             } catch (err) {
                 await client.query('ROLLBACK');
@@ -616,6 +620,68 @@ app.get("/categories",async(req, res)=>{
         sendError(res, 500);
     }
 });
+
+// Genera uno slug unico per una categoria, verificando che non esista già nel DB
+const generateCategorySlug = async (categoryName, pool) => {
+    // Funzione per generare lo slug base
+    const slugify = str =>
+        str
+            .toString()
+            .normalize('NFD') // rimuove accenti
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-') // sostituisce tutto ciò che non è alfanumerico con -
+            .replace(/^-+|-+$/g, ''); // rimuove - iniziali/finali
+
+    let baseSlug = slugify(categoryName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    // Verifica se esiste già una categoria con questo slug
+    // Se sì, aggiunge un numero incrementale
+    while (true) {
+        const res = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [slug]);
+        if (res.rowCount === 0) break;
+        slug = `${baseSlug}-${counter++}`;
+    }
+
+    return slug;
+};
+
+/**
+ * API per inserire una nuova categoria
+ */
+app.post("/category",authJWT, async(req, res)=>{
+    try {
+        const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
+        if(req.user.user_role_id !== ARTISAN_ROLE_ID) {
+            sendError(res, 403);
+            return;
+        }
+
+        const { name } = req.body;
+
+        if(!isBodyString(name, true)) {
+            sendError(res, 400);
+            return;
+        }
+
+        const slug = await generateCategorySlug(name, pool);
+
+        const sql_res = await pool.query('INSERT INTO categories(name, slug) VALUES($1, $2) RETURNING *', [name, slug]);
+
+        res.json({
+            id: sql_res.rows[0].ID,
+            name: sql_res.rows[0].name,
+            slug: sql_res.rows[0].slug
+        });
+    } catch (err) {
+        console.error('Error creating category: ' + err);
+        sendError(res, 500);
+    }
+});
+
 
 function getPercentage(total, last2w) {
     if(total === 0)
