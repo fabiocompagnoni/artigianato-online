@@ -57,3 +57,14 @@ export const getProductThumbnail=async(idProduct, pool)=>{
         product_image = 'https://localhost:3000/images/' + product_image_res.rows[0].ID_image;
     return product_image;  
 }
+
+export async function getArtisanReviews(id_artisan, pool) {
+    const sql_res = await pool.query(
+        'SELECT COUNT(*) AS total_reviews, SUM(rating) / COUNT(*) AS average from artisan_reviews WHERE id_artisan = $1 GROUP BY id_artisan',
+        [id_artisan]
+    );
+
+    if(sql_res.rowCount <= 0)
+        return {reviews_total: 0, reviews_avg: 0};
+    return {reviews_total: parseInt(sql_res.rows[0].total_reviews), reviews_avg: parseInt(sql_res.rows[0].average)};
+}

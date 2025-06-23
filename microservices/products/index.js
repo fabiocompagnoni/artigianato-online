@@ -14,7 +14,7 @@ const PORT = 4000;
 import authJWT, { getJWTinfo } from "./common_scripts/authJWT.js";
 import sendError from "./common_scripts/sendError.js";
 import { isBodyString, isPrice, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
-import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail } from './common_scripts/utils.js';
+import { getRoleID, getOrderStatusID, getTicketStatusID, getProductThumbnail, getArtisanReviews } from './common_scripts/utils.js';
 import { getCategoryID, generateArtisanProductSlug } from "./scripts/utils.js";
 
 const app = express();
@@ -89,6 +89,7 @@ const getCategories=async(idProduct)=>{
 }
 const outputProduct=async(dbRow, single_product=false)=>{
     let categories=await getCategories(dbRow.id);
+    const artisan_reviews = await getArtisanReviews(dbRow.id, pool);
     const obj = {
         id: dbRow.id,
         name: dbRow.pname,
@@ -100,6 +101,8 @@ const outputProduct=async(dbRow, single_product=false)=>{
             surname: dbRow.surname,
             photoProfile: dbRow.artisan_propic_link,
             link: `/artigiani/${dbRow.aslug}`,
+            reviews_total: artisan_reviews.reviews_total,
+            reviews_avg: artisan_reviews.reviews_avg
         },
         link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`,
         quantity: parseInt(dbRow.availability),
