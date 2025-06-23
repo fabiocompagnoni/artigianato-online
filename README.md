@@ -59,9 +59,18 @@ GOOGLE_EMAIL_TOKEN
 3. Creazione dell'infrastruttura docker
 ````
 docker compose up --build
+#utilizzando -d viene eseguito come deamon ed è possibile chiudere la console o continuare con altro
 ````
 
+4. Terminazione
+
+````
+docker compose down
+#utilizzato per distruggere l'infrastruttura
+````
 Per effettuare il testing delle API è possibile utilizzare il file docker-compose.test.yaml. Per avviarlo è necessario eseguire il seguente comando:
 ````
 docker-compose -f docker-compose.test.yml up --abort-on-container-exit --build
 ````
+
+Note* per applicare le modifiche al codice lato server è necessario riavviare tutte le volte il container, invece per le modifiche client side non è necessario.
