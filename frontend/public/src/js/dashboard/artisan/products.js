@@ -21,9 +21,10 @@ const makePagination=(currentPage, pages)=>{
 }
 export const loadProducts=async(page)=>{
     let tbody=document.getElementById("productsTbContent");
+    tbody.innerHTML = '';
     try{
         const userSlug=window.artisanSlug;
-        const requestProducts=await ajax(`https://localhost:3000/products/${page}?filter.artisan=${userSlug}`);
+        const requestProducts=await ajax(`https://localhost:3000/products/${page}?artisan=${userSlug}`);
         if(requestProducts.error!=null){
             throw new Error(requestProducts.error);
         }
@@ -45,7 +46,7 @@ export const loadProducts=async(page)=>{
                         </button>
                         <ul class="dropdown-menu">
                             <li><button class='dropdown-item' onclick='window.editProdToggle("${slug}")'><i class="fas fa-edit"></i> Modifica</button></li>
-                            <li><button class='dropdown-item' onclick='window.deleteProdToggle("${slug}")'><i class="fas fa-trash"></i> Elimina</button></li>
+                            <li><button class='dropdown-item' onclick='window.deleteProdToggle("${product.id}")'><i class="fas fa-trash"></i> Elimina</button></li>
                             <li><a href='${product.link}' class='dropdown-item' target='_blank'><i class="fas fa-eye"></i>Visualizza</a></li>
                         </ul>
                     </div>
@@ -166,14 +167,14 @@ const showUpdate=(success, message=null)=>{
 
 export const deleteProduct=async(slugProduct)=>{
     if(confirm("Sei sicuro di voler cancellare definitivamente il prodotto?")){
-        const request=await ajax("https://localhost/products/"+slugProduct,{
-            method:"DELETE"
+        const request=await fetch("https://localhost:3000/products/product/"+slugProduct,{
+            method:"DELETE",
+            credentials:"include"
         });
-        if(request.error==null){
+        if(!request.ok){
             alert("Si è verificato un errore nell'eliminazione del prodotto. Riprova");
         }else{
             window.history.pushState({}, '', "/artigiani/area-riservata/prodotti");
-            handlePageUrl
         }
     }
 }

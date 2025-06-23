@@ -27,7 +27,7 @@
                     <button class="btnReviews"><i class="fa-solid fa-star"></i> Recensioni</button>
                 </div>
             </div>
-            <button class="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <button class="btnLogout" onclick="fetch('https://localhost:3000/users/logout', {method: 'POST'})"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
         </div>
         <div class="navbarMobile d-flex d-md-none">
             <button class="btnHome"><i class="fa-solid fa-house"></i> Dashboard</button>
@@ -61,7 +61,7 @@
                             <div class="statText">
                                 <h2>Vendite</h2>
                                 <div class="statValue">
-                                    <span class="ordersNum">0</span> Ordini
+                                    <span class="ordersNum" id="salesValue">0</span> Ordini
                                 </div>
                             </div>
                             <i class="fa-solid fa-angle-right"></i>
@@ -72,7 +72,7 @@
                         <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
                             <div class="statInfo">
                                 <i class="fa-solid fa-arrow-trend-up" id="trendOrders"></i>
-                                <span class="trendOrdersText">+0,00 %</span>
+                                <span class="trendOrdersText" id="salesTrend">+0,00 %</span>
                             </div>
                             <div class="statInfo">
                                 <span id="ordersWeek">+0</span> questa settimana
@@ -100,7 +100,7 @@
                             <div class="statText">
                                 <h2>Rimborsi</h2>
                                 <div class="statValue">
-                                    <span class="ordersNum">0</span> Ordini
+                                    <span class="ordersNum" id="totalRefunds">0</span> Ordini
                                 </div>
                             </div>
                             <i class="fa-solid fa-angle-right"></i>
@@ -110,11 +110,11 @@
                         </div>
                         <div class="thirdRow d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
                             <div class="statInfo">
-                                <i class="fa-solid fa-arrow-trend-up" id="trendRefound"></i>
-                                <span class="trendRefoundText">+0,00 %</span>
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                <span class="trendRefoundText"  id="trendRefound">+0,00 %</span>
                             </div>
                             <div class="statInfo">
-                                <span id="ordersWeek">+0</span> questa settimana
+                                <span id="refundsWeek">+0</span> questa settimana
                             </div>
                         </div>
                     </div>
@@ -136,9 +136,6 @@
                         <div id="chartContainer">
                             <canvas id="salesChart" class="chart"></canvas>
                         </div>
-                    </div>
-                    <div class="card cardResume">
-                        <h3>Top categorie</h3>
                     </div>
 
                 </div>

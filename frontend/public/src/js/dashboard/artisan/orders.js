@@ -4,7 +4,7 @@ import { handlePageUrl, showErrorPopup } from "./index.js";
 export const showOrders=async()=>{
     let cont=document.getElementById("orderList");
 
-    let ordersRequest=await ajax("https://localhost:3000/purchases/orders");
+    let ordersRequest=await ajax("https://localhost:3000/purchases/orders/1");
     if(ordersRequest.error!=null){
         let err="Si è verificato un errore durante il caricamento dei tuoi ordini";
         if(ordersRequest.error.message=="Unauthorized")
@@ -12,6 +12,8 @@ export const showOrders=async()=>{
         cont.innerHTML=`${err}</td>`;
         return;
     }
+    ordersRequest = ordersRequest.orders;
+    console.log(ordersRequest)
     if(ordersRequest.length==0){
         cont.innerHTML=`Non hai ricevuto ancora nessun ordine. Ci dispiace 🥲`;
         return;

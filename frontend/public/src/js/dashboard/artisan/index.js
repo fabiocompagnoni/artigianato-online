@@ -2,7 +2,7 @@ import {ajax} from "/src/js/modules/fetchWorkerModule.js";
 
 
 let chart;
-const initChartSell = async () => {
+const initChartSell = async (labels, values) => {
     const {  Chart, 
         LinearScale,      
         CategoryScale,    
@@ -27,9 +27,6 @@ const initChartSell = async () => {
         Legend
     );
 
-    let data = [];
-    let labels = [];
-    let values = [];
     if(chart)
         chart.destroy();
     chart = new Chart(document.getElementById("salesChart"), {
@@ -66,10 +63,59 @@ const initChartSell = async () => {
     });
 }
 
+async function getDashboardData(days) {
+    return await (await fetch(
+        "https://localhost:3000/products/dashboard/" + days,
+        {credentials: "include"}
+    )).json();
+}
+
+function gi(id) {
+    return document.getElementById(id);
+}
+
+function toEuro(num) {
+    return num.toLocaleString("it-IT", { style: "currency", currency: "EUR" })
+}
+
+function toGain(num) {
+    return '+' + ('' + num).replace('.', ',') + '%';
+}
+
+gi('selectTimePerformace').addEventListener('change', e => changeSalesChart(e.target.value));
+
+async function changeSalesChart(days) {
+    const dashboard_data = await getDashboardData(days);
+    const sales_data = dashboard_data.performance.sales;
+
+    const timestamps = [];
+    const values = [];
+
+    for(const [k, v] of Object.entries(sales_data)) {
+        timestamps.push(k);
+        values.push(v);
+    }
+
+    initChartSell(timestamps, values);
+}
 
 const initDashboard=async()=>{
     initChartSell();
-    //TODO: impostare i dati nella pagina ottenuti dall'api
+    const dashboard_data = await getDashboardData(7);
+    gi('salesValue').innerText = dashboard_data.sales.total_orders;
+    gi('ordersValue').innerText = toEuro(dashboard_data.sales.total_gain);
+    gi('salesTrend').innerText = toGain(dashboard_data.sales.total_gain_last_days_percent);
+    gi('ordersWeek').innerText = dashboard_data.sales.total_gain_last_days;
+
+    gi('visualsValue').innerText = dashboard_data.visits.total_visits;
+
+    gi('totalRefunds').innerText = dashboard_data.refunds.total_refunds;
+    gi('refoundsValue').innerText = dashboard_data.refunds.total_refunds;
+    gi('trendRefound').innerText = toGain(dashboard_data.refunds.total_refunds_last_days_percent);
+    gi('refundsWeek').innerText = '+' + dashboard_data.refunds.total_refunds_last_days;
+    
+    
+    changeSalesChart(0);
 }
 
 const initOrders=async()=>{
