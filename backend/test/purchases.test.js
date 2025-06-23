@@ -123,7 +123,6 @@ beforeAll(async () => {
     global_setup_product_data.images.push(globalUploadedImageId);
 
     // 5. Crea un prodotto di setup globale per i test di ordine/rimborso
-    console.log('Creating global setup product...');
     const productCreateRes = await request(app)
         .post('/products/product')
         .set('Cookie', globalArtisanJwtCookie)
@@ -133,10 +132,8 @@ beforeAll(async () => {
     expect(productCreateRes.statusCode).toBe(200);
     expect(productCreateRes.body.id).toBeDefined();
     globalSetupProductId = productCreateRes.body.id;
-    console.log(`Global setup product created with ID: ${globalSetupProductId}`);
 
     // 6. Aggiungi il prodotto di setup al carrello del cliente globale
-    console.log('Adding global setup product to global customer cart...');
     const addToCartRes = await request(app)
         .post('/purchases/addToCart')
         .set('Cookie', globalCustomerJwtCookie)
@@ -146,7 +143,6 @@ beforeAll(async () => {
     expect(addToCartRes.statusCode).toBe(200);
 
     // 7. Effettua l'acquisto iniziale per ottenere customerOrderId e customerOrderItemId
-    console.log('Performing initial purchase to get global order IDs...');
     const purchaseRes = await request(app)
         .post('/purchases/purchase')
         .set('Cookie', globalCustomerJwtCookie)
@@ -157,9 +153,6 @@ beforeAll(async () => {
     
     customerOrderId = purchaseRes.body.order_id;
     customerOrderItemId = purchaseRes.body.items[0].id;
-    console.log(`Initial global purchase successful. Order ID: ${customerOrderId}, Item ID: ${customerOrderItemId}`);
-
-    console.log('Global setup complete for Purchases tests.');
 });
 
 // Test health check del microservizio Purchases
@@ -243,7 +236,6 @@ describe('Cart Management', () => {
             .timeout(20000);
         expect(productCreateRes.statusCode).toBe(200);
         currentTestProductId = productCreateRes.body.id;
-        console.log(`BeforeEach (Cart): Created product ${currentTestProductId} for new customer/artisan.`);
         
         // Assicurati che il carrello per questo nuovo cliente sia vuoto per il prodotto appena creato.
         // Questo usa il currentCustomerJwtCookie, assicurando l'isolamento.
@@ -259,7 +251,6 @@ describe('Cart Management', () => {
                 .send([{ id: currentTestProductId, quantity: -productAlreadyInCart.quantity }])
                 .set('Content-Type', 'application/json')
                 .timeout(10000);
-            console.log(`BeforeEach (Cart): Cleared product ${currentTestProductId} from cart.`);
         }
     });
 
@@ -435,7 +426,6 @@ describe('Purchase Process', () => {
             .timeout(20000);
         expect(productCreateRes.statusCode).toBe(200);
         currentTestProductId = productCreateRes.body.id;
-        console.log(`BeforeEach (Purchase): Created product ${currentTestProductId} for new customer/artisan.`);
 
         // Assicurati che il carrello per questo nuovo cliente sia pulito per il prodotto prima di ogni test.
         const cartContentBeforeClean = await request(app)
@@ -450,7 +440,6 @@ describe('Purchase Process', () => {
                 .send([{ id: currentTestProductId, quantity: -productAlreadyInCart.quantity }])
                 .set('Content-Type', 'application/json')
                 .timeout(10000);
-            console.log(`BeforeEach (Purchase): Cleared product ${currentTestProductId} from cart.`);
         }
         
         // Aggiungi 1 di questo prodotto al carrello per gli acquisti (salvo test specifici).
@@ -529,25 +518,29 @@ describe('Purchase Process', () => {
 
 // Test gestione ordini (utilizzano customerOrderId e customerOrderItemId dal beforeAll)
 describe('Order Management', () => {
-    test('GET /purchases/orders - Should retrieve orders for a customer', async () => {
+    test('GET /purchases/orders/1 - Should retrieve orders for a customer', async () => {
         const res = await request(app)
-            .get('/purchases/orders')
+            .get('/purchases/orders/1')
             .set('Cookie', globalCustomerJwtCookie) // Usa il cliente globale
             .timeout(10000);
         expect(res.statusCode).toBe(200);
-        expect(res.body).toBeInstanceOf(Array);
-        expect(res.body.some(order => order.id === customerOrderId)).toBe(true);
+        expect(res.body.orders).toBeInstanceOf(Array);
+        expect(res.body.pages).toBeGreaterThanOrEqual(1);
+        expect(res.body.num_orders).toBeGreaterThanOrEqual(1);
+        expect(res.body.orders.some(order => order.id === customerOrderId)).toBe(true);
     });
 
-    test('GET /purchases/orders - Should retrieve orders for an artisan (if they have products in orders)', async () => {
+    test('GET /purchases/orders/1 - Should retrieve orders for an artisan (if they have products in orders)', async () => {
         const res = await request(app)
-            .get('/purchases/orders')
+            .get('/purchases/orders/1')
             .set('Cookie', globalArtisanJwtCookie) // Usa l'artigiano globale
             .timeout(10000);
         expect(res.statusCode).toBe(200);
-        expect(res.body).toBeInstanceOf(Array);
+        expect(res.body.orders).toBeInstanceOf(Array);
+        expect(res.body.pages).toBeGreaterThanOrEqual(1);
+        expect(res.body.num_orders).toBeGreaterThanOrEqual(1);
         // Dovremmo vedere il nostro prodotto di test globale tra gli ordini dell'artigiano globale
-        expect(res.body.some(item => item.product_id === globalSetupProductId)).toBe(true);
+        expect(res.body.orders.some(item => item.product_id === globalSetupProductId)).toBe(true);
     });
 
     test('GET /purchases/order/{id_order} - Should retrieve details for a specific order (customer)', async () => {
@@ -732,22 +725,24 @@ describe('Refund and Item Status', () => {
 
 // Test clienti (per artigiani) (utilizza l'artigiano globale e il cliente globale dall'acquisto iniziale)
 describe('Customers (Artisan View)', () => {
-    test('GET /purchases/customers - Should allow an artisan to retrieve customer data', async () => {
+    test('GET /purchases/customers/1 - Should allow an artisan to retrieve customer data', async () => {
         const res = await request(app)
-            .get('/purchases/customers')
+            .get('/purchases/customers/1')
             .set('Cookie', globalArtisanJwtCookie) // Usa l'artigiano globale
             .timeout(10000);
         expect(res.statusCode).toBe(200);
-        expect(res.body).toBeInstanceOf(Array);
+        expect(res.body.customers).toBeInstanceOf(Array);
+        expect(res.body.pages).toBeGreaterThanOrEqual(1);
+        expect(res.body.num_customers).toBeGreaterThanOrEqual(1);
         // Dovremmo trovare il cliente globale nei clienti dell'artigiano globale
-        const testCustomer = res.body.find(c => c.email === global_customer_user_data.email);
+        const testCustomer = res.body.customers.find(c => c.email === global_customer_user_data.email);
         expect(testCustomer).toBeDefined();
         expect(testCustomer.num_orders).toBeGreaterThanOrEqual(1);
     });
 
-    test('GET /purchases/customers - Should prevent non-artisans from retrieving customer data (403 Forbidden)', async () => {
+    test('GET /purchases/customers/1 - Should prevent non-artisans from retrieving customer data (403 Forbidden)', async () => {
         const res = await request(app)
-            .get('/purchases/customers')
+            .get('/purchases/customers/1')
             .set('Cookie', globalCustomerJwtCookie) // Cliente globale tenta di accedere
             .timeout(10000);
         expect(res.statusCode).toBe(403);

@@ -48,6 +48,7 @@ services:
     environment:
       DATABASE_URL: postgres://testuser:testpass@test_db:5432/marketplace_artigiani_test
       JWT_SECRET: test_jwt_secret
+      NODE_ENV: test
     depends_on:
       - test_db
     networks:

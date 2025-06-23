@@ -128,7 +128,6 @@ beforeAll(async () => {
     base_test_product_data.images.push(uploadedImageId);
 
     // 5. Crea un prodotto base da utilizzare in molti test successivi
-    console.log('Creating base product for tests...');
     const productCreateRes = await request(app)
         .post('/products/product')
         .set('Cookie', artisanJwtCookie)
@@ -139,9 +138,6 @@ beforeAll(async () => {
     expect(productCreateRes.body.id).toBeDefined();
     testProductId = productCreateRes.body.id; // Assegna l'ID del prodotto qui
     createdProductSlug = generateProductSlug(base_test_product_data.name); // Assegna lo slug qui
-    console.log(`Base product created with ID: ${testProductId} and Slug: ${createdProductSlug}`);
-
-    console.log('Setup complete: Artisan, Customer, and Admin logged in, image uploaded, base product created.');
 });
 
 // Test health check del microservizio Products
@@ -260,7 +256,7 @@ describe('Product Retrieval', () => {
         expect(res.body.name).toBe(base_test_product_data.name);
         expect(res.body.images).toBeInstanceOf(Array);
         expect(res.body.images.length).toBeGreaterThan(0);
-        expect(res.body.images[0]).toContain(uploadedImageId);
+        expect(res.body.images[0].id).toContain(uploadedImageId);
     });
 
     test('GET /products/product/{artisan_slug}/{product_slug} - Should return 404 for non-existent product', async () => {

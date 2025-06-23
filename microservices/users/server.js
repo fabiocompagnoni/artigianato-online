@@ -21,7 +21,7 @@ import session from "express-session";
 
 const PER_PAGE = 20;
 
-const emailer = nodemailer.createTransport({
+const emailer = process.env.NODE_ENV === 'test' ? null : nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
@@ -87,17 +87,18 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie:{
-        secure:true,
-        httpOnly:true,
-        sameSite:'None',
-        maxAge: 24 * 60 * 60 * 1000
-    }
-}));
+if(process.env.NODE_ENV !== 'test')
+    app.use(session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie:{
+            secure:true,
+            httpOnly:true,
+            sameSite:'None',
+            maxAge: 24 * 60 * 60 * 1000
+        }
+    }));
 
 
 app.use(express.json());
@@ -295,6 +296,46 @@ app.get('/artisans/:page', async (req, res) => {
         sendError(res, 500);
     }
 });
+
+app.get('/user/:user_slug', async (req, res) => {
+    const user_slug_param = req.params.user_slug; // slug dall'URL
+
+    try {
+        const sql_res = await pool.query(
+            'SELECT users."ID", users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE slug = $1',
+            [user_slug_param]
+        );
+
+        if (sql_res.rowCount < 1) {
+            sendError(res, 515);
+            return;
+        }
+
+        const user_data = sql_res.rows[0];
+        const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
+
+        const response = {
+            name: user_data.user_name,
+            surname: user_data.surname,
+            role: user_data.role_name,
+            bio: user_data.bio,
+            url_profile_picture: propic_url,
+        }
+
+        if(user_data.role_name === 'artisan') {
+            const r = await getArtisanReviews(user_data.ID, pool);
+            response.reviews_total = r.reviews_total;
+            response.reviews_avg = r.reviews_avg;
+        }
+
+        res.status(200).json(response);
+    } catch (err) {
+        console.error('Error getting user data by user slug:', err);
+        sendError(res, 500);
+    }
+});
+
+if(process.env.NODE_ENV !== 'test') {
 //configurazione autenticazione con google
 configurePassport(passport);
 /**
@@ -373,44 +414,7 @@ app.post("/user/:googleId",async(req, res)=>{
     } while (slug_error);
 
 });
-
-app.get('/user/:user_slug', async (req, res) => {
-    const user_slug_param = req.params.user_slug; // slug dall'URL
-
-    try {
-        const sql_res = await pool.query(
-            'SELECT users."ID", users.name AS user_name, surname, roles.name AS role_name, bio, id_profile_picture FROM users JOIN roles ON id_role = roles."ID" WHERE slug = $1',
-            [user_slug_param]
-        );
-
-        if (sql_res.rowCount < 1) {
-            sendError(res, 515);
-            return;
-        }
-
-        const user_data = sql_res.rows[0];
-        const propic_url = user_data.id_profile_picture ? 'https://localhost:3000/images/' + user_data.id_profile_picture : null;
-
-        const response = {
-            name: user_data.user_name,
-            surname: user_data.surname,
-            role: user_data.role_name,
-            bio: user_data.bio,
-            url_profile_picture: propic_url,
-        }
-
-        if(user_data.role_name === 'artisan') {
-            const r = await getArtisanReviews(user_data.ID, pool);
-            response.reviews_total = r.reviews_total;
-            response.reviews_avg = r.reviews_avg;
-        }
-
-        res.status(200).json(response);
-    } catch (err) {
-        console.error('Error getting user data by user slug:', err);
-        sendError(res, 500);
-    }
-});
+}
 
 // Rotta per aggiornare i dati dell'utente autenticato
 app.put('/user', authJWT, async (req, res) => {
@@ -749,6 +753,7 @@ https.createServer(credentials, app).listen(port, () => {
   console.log("Microservice users online");
 });
 
+if(process.env.NODE_ENV !== 'test') {
 app.get("/auth/google/callback", async(req, res)=>{
     passport.authenticate("google", {failureRedirect:'/login'}),(req, res)=>{
         const payload={
@@ -792,3 +797,4 @@ app.get("/auth/google", (req, res)=>{
     passport.authenticate("google",{scope:['profile','email']});
 });
 
+}
