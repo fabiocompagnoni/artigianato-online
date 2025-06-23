@@ -165,9 +165,9 @@ const showUpdate=(success, message=null)=>{
 }
 
 
-export const deleteProduct=async(slugProduct)=>{
+export const deleteProduct=async(id_product)=>{
     if(confirm("Sei sicuro di voler cancellare definitivamente il prodotto?")){
-        const request=await fetch("https://localhost:3000/products/product/"+slugProduct,{
+        const request=await fetch("https://localhost:3000/products/product/"+id_product,{
             method:"DELETE",
             credentials:"include"
         });

@@ -176,7 +176,8 @@ export const showErrorPopup=(errorText, backPage, backBtnText)=>{
 
 const initCustomers=async()=>{
     let tbody=document.getElementById("customersTbContent");
-    const req=await ajax("https://localhost:3000/purchases/customers");
+    tbody.innerHTML = '';
+    const req=await ajax("https://localhost:3000/purchases/customers/1");
     if(req.error!=null){
         tbody.innerHTML="<tr><td colspan='5'>Si è verificato un errore nel caricamento dei clienti</td></tr>";
         return;
@@ -185,7 +186,7 @@ const initCustomers=async()=>{
         tbody.innerHTML="<tr><td colspan='5'>Non è stato ancora effettuato alcun acquisto</td></tr>";
         return;
     }
-    req.forEach(customer=>{
+    req.customers.forEach(customer=>{
         let tr=document.createElement("tr");
         tr.innerHTML=`
             <td>${customer.name} ${customer.surname}</td>
@@ -210,15 +211,20 @@ const loadReviews=async(page)=>{
     }
     cont.innerHTML="";
     Array.from(request.reviews).forEach(review=>{
-        let rCont=document.createElememt("div");
+        let rCont=document.createElement("div");
         rCont.classList.add("review");
-        //todo mettere nome reviewer quando api completa
-        //let rName=
+        let rName=review.reviewer_name;
+        let rSurname=review.reviewer_surname;
         let starsCont=document.createElement("div");
         let rating = review.rating || 0;
         let fullStars = Math.floor(rating);
         let halfStar = (rating - fullStars >= 0.5) ? 1 : 0;
         let emptyStars = 5 - fullStars - halfStar;
+
+        const nsCont = document.createElement("div");
+        nsCont.innerText = rName + ' ' + rSurname;
+
+        rCont.appendChild(nsCont);
 
         for (let i = 0; i < fullStars; i++) {
             let star = document.createElement("span");
@@ -241,7 +247,7 @@ const loadReviews=async(page)=>{
         rCont.appendChild(starsCont);
         let time=document.createElement("div");
         time.classList.add("text-muted");
-        time.innerHTML = new Date(review.created_at).toLocaleDateString('it-IT', {
+        time.innerHTML = new Date(review.timestamp).toLocaleDateString('it-IT', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
