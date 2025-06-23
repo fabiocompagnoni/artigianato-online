@@ -15,6 +15,7 @@ const error_messages = {
     523: 'Product not found',
     524: 'Not enough items to purchase',
     525: 'No items in cart',
+    526: 'OTP expired',
     400: 'Bad request',
     401: 'Unauthorized',
     403: 'Forbidden',

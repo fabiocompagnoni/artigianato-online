@@ -85,7 +85,6 @@ app.use(cors({
   credentials: true // Necessario per l'invio di cookie (es. httpOnly)
 }));
 
-console.log(process.env.GOOGLE_CLIENT_ID ?? "Client ID non letto");
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -579,7 +578,7 @@ app.post('/requestOTP', async (req, res) => {
     }
 });
 
-/*app.post('/resetPassword', async (req, res) => {
+app.post('/resetPassword', async (req, res) => {
     try {
         if(!req.body || !req.body.otp || !isBodyString(req.body.otp, true)
         || !req.body.email || !isBodyString(req.body.email, true)
@@ -588,7 +587,7 @@ app.post('/requestOTP', async (req, res) => {
             return;
         }
 
-        const { email, otp } = req.body;
+        const { email, otp, password } = req.body;
 
         const user_info = await pool.query('SELECT "ID", name FROM users WHERE email = $1', [email]);
 
@@ -597,7 +596,9 @@ app.post('/requestOTP', async (req, res) => {
             return;
         }
 
-        let sql_res = await pool.query('SELECT timestamp_creation FROM email_otp WHERE id_user = $1 AND otp_code = $2', [user_info.rows[0].ID, otp]);
+        const user_id = user_info.rows[0].ID;
+
+        let sql_res = await pool.query('SELECT timestamp_creation FROM email_otp WHERE id_user = $1 AND otp_code = $2', [user_id, otp]);
 
         //non è stata trovata la coppia (id_user, otp_code), probabilmente l'otp è sbagliato
         if(sql_res.rowCount <= 0) {
@@ -605,19 +606,29 @@ app.post('/requestOTP', async (req, res) => {
             return;
         }
 
-        if(sql_res.rows[0].timestamp_creation)
+        //otp scaduto
+        if(new Date() - new Date(sql_res.rows[0].timestamp_creation) > 15 * 60 * 1000) {
+            sendError(res, 526);
+            return;
+        }
+
+        //password non corretta
+        if (!checkPasswordFormat(password)) {
+            sendError(res, 516);
+            return;
+        }
 
         //a questo punto sappiamo che l'utente ha inserito l'otp corretto
         const new_pass = generatePasswordHash(password);
 
-        await pool
+        await pool.query('UPDATE users SET password = $1 WHERE "ID" = $2', [new_pass, user_id]);
 
         res.json({ status: 'ok' });
     } catch (err) {
         console.error('Error sending otp:', err);
         sendError(res, 500);
     }
-});*/
+});
 
 /**
  * API per ottenere il link della dashboard in base al ruolo dell'utente
