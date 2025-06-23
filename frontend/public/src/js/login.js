@@ -148,7 +148,7 @@ const register=async()=>{
             password:password,
             name:nome,
             surname:cognome,
-            type:parsedType
+            role:parsedType
         },{
             "Content-Type": "application/json"
         });
@@ -175,7 +175,6 @@ const register=async()=>{
 document.addEventListener("DOMContentLoaded",async()=>{
     //verifico se utente e' gia' loggato
     let isLogged=await isLoggedIn();
-    console.log(isLogged);
     if(isLogged){
         try{
             let urlDashboard=await getUrlDashboard();
@@ -184,14 +183,16 @@ document.addEventListener("DOMContentLoaded",async()=>{
             console.error(err);
         }
     }
+    
     if(document.getElementById("showPsw")!=null)
         document.getElementById("showPsw").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("password"), document.getElementById("showPsw"));});
     if(document.getElementById("showPsw1")!=null)
         document.getElementById("showPsw1").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("passwordRegister"), document.getElementById("showPsw1"));});
     if(document.getElementById("showPsw2")!=null)
         document.getElementById("showPsw2").addEventListener("click",(event)=>{toggleShowPassword(document.getElementById("passwordConfirm"), document.getElementById("showPsw2"));});
-    if(document.getElementById("loginButton") != null)
+    if(document.getElementById("loginButton") != null){
         document.getElementById("loginButton").addEventListener("click",makeLogin);
+    }
     if(document.getElementById("registerButton") != null)
         document.getElementById("registerButton").addEventListener("click",register);
 });
