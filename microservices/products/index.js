@@ -951,8 +951,20 @@ app.get("/:page",async(req,res)=>{
         
     }
     if(req.query.order){
-        queryStandard+=`ORDER BY $${query_placeholder_num++} `;
-        query_placeholder_values.push(req.query.order);
+        // Applica direttamente la stringa di ordinamento solo se è tra quelle consentite
+        let order = req.query.order;
+        let orderClause = "timestamp_last_update DESC";
+        if (
+            order === "timestamp_creation DESC" ||
+            order === "timestamp_creation ASC" ||
+            order === "price ASC" ||
+            order === "price DESC" ||
+            order === "pname ASC" ||
+            order === "pname DESC"
+        ) {
+            orderClause = order;
+        }
+        queryStandard += `ORDER BY ${orderClause} `;
     }else{
         queryStandard+=`ORDER BY timestamp_last_update DESC `;
     }
