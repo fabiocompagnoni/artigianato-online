@@ -161,17 +161,57 @@ const initProducts=async()=>{
 }
 
 const initProduct=async(slugProduct=null)=>{
-    const {loadCategories} = await import("/src/js/dashboard/artisan/products.js");
+    const {loadCategories, uploadImage, addNewCategory, addNewQuantity, saveProduct, updateProduct} = await import("/src/js/dashboard/artisan/products.js");
+    let btnAction=document.getElementById("btnActionProduct");
     if(slugProduct==null){
         //nuovo prodotto
+        btnAction.onclick=()=>{
+            saveProduct();
+        }
     }else{
         //modifica prodotto esistente
+        btnAction.onclick=()=>{
+            updateProduct(slugProduct);
+        }
     }
     loadCategories(slugProduct);
     document.querySelector(".selectImgBtn").addEventListener("click",(event)=>{
         event.preventDefault();
         document.getElementById("fotoInput").click();
     });
+
+    document.getElementById("fotoInput").addEventListener("change",(event)=>{
+        event.preventDefault();
+        uploadImage();
+    });
+
+    //aggiunta categoria
+    document.getElementById("btnAddCategory").addEventListener("click",async(event)=>{
+        event.preventDefault();
+        let categoryName=document.getElementById("newCatName").value;
+        if(categoryName!=""){
+            let res=await addNewCategory(categoryName, slugProduct);
+            if(res){
+                document.getElementById("resCatNew").innerHTML="La categoria è stata aggiunta con successo";
+            }else{
+                document.getElementById("resCatNew").innerHTML="Si è verificato un errore nell'aggiunta della categoria";
+            }
+        }
+    });
+    //aggiunta disponibilita
+    document.getElementById("btnAddQuantity").addEventListener("click",async(event)=>{
+        event.preventDefault();
+        let quantity=document.getElementById("productQuantityAdd").value;
+        if(quantity!=""){
+            let res=await addNewQuantity(quantity, slugProduct);
+            if(res){
+                document.getElementById("resQuantityAdd").innerHTML="La disponibilità del prodotto è stata aggiornata con successo.";
+            }else{
+                document.getElementById("resQuantityAdd").innerHTML="Si è verificato un errore nell'aggiunta della disponibilità del prodotto.";
+            }
+        }
+    });
+
 }
 
 const showHidePage=(currentPage, allPages)=>{

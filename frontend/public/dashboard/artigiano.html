@@ -187,7 +187,7 @@
                         <div class="productImgCont" id="imgProdUploaded">
                             <div class="selectImgBtn"><i class="fa-solid fa-plus"></i></div>
                         </div>
-                        <input id="fotoInput" type="file" accept="image/*" hidden/>
+                        <input id="fotoInput" type="file" accept="image/*" multiple hidden/>
                         
                         <div class="infoChangeOrder">Trascina le foto una sopra l'altra per cambiarne l'ordine</div>
                         <div class="releaseTrash" id="releaseTrashImg">
@@ -210,12 +210,13 @@
                     <div class="card cardPartProduct">
                         <div class="d-flex flex-row flex-wrap gap-2 align-items-center justify-content-between">
                             <label>Categorie del prodotto</label>
-                            <button class="btn btn-secondary rounded-4"><i class="fa-solid fa-plus"></i> Aggiungi categoria</button>
+                            <button class="btn btn-secondary rounded-4" data-bs-toggle="modal" data-bs-target="#modalCategory"><i class="fa-solid fa-plus"></i> Aggiungi categoria</button>
                         </div>
                         <div class="categoryList" id="categoryList"></div>
                     </div> 
                 </div>
-                <button class="btn btn-success rounded-4 btnActionPrimary">Salva</button>
+                <button class="btn btn-success rounded-4 btnActionPrimary" id="btnActionProduct"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+                
                 <div class="modal fade" id="modalRestock" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -229,13 +230,44 @@
                                     <label>Quantità</label>
                                     <input type="number" class="form-control rounded-4" id="productQuantityAdd"/>
                                 </div>
+                                <div id="resQuantityAdd"></div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-primary rounded-4">Aggiorna disponibilità</button>
+                                <button type="button" class="btn btn-primary rounded-4" id="btnAddQuantity">Aggiorna disponibilità</button>
                             </div>
                         </div>
                     </div>
-                </div>  
+                </div>
+                <div class="modal fade" id="modalCategory" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="exampleModalLabel">Aggiungi una nuova categoria</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Inserisci il nome della categoria che vuoi aggiungere</p>
+                                <div class="my-2">
+                                    <label>Nome categoria</label>
+                                    <input type="text" class="form-control rounded-4" id="newCatName"/>
+                                </div>
+                                <div id="resCatNew"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary rounded-4" id="btnAddCategory">Aggiungi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="updates">
+                <div class="bodyArea">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAC70lEQVR4nO2Y24tNURzHP2Zcj0sT48yhyC1FFFHThFyKpvHiRSQ8zwOat+FNlEZR5A8YJEoZD+6J4uQaIYxcGqWExMxghinmaE3freU458y5rD1nn+xP7dpr771+v993r9tvLQgJCQkCg4EFwEZgG7AFWAMsBMopAaqBw8BXIJHm+gg0AzUEkAnASaDXCvgZcBw4CBwCWoCnSaJagOkEhGXAewX2GdgFTMrw/QxgJ9CpOu1ALUVmFfBdAZ0AojnUHa8WM3V/ApspErOBbwpkR542Bqmu6ZI9wGJ8IqKZZoW6hMcQ4IlE7HbgZ49smS5agUOmAceA7qTB2QqsBRpUvgaUOfBXBlyRzSYcUWsNRNN3HwBXgdeWINMVfgGzXDkF5smm+XlVLox1KdhmTas2NRLmTZ2uOS3b9YUauiFDe/sZN/Uu/loKNsn/BQpgvoy81GAuBlHF8KkQIw0OZ6FC6FYcI/KpvAS4JwNFW5hEm+KYSg5UWQPMS+js9aIYvFUs+4HVwND+Ksy0ptQ2DbS8mtMxj5PWrg9AY7pxOw54pQ9PAaMIDmOARcAGLco9ivNuqlzuqF5e8mGGiuaYPGaTZdyyMgsj9E+y16vVeyJuiclZq+5dMVzpUEKt1Mc+PTiAW2LaTNkbK5diYsAXNYLJQLgvR0t9FOGXmCa7EdpVGOuDiOQWcS2mWjbNzMYPFYb5ICJmCUn1rlAqZK/DFN6okGlfnS2PUgTqCSFJzEMH/kbKltmZclmFdQ4M31Fab/9tWwh6Z0TcduBvjmy/MIWtKpzBH5KFuKTR2itRae0AzVFOqQiJWHlYnfdwux68A6aUiJAjsntTpy99mPPX85aY5QEWErFEdCoz+YvRwDnL8VlgPTA5m9TZZyERYK7GhNedzKq+Ml2Fcn3ckeHQOd0Vz0NIPA8/CXWnf1oiFZU6+r+odcZLnTNd130U0gU81+xUZ4+JgcTP6XdACYUEjbBFgkbYIkEjnmGNCQkJCflP+Q1txSw9AhDQdwAAAABJRU5ErkJggg==" alt="upload-to-cloud--v1" width="32" height="32">
+                    <div id="textContent">Annuncio aggiornato</div>
+                </div>
+                <div id="progress">
+                    <div id="active"></div>
+                </div>
             </div>
             <div id="orders" style="display:none">
                 <div class="ordersCont" id="orderList">
