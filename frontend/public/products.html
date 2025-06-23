@@ -6,6 +6,13 @@
     <title>I prodotti dei nostri artigiani &middot; Artigianato Online</title>
     <meta name="description" content="Esplora la nostra esclusiva collezione di prodotti artigianali online, realizzati con passione e maestria dai più talentuosi artigiani italiani. Scopri pezzi unici fatti a mano, perfetti per aggiungere un tocco di originalità alla tua vita o per trovare idee regalo originali e significative. Dalle eleganti ceramiche ai raffinati gioielli, dall'arredamento unico alla moda sostenibile, ogni creazione racconta una storia di tradizione e innovazione. Immergiti nel mondo dell'artigianato locale e lasciati conquistare dalla bellezza e dall'autenticità."/>
     <meta name="keywords" content=""/>
+    <!--manifest PWA -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    <meta name="theme-color" content="#A8BBA2">
+    <link rel="apple-touch-icon" href="/src/img/icons/ios/192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/src/css/root.css"/>
     <link rel="stylesheet" href="/src/css/prodotti.css"/>
@@ -216,6 +223,13 @@
             window.artisanPage=false;
         }
 
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/pwa/serviceWorker.js')
+            .then(() => console.log('Service Worker registrato dinamicamente!'))
+            .catch(err => console.error('Errore nel SW:', err));
+        }
     </script>
     <script src="/src/js/products.js" type="module"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
