@@ -81,8 +81,8 @@
                 <span class="placeholder col-8"></span>
             </p>
             <div class="mb-3">
-                <div class="productDate">Data caricamento del prodotto <span id="dateUploadProduct" class="placeholder-glow"><div class="placeholder col-2"></div></span></div>
-                <button class="secondaryButton">Segnala un problema</button>
+                <div class="productDate mb-2">Data caricamento del prodotto <span id="dateUploadProduct" class="placeholder-glow"><div class="placeholder col-2"></div></span></div>
+                <button class="btn btn-warning rounded-4" data-bs-target="#modalNewSegnalazione" data-bs-toggle="modal">Segnala un problema</button>
             </div>
         </div>
         <div class="artisanReviewsCont">
@@ -120,6 +120,26 @@
                     <div class="product placeholder"></div>
                     <div class="product placeholder"></div>
                     <div class="product placeholder"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNewSegnalazione" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Segnalazione del prodotto</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Segnala un problema con questo prodotto. Specifica quali errori o problemi hai riscontrato.</p>
+                    <label>Testo della segnalazione</label>
+                    <textarea class="form-control rounded-4" id="segnalazioneText"></textarea>
+                    <div id="respSegnalazione"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary rounded-4" id="btnHandleSegnalazione">Invia segnalazione</button>
                 </div>
             </div>
         </div>
