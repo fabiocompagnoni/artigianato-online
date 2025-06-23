@@ -320,7 +320,7 @@ app.put('/user', authJWT, async (req, res) => {
 });
 
 //per vedere le review di un artigiano
-app.get('/reviews/:artisan_slug/:page', authJWT, async (req, res) => {
+app.get('/reviews/:artisan_slug/:page', async (req, res) => {
     try {
         const artisan_slug = req.params.artisan_slug; // slug dall'URL
         const page = req.params.page;
@@ -343,7 +343,7 @@ app.get('/reviews/:artisan_slug/:page', authJWT, async (req, res) => {
 
         const id_artisan = sql_res.rows[0].ID;
 
-        const response = {page, reviews: []};
+        const response = {page: parseInt(page), reviews: []};
 
         sql_res = await pool.query('SELECT * FROM artisan_reviews WHERE id_artisan = $1 LIMIT $2 OFFSET $3', [id_artisan, 20, (page - 1) * 20]);
 
@@ -359,7 +359,7 @@ app.get('/reviews/:artisan_slug/:page', authJWT, async (req, res) => {
 
         res.json(response);
     } catch (err) {
-        console.error('Error giving artisan review:', err);
+        console.error('Error getting artisan reviews:', err);
         sendError(res, 500);
     }
 });

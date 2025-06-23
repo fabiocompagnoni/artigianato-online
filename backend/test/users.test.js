@@ -192,3 +192,82 @@ test('Change and get user informations', async () => {
     expect(res.body.bio).toBe(new_data.bio);
     expect(res.body.url_profile_picture).toBe('https://localhost:3000/images/' + avatar_id);
 });
+
+test('Give review to artisan', async () => {
+    const artisan_data = {...user_data};
+    artisan_data.email = 'artigianorulli@gmail.com';
+    artisan_data.name = 'Giuseppe';
+    artisan_data.role = 'artisan';
+
+    const customer_data = {...user_data};
+    customer_data.email = 'customerrulli@gmail.com';
+    customer_data.name = 'Customer';
+
+    const review_data = {
+        rating: 5,
+        review_text: 'Questo artigiano è molto bravo'
+    }
+
+    //registro artigiano e customer
+    let res = await request(app)
+        .post('/users/user')
+        .send(artisan_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+
+    //ottengo le info del artisan
+    const cookies = res.headers['set-cookie'];
+    const jwtCookieArtisan = cookies.find(cookie => cookie.startsWith('jwt='));
+
+    res = await request(app)
+        .post('/users/user')
+        .send(customer_data)
+        .set('Content-Type', 'application/json');
+    expect(res.statusCode).toBe(200);
+
+    //ottengo il jwt del customer
+    const cookies2 = res.headers['set-cookie'];
+    const jwtCookieCustomer = cookies2.find(cookie => cookie.startsWith('jwt='));
+
+    //invio la recensione come customer
+    res = await request(app)
+        .post('/users/reviewArtisan/giuseppe-rulli')
+        .send(review_data)
+        .set({
+            'Content-Type': 'application/json',
+            'Cookie': jwtCookieCustomer
+        });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.artisan).toBe('giuseppe-rulli');
+    expect(res.body.rating).toBe(review_data.rating);
+    expect(res.body.review_text).toBe(review_data.review_text);
+
+    //provo a inviare la review senza essere loggato
+    res = await request(app)
+        .post('/users/reviewArtisan/giuseppe-rulli')
+        .send(review_data)
+        .set({
+            'Content-Type': 'application/json'
+        });
+    expect(res.statusCode).toBe(401);
+
+    //provo a inviare la review come artisan
+    res = await request(app)
+        .post('/users/reviewArtisan/giuseppe-rulli')
+        .send(review_data)
+        .set({
+            'Content-Type': 'application/json',
+            'Cookie': jwtCookieArtisan
+        });
+    expect(res.statusCode).toBe(403);
+
+    //ottengo le reviews
+    res = await request(app)
+        .get('/users/reviews/giuseppe-rulli/1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.page).toBe(1);
+    expect(res.body.reviews_this_page).toBe(1);
+    const my_review = res.body.reviews[0];
+    expect(my_review.rating).toBe(review_data.rating);
+    expect(my_review.review_text).toBe(review_data.review_text);
+});
