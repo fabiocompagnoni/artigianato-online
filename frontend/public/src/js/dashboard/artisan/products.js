@@ -170,14 +170,17 @@ const showUpdate=(success, message=null)=>{
 
 export const deleteProduct=async(slugProduct)=>{
     if(confirm("Sei sicuro di voler cancellare definitivamente il prodotto?")){
-        const request=await ajax("https://localhost/products/"+slugProduct,{
-            method:"DELETE"
-        });
-        if(request.error==null){
+        const request=await ajax("https://localhost:3000/products/product/"+slugProduct,"DELETE");
+        console.log(request);
+        if(request.error!=null){
             alert("Si è verificato un errore nell'eliminazione del prodotto. Riprova");
         }else{
-            window.history.pushState({}, '', "/artigiani/area-riservata/prodotti");
-            handlePageUrl
+            alert("Il prodotto è stato eliminato con successo!");
+            if(window.location.pathname=="/artigiani/area-riservata/prodotti"){
+                loadProducts(1);
+            }else{
+                window.location.href="/artigiani/area-riservata/prodotti";
+            }
         }
     }
 }

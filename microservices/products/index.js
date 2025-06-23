@@ -478,34 +478,45 @@ app.post("/restock/:slugProduct",authJWT, async(req, res)=>{
 });
 
 //delete product (lo marchia come eliminato nel db)
-app.delete('/product/:product_id', authJWT, async (req, res) => {
+app.delete('/product/:product_slug', authJWT, async (req, res) => {
     try {
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
         const ADMIN_ROLE_ID = await getRoleID('admin', pool);
-        if(req.user.user_role_id !== ARTISAN_ROLE_ID && req.user.user_role_id !== ADMIN_ROLE_ID) {
+        if (req.user.user_role_id !== ARTISAN_ROLE_ID && req.user.user_role_id !== ADMIN_ROLE_ID) {
             sendError(res, 403);
             return;
         }
 
-        if(!isBodyInt(req.params.product_id, true)) {
+        const { product_slug } = req.params;
+        if (!isBodyString(product_slug, true)) {
             sendError(res, 400);
             return;
         }
 
-        let query = 'UPDATE products SET removed = true WHERE "ID" = $1 AND removed = false';
-        const params = [req.params.product_id];
+        // Recupera l'ID del prodotto tramite slug
+        let productQuery = 'SELECT "ID", artisan FROM products WHERE slug = $1 AND removed = false';
+        const productRes = await pool.query(productQuery, [product_slug]);
+        if (productRes.rowCount === 0) {
+            sendError(res, 404);
+            return;
+        }
+        const productId = productRes.rows[0].ID;
+        const productArtisan = productRes.rows[0].artisan;
 
-        //se l'utente non è admin, verifica che abbia accesso al prodotto
-        if(req.user.user_role_id === ARTISAN_ROLE_ID) {
-            query += ' AND artisan = $2';
-            params.push(req.user.user_id);
+        // Se l'utente non è admin, verifica che abbia accesso al prodotto
+        if (req.user.user_role_id === ARTISAN_ROLE_ID && req.user.user_id !== productArtisan) {
+            sendError(res, 403);
+            return;
         }
 
-        const sql_res = await pool.query(query, params);
+        const sql_res = await pool.query(
+            'UPDATE products SET removed = true WHERE "ID" = $1 AND removed = false',
+            [productId]
+        );
 
-        if(sql_res.rowCount > 0) //il prodotto è stato eliminato
-            res.json({status: 'ok'});
-        else //il prodotto non è stato elminato perché non esiste una coppia (id, utente) che combaci con la richiesta
+        if (sql_res.rowCount > 0)
+            res.json({ status: 'ok' });
+        else
             sendError(res, 401);
     } catch (err) {
         console.error('Error deleting product: ' + err);
@@ -981,7 +992,20 @@ app.get("/correlated/:slugArtisan/:slugProduct",async(req,res)=>{
             [slugArtisan, slugProduct]
         );
 
-        const products = await Promise.all(sql_res.rows.map(row => outputProduct(row)));
+        const products = await Promise.all(sql_res.rows.map(async dbRow => {
+            const categories = await getCategories(dbRow.id);
+            return {
+                id: dbRow.id,
+                name: dbRow.pname,
+                short_description: dbRow.short_description,
+                description: dbRow.description,
+                price: (dbRow.price / 100),
+                categories: categories,
+                timestamp_update: dbRow.timestamp_update,
+                timestamp_creation: dbRow.timestamp_creation,
+                link: `/prodotti/${dbRow.aslug}/${dbRow.pslug}`
+            };
+        }));
         res.json({ products });
     } catch (err) {
         console.error('Error fetching correlated products:', err);
@@ -1037,7 +1061,6 @@ app.get("/similar/:slugProduct", async (req, res) => {
                 OR (p.price BETWEEN $3 AND $4)
             )
             ORDER BY
-                -- Priorità: più categorie in comune, poi prezzo più vicino
                 (
                     SELECT COUNT(*) FROM product_categories pc
                     WHERE pc."ID_product" = p."ID" AND pc."ID_category" = ANY($2)
@@ -1049,7 +1072,32 @@ app.get("/similar/:slugProduct", async (req, res) => {
             [productId, categoryIds, minPrice, maxPrice, price]
         );
 
-        const products = await Promise.all(similarRes.rows.map(row => outputProduct(row)));
+        // Per ogni prodotto, restituisci solo i campi richiesti
+        const products = await Promise.all(similarRes.rows.map(async row => {
+            // Ottieni categorie
+            const categories = await getCategories(row.id);
+            // Ottieni recensioni artigiano
+            const artisan_reviews = await getArtisanReviews(row.id, pool);
+            return {
+                id: row.id,
+                name: row.pname,
+                short_description: row.short_description,
+                description: row.description,
+                price: (row.price / 100),
+                categories: categories,
+                timestamp_update: row.timestamp_update,
+                timestamp_creation: row.timestamp_creation,
+                artisan: {
+                    name: row.aname,
+                    surname: row.surname,
+                    photoProfile: row.id_profile_picture ? 'https://localhost:3000/images/' + row.id_profile_picture : null,
+                    link: `/artigiani/${row.aslug}`,
+                    reviews_total: artisan_reviews.reviews_total,
+                    reviews_avg: artisan_reviews.reviews_avg
+                },
+                link: `/prodotti/${row.aslug}/${row.pslug}`
+            };
+        }));
         res.json({ products });
     } catch (err) {
         console.error('Error fetching similar products:', err);
