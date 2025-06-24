@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggiorna le informazioni del tuo account</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="src/css/root.css"/>
+    <link rel="stylesheet" href="src/css/home.css"/>
+    <script type="module" src="src/components/index.js"></script>
+    <script src="https://kit.fontawesome.com/09c9d5cf6f.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav-bar></nav-bar>
+    <header>
+        <div class="container">
+            <h1>Aggiorna le informazioni del tuo account</h1>
+        </div>
+    </header>
+    <div class="container my-2">
+        <div class="row mb-3">
+            <div class="col-sm">
+                <label for="name" class="form-label">Nome</label>
+                <input type="text" id="name" class="form-control rounded-4"/>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm">
+                <label for="surname" class="form-label">Cognome</label>
+                <input type="text" id="surname" class="form-control rounded-4"/>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" class="form-control rounded-4"/>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-sm">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" class="form-control rounded-4"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                <button type="submit" class="btn btn-primary rounded-4" id="btnSubmit">Aggiorna</button>
+            </div>
+        </div>
+    </div>
+    <script src="/src/js/updateAccount.js"></script>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        header{
+            padding-top:calc(83px + 2rem);
+            background-color: var(--bs-body-bg);
+            background:  linear-gradient(rgba(168, 187, 162, 0.8), rgba(var(--bs-body-bg-rgb),0.4)), repeating-radial-gradient( circle at 0 0, transparent 0, var(--bs-body-bg) 15px ), repeating-linear-gradient( #A8BBA255, #A8BBA2 );
+            padding-bottom:2rem;
+        }
+    </style>
+</body>
+</html>
