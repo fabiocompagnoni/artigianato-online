@@ -99,6 +99,18 @@ async function changeSalesChart(days) {
     initChartSell(timestamps, values);
 }
 
+export const initTopUserSelect=async()=>{
+    let artisansName=document.querySelectorAll(".nomeArtigiano");
+    const request=await ajax("https://localhost:3000/users/user");
+    if(request.error!=null){
+        return;
+    }
+    artisansName.forEach(name=>{
+        name.innerHTML=`${request.name} ${request.surname}`;
+    });
+    document.getElementById("artisanPhotoNav").src=request.url_profile_picture;
+}
+
 const initDashboard=async()=>{
     initChartSell();
     const dashboard_data = await getDashboardData(7);

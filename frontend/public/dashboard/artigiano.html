@@ -356,7 +356,7 @@
     
     <script type="module">
         //gestione delle pagine
-        import {handlePageUrl, handleNavigation, getArtisanSlug} from "/src/js/dashboard/artisan/index.js";
+        import {handlePageUrl, handleNavigation, getArtisanSlug, initTopUserSelect} from "/src/js/dashboard/artisan/index.js";
         
         document.addEventListener("DOMContentLoaded",async()=>{
             let artisanReq=await getArtisanSlug()
@@ -364,6 +364,7 @@
             if(window.artisanSlug==null){
                 window.location.href="/accedi";
             }
+            initTopUserSelect();
             handlePageUrl({
                 home: document.querySelector("#home"),
                 ordini: document.querySelector("#orders"),
