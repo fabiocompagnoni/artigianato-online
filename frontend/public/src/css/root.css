@@ -53,3 +53,22 @@ body{
     background:var(--second-color);
     color:white;
 }
+
+.popupCart{
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s cubic-bezier(0.4,0,0.2,1);
+    border-radius:var(--bs-border-radius-xl);
+    padding:1rem;
+    background:var(--bs-body-bg);
+    color:var(--bs-body-color);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+}
+.popupCart.show {
+    transform: translateX(0);
+    opacity: 1;
+}

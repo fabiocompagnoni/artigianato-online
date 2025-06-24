@@ -8,8 +8,23 @@ export const addToCart=async (idProd, quantity)=>{
         }]),
         credentials: 'include'
     });
-    if(!res.ok)
-        alert('Errore nell\'aggiunta al carrello');
+    if(!res.ok){
+        popupCart("Errore nell'aggiunta del prodotto al carrello");
+    }else{
+        popupCart();
+    }
+}
+
+export const popupCart=(error=null)=>{
+    let div = document.createElement("div");
+    div.classList.add("popupCart");
+    let str = error ?? "Il prodotto è stato aggiunto al carrello";
+    div.innerHTML = `${str}`;
+    document.body.appendChild(div);
+    div.classList.add("show");
+    setTimeout(() => {
+        div.remove();
+    }, 2000);
 }
 
 export const updateCart=(idProd, quantity)=>{
