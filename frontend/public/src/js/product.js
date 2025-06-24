@@ -383,19 +383,26 @@ const checkAndInitMobileImageHandler = () => {
 
 
 
-const handleProblem=async(artisanSlug, productSlug)=>{
+const handleProblem=async(artisanSlug, productId)=>{
     let text=document.getElementById("segnalazioneText").value;
-    const req=await ajax(`https://localhost:3000/products/report/${artisanSlug}/${productSlug}`,"POST",{
-        note:text
-    });
-    if(req.error!=null){
+    const req=await fetch(`https://localhost:3000/products/report/${artisanSlug}/${productId}`,{
+        method: "POST",
+        body: JSON.stringify({
+            note:text
+        }),
+        headers: {"Content-Type": "application/json; charset=utf-8"},
+        credentials: 'include'
+    }
+    );
+    const json = await req.json();
+    if(!req.ok){
         if(req.error.message=="Unauthorized"){
             document.getElementById("respSegnalazione").innerHTML="Devi aver prima fatto l'accesso per poter inviare una segnalazione";
         }else{
             document.getElementById("respSegnalazione").innerHTML="Si è verificato un errore durante la segnalazione. Riprova più tardi";
         }
-    }else if(req.ticket_id!=null){
-        document.getElementById("respSegnalazione").innerHTML=`La tua segnalazione è stata presa in carico. L'identificativo della tua richiesta è: ${req.ticket_id}`;
+    }else if(json.ticket_id!=null){
+        document.getElementById("respSegnalazione").innerHTML=`La tua segnalazione è stata presa in carico. L'identificativo della tua richiesta è: ${json.ticket_id}`;
     }
 }
 
