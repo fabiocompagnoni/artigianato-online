@@ -164,6 +164,9 @@ const loadOrders=async(preview=false)=>{
         response.forEach((order)=>{
             cont.appendChild(makeDivOrder(order));
         });
+        if(ajax_response.orders.length==0){
+            cont.innerHTML=`<div class='product shadow'>Non hai ancora effettuato acquisti.</div>`
+        }
         return cont;
     }catch(err){
         console.error(err);
@@ -223,4 +226,18 @@ document.addEventListener("DOMContentLoaded",async()=>{
     } else {
         handlePageHome();
     }
+});
+
+const makeLogout=async()=>{
+    let req=ajax("https://localhost:3000/users/logout","POST");
+    if(req.error==null){
+        window.location.href="/";
+    }
+}
+
+
+document.querySelectorAll(".btnLogout").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        makeLogout();
+    });
 });
