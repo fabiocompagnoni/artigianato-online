@@ -65,6 +65,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/upload', authJWT, upload.single('image'), async (req, res) => {
+  try {
     const file = req.file;
     if(!file)
         sendError(res, 519);
@@ -86,6 +87,10 @@ app.post('/upload', authJWT, upload.single('image'), async (req, res) => {
         console.log('Error during image processing: ' + err);
         sendError(res, 520);
     }
+  } catch(err) {
+    console.error('Error uploading image: ' + err);
+    sendError(res, 500);
+  }
 });
 
 function validateID(id) {

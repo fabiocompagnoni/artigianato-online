@@ -129,6 +129,15 @@ document.addEventListener("DOMContentLoaded",()=>{
         page = parseInt(url.hash.substring(url.hash.lastIndexOf("a")+1));
     }
     loadArtisans(page);
+
+    window.addEventListener("hashchange", () => {
+      let url = new URL(window.location.href);
+      let page = 1;
+      if (url.hash !== "" && url.hash.includes("pagina")) {
+        page = parseInt(url.hash.substring(url.hash.lastIndexOf("a") + 1));
+      }
+      loadArtisans(page);
+    });
 });
 
 async function toMockArtisans(artisans) {
@@ -144,15 +153,20 @@ async function toMockArtisans(artisans) {
 
 const loadArtisans=async(page=1)=>{
     try{
-        const artisans=await toMockArtisans((await ajax('https://localhost:3000/users/artisans/' + page)).artisans);
+        const request=await ajax('https://localhost:3000/users/artisans/' + page);
+        if(request.error!=null)
+            throw new Error(request.error);
+        const artisans=await toMockArtisans(request.artisans);
         const container=document.getElementById("listArtisans");
         
         container.innerHTML="";
         artisans.forEach(async artisan=>{
             container.appendChild(await makeArtisanDiv(artisan));
         });
-        //todo: sostituire con pagine reali
-        makePagination(page,1);
+        if(artisans.length==0){
+            container.innerHTML=`<div class='card'><div class='card-body'>Ancora nessun artigiano registrato. Condividi questo sito con il tuo artigiano di fiducia e aiutalo a raggiungere molti più clienti grazie al nostro marketplace.</div></div>`;
+        }
+        makePagination(page,request.pages);
     }catch(err){
         console.error(err);
     }
