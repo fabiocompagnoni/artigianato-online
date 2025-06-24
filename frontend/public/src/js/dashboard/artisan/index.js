@@ -108,9 +108,16 @@ export const initTopUserSelect=async()=>{
     artisansName.forEach(name=>{
         name.innerHTML=`${request.name} ${request.surname}`;
     });
-    document.getElementById("artisanPhotoNav").src=request.url_profile_picture;
+    if(request.url_profile_picture==null)
+        document.getElementById("artisanPhotoNav").style.display="none"
+    else document.getElementById("artisanPhotoNav").src=request.url_profile_picture;
 }
-
+export const makeLogout=()=>{
+    let req=ajax("https://localhost:3000/users/logout","POST");
+    if(req.error==null){
+        window.location.href="/";
+    }
+}
 const initDashboard=async()=>{
     initChartSell();
     const dashboard_data = await getDashboardData(7);

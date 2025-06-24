@@ -27,7 +27,7 @@
                     <button class="btnReviews"><i class="fa-solid fa-star"></i> Recensioni</button>
                 </div>
             </div>
-            <button class="btnLogout" onclick="fetch('https://localhost:3000/users/logout', {method: 'POST'})"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <button class="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
         </div>
         <div class="navbarMobile d-flex d-md-none">
             <button class="btnHome"><i class="fa-solid fa-house"></i> Dashboard</button>
@@ -356,7 +356,7 @@
     
     <script type="module">
         //gestione delle pagine
-        import {handlePageUrl, handleNavigation, getArtisanSlug, initTopUserSelect} from "/src/js/dashboard/artisan/index.js";
+        import {handlePageUrl, handleNavigation, getArtisanSlug, initTopUserSelect, makeLogout} from "/src/js/dashboard/artisan/index.js";
         
         document.addEventListener("DOMContentLoaded",async()=>{
             let artisanReq=await getArtisanSlug()
@@ -396,6 +396,12 @@
                 clienti: document.querySelector("#customers"),
                 rimborsi: document.querySelector("#refounds"),
                 recensioni: document.querySelector("#reviews")
+            });
+        });
+
+        document.querySelectorAll(".btnLogout").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                makeLogout();
             });
         });
     </script>
