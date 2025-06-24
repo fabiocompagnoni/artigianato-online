@@ -348,8 +348,13 @@
     position:fixed;
     bottom:0.5rem;
     right:0.5rem;
+    padding:1rem;
 }
-
+@media(max-width:768px){
+    .btnActionPrimary{
+        bottom:calc(70px + 0.5rem);
+    }
+}
 #updates{
     position:fixed;
     top:2%;
