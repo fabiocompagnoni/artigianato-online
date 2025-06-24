@@ -18,7 +18,7 @@ document.querySelector('#btnSubmit').addEventListener('click', async function (e
     }
 
     try {
-        const response = await fetch('/users/user', {
+        const response = await fetch('https://localhost:3000/users/user', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
