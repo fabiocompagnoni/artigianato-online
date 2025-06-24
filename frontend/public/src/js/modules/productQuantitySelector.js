@@ -5,14 +5,17 @@ export const initProductQuantitySelectors=()=>{
         let btnPlus=selector.querySelector(".addOne");
         let input=selector.querySelector(".quantityShow");
 
+        if(input.value < 2)
+            btnMinus.disabled=true;
+
         btnMinus.addEventListener("click",()=>{
             let v=input.value;
             if(v>1){
                 v--;
                 input.setAttribute("value",v);
-            }else{
-                btnMinus.disabled=true;
             }
+            if(v<=1)
+                btnMinus.disabled=true;
         });
         btnPlus.addEventListener("click",()=>{
             let v=input.value;
