@@ -135,6 +135,69 @@ app.get('/fetchTickets/:page', authJWT, async (req, res) => {
     }
 });
 
+app.get('/ticket/:ticket_id', authJWT, async (req, res) => {
+    try {
+        const { ticket_id } = req.params;
+
+        if (!isBodyInt(ticket_id)) {
+            sendError(res, 400);
+            return;
+        }
+
+        // Only admin or the ticket owner can view the ticket
+        const ADMIN_ROLE_ID = await getRoleID('admin', pool);
+
+        // Try to find the ticket in both tables
+        const queries = [
+            {
+                type: 'product',
+                table: 'ticket_products'
+            },
+            {
+                type: 'order',
+                table: 'ticket_orders'
+            }
+        ];
+
+        let ticket = null;
+        let ticket_type = null;
+
+        for (const q of queries) {
+            const query = `
+                SELECT t.*, ts.name AS status_name
+                FROM ${q.table} t
+                JOIN ticket_status ts ON t.status = ts."ID"
+                WHERE t."ID" = $1
+            `;
+            const result = await pool.query(query, [ticket_id]);
+            if (result.rowCount > 0) {
+                ticket = makeTicket(result.rows[0], q.type);
+                ticket_type = q.type;
+                break;
+            }
+        }
+
+        if (!ticket) {
+            sendError(res, 404);
+            return;
+        }
+
+        // Check if user is admin or ticket owner
+        if (
+            req.user.user_role_id !== ADMIN_ROLE_ID &&
+            req.user.user_id !== ticket.user_id
+        ) {
+            sendError(res, 403);
+            return;
+        }
+
+        res.json({ ticket, ticket_type });
+    } catch (err) {
+        console.error('Error fetching ticket info: ' + err);
+        sendError(res, 500);
+    }
+});
+
 //per chiudere i ticket
 app.post('/resolve/:ticket_type/:ticket_id', authJWT, async (req, res) => {
     try {
