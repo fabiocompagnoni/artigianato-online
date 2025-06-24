@@ -6,7 +6,7 @@ let searchString=null;
 let page=1;
 
 
-const makeArtisanDiv=(artisan)=>{
+const makeArtisanDiv=async (artisan)=>{
     let cont=document.createElement("div");
     cont.classList.add("artisan","shadow");
     cont.dataset.id=artisan.id;
@@ -57,27 +57,7 @@ const makeArtisanDiv=(artisan)=>{
     let productPreview=document.createElement("div");
     productPreview.classList.add("productPreview","justify-content-md-end");
     
-    //TODO: chiamata api per anteprima prodotti
-    let response=[
-        {
-            link:"/prodotto1",
-            thumbnail:"https://100k-faces.glitch.me/random-image",
-            name:"Prodotto 1",
-            price:20.50
-        },
-        {
-            link:"/prodotto2",
-            thumbnail:"https://100k-faces.glitch.me/random-image",
-            name:"Prodotto 2",
-            price:10
-        },
-        {
-            link:"/prodotto3",
-            thumbnail:"https://100k-faces.glitch.me/random-image",
-            name:"Prodotto 3",
-            price:30
-        }
-    ];
+    const response = (await ajax('https://localhost:3000/products/1?artisan=' + artisan.slug)).products.slice(0, 3);
     
     response.forEach(product=>{
         let a=document.createElement("a");
@@ -151,107 +131,25 @@ document.addEventListener("DOMContentLoaded",()=>{
     loadArtisans(page);
 });
 
-const mockupArtisans = [
-    {
-        id: 1,
-        name: "Mario",
-        surname: "Rossi",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Artigiano del legno specializzato in intagli.",
-        reviews: 4.5,
-        link: "/artigiani/mario-rossi"
-    },
-    {
-        id: 2,
-        name: "Giulia",
-        surname: "Verdi",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Creatrice di gioielli in argento e pietre naturali.",
-        reviews: 3.8,
-        link: "/artigiani/giulia-verdi"
-    },
-    {
-        id: 3,
-        name: "Luca",
-        surname: "Bianchi",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Ceramista con una passione per i colori vivaci.",
-        reviews: 4.2,
-        link: "/artigiani/luca-bianchi"
-    },
-    {
-        id: 4,
-        name: "Anna",
-        surname: "Neri",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Sarta specializzata in abiti su misura.",
-        reviews: 4.9,
-        link: "/artigiani/anna-neri"
-    },
-    {
-        id: 5,
-        name: "Paolo",
-        surname: "Gialli",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Fabbro che crea oggetti unici in ferro battuto.",
-        reviews: 4.0,
-        link: "/artigiani/paolo-gialli"
-    },
-    {
-        id: 6,
-        name: "Francesca",
-        surname: "Blu",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Artista che dipinge quadri con colori acrilici.",
-        reviews: 3.5,
-        link: "/artigiani/francesca-blu"
-    },
-    {
-        id: 7,
-        name: "Roberto",
-        surname: "Viola",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Scultore che modella statue in argilla.",
-        reviews: 4.7,
-        link: "/artigiani/roberto-viola"
-    },
-    {
-        id: 8,
-        name: "Elena",
-        surname: "Rosa",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Ricamatrice che crea opere d'arte con ago e filo.",
-        reviews: 4.3,
-        link: "/artigiani/elena-rosa"
-    },
-    {
-        id: 9,
-        name: "Simone",
-        surname: "Marrone",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Falegname che costruisce mobili artigianali.",
-        reviews: 3.9,
-        link: "/artigiani/simone-marrone"
-    },
-    {
-        id: 10,
-        name: "Chiara",
-        surname: "Grigi",
-        photoProfile: "https://100k-faces.glitch.me/random-image",
-        bio: "Designer che crea borse e accessori in pelle.",
-        reviews: 4.6,
-        link: "/artigiani/chiara-grigi"
+async function toMockArtisans(artisans) {
+    let result = [];
+    for(const artisan of artisans) {
+        const artisan_slug = artisan.link.split('/')[2];
+        const artisan_info = await ajax('https://localhost:3000/users/user/' + artisan_slug);
+        result.push({...artisan, reviews: artisan.reviews_avg, bio: artisan_info.bio, slug: artisan_slug});
     }
-];
+
+    return result;
+}
+
 const loadArtisans=async(page=1)=>{
     try{
-        //TODO: api per ottenere gli artigiani
-        const artisans=mockupArtisans;
+        const artisans=await toMockArtisans((await ajax('https://localhost:3000/users/artisans/' + page)).artisans);
         const container=document.getElementById("listArtisans");
         
         container.innerHTML="";
-        artisans.forEach(artisan=>{
-            container.appendChild(makeArtisanDiv(artisan));
+        artisans.forEach(async artisan=>{
+            container.appendChild(await makeArtisanDiv(artisan));
         });
         //todo: sostituire con pagine reali
         makePagination(page,1);
