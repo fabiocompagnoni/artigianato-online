@@ -247,7 +247,7 @@ app.get('/user', authJWT, async (req, res) => {
         }
 
         if(user_data.role_name === 'artisan') {
-            const r = await getArtisanReviews(id_artisan, pool);
+            const r = await getArtisanReviews(user_id, pool);
             response.reviews_total = r.reviews_total;
             response.reviews_avg = r.reviews_avg;
         }
