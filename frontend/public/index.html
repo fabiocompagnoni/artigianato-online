@@ -6,6 +6,12 @@
     <title>Artigianato Online</title>
     <meta name="description" content="" id="descrizione"/>
     <meta name="keywords" content=""/>
+    <!--manifest PWA -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    <meta name="theme-color" content="#A8BBA2">
+    <link rel="apple-touch-icon" href="/src/img/icons/ios/192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="src/css/root.css"/>
     <link rel="stylesheet" href="src/css/home.css"/>
@@ -137,6 +143,14 @@
         </div>
     </div>
     <footer-component></footer-component>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/pwa/serviceWorker.js')
+            .then(() => console.log('Service Worker registrato dinamicamente!'))
+            .catch(err => console.error('Errore nel SW:', err));
+        }
+    </script>
+    <script src="/src/js/home.js" type="module"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
