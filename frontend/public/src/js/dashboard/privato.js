@@ -32,7 +32,9 @@ const makeDivOrder=(order)=>{
     
     let resumeOrder=document.createElement("div");
     resumeOrder.classList.add("resumeOrder");
-    resumeOrder.innerHTML=`Ordine del ${order.timestamp}`;
+    const date = new Date(order.timestamp);
+    const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    resumeOrder.innerHTML = `Ordine del ${formattedDate}`;
 
     let pTot=document.createElement("div");
     pTot.innerHTML=`Totale ${parseFloat(order.total).toLocaleString("it-IT", { style: 'currency', currency: 'EUR' })}`;
