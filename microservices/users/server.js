@@ -18,6 +18,7 @@ import { isBodyString, isBodyInt } from "./common_scripts/bodyTypeChecker.js";
 import passport from 'passport';
 import configurePassport from "./passportSetup.js";
 import session from "express-session";
+import { get } from 'http';
 
 const PER_PAGE = 20;
 
@@ -681,13 +682,16 @@ app.post('/resetPassword', async (req, res) => {
 /**
  * API per ottenere il link della dashboard in base al ruolo dell'utente
  */
-app.get("/dashboardPage", authJWT, (req, res) => {
-    let role=req.user.user_role;
+app.get("/dashboardPage", authJWT, async(req, res) => {
+    let role=req.user.user_role_id;
     let dashboardLink="";
+    let idArtisan=await getRoleID('artisan', pool);
+    let idCustomer=await getRoleID('customer', pool);
+    let idAdmin=await getRoleID('admin', pool);
     switch(role){
-        case 'admin': dashboardLink="/admin/area-riservata"; break;
-        case 'customer': dashboardLink="/clienti/area-riservata"; break;
-        case 'artisan': dashboardLink="/artigiani/area-riservata"; break;
+        case idAdmin: dashboardLink="/admin/area-riservata"; break;
+        case idCustomer: dashboardLink="/clienti/area-riservata"; break;
+        case idArtisan: dashboardLink="/artigiani/area-riservata"; break;
         default: dashboardLink="/clienti/area-riservata"; break;
     }
     res.status(200).json({dashboardLink: dashboardLink});
