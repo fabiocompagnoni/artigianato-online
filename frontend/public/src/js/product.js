@@ -15,10 +15,16 @@ document.addEventListener("DOMContentLoaded",initProductQuantitySelectors);
 
 /*add to cart listener*/
 const initAddToCart=()=>{
-    document.getElementById("addToCartBtn").addEventListener("click",(e)=>{
+    document.getElementById("addToCartBtn").addEventListener("click",async(e)=>{
         e.preventDefault();
         let quantity=parseInt(document.querySelector(".customQuantitySelector input").value);
-        addToCart(window.productId, quantity);;
+        let url=window.location.pathname;
+        let urlPart=url.split("/");
+        let slugProd=urlPart[urlPart.length-1];
+        let slugArtisan=urlPart[urlPart.length-2];
+
+        const prod_info = await ajax(`https://localhost:3000/products/product/${slugArtisan}/${slugProd}`);
+        addToCart(prod_info.id, quantity);
     });
 }
 
