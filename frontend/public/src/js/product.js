@@ -308,6 +308,188 @@ document.getElementById("scrollBottonBtn").addEventListener("click", (event) => 
     cont.scrollBy({ top: SCROLL_AMOUNT, behavior: "smooth" });
 });
 
+/**
+ * Gestione fullscreen della galleria immagini prodotto
+ */
+const openGalleryFullscreen = (arrayFoto, startIndex = 0) => {
+    // Crea overlay
+    let overlay = document.createElement("div");
+    overlay.classList.add("gallery-fullscreen-overlay");
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(0,0,0,0.95)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = 9999;
+    overlay.style.flexDirection = "column";
+
+    // Immagine principale
+    let img = document.createElement("img");
+    img.style.maxWidth = "90vw";
+    img.style.maxHeight = "80vh";
+    img.style.objectFit = "contain";
+    img.classList.add("fullscreen-gallery-img");
+
+    // Indice corrente
+    let currentIndex = startIndex;
+
+    // Funzione per mostrare immagine
+    const showImage = (idx) => {
+        if (idx < 0) idx = 0;
+        if (idx >= arrayFoto.length) idx = arrayFoto.length - 1;
+        currentIndex = idx;
+        img.src = arrayFoto[currentIndex].url;
+        img.alt = arrayFoto[currentIndex].alt || `Foto ${currentIndex + 1}`;
+    };
+
+    // Pulsante chiudi
+    let closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "2rem";
+    closeBtn.style.right = "2rem";
+    closeBtn.style.fontSize = "2.5rem";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.color = "#fff";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.setAttribute("aria-label", "Chiudi galleria");
+
+    closeBtn.addEventListener("click", () => {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = "";
+    });
+
+    // Pulsanti avanti/indietro
+    let prevBtn = document.createElement("button");
+    prevBtn.innerHTML = "&#10094;";
+    prevBtn.style.position = "absolute";
+    prevBtn.style.left = "2vw";
+    prevBtn.style.top = "50%";
+    prevBtn.style.transform = "translateY(-50%)";
+    prevBtn.style.fontSize = "2.5rem";
+    prevBtn.style.background = "none";
+    prevBtn.style.border = "none";
+    prevBtn.style.color = "#fff";
+    prevBtn.style.cursor = "pointer";
+    prevBtn.setAttribute("aria-label", "Immagine precedente");
+
+    let nextBtn = document.createElement("button");
+    nextBtn.innerHTML = "&#10095;";
+    nextBtn.style.position = "absolute";
+    nextBtn.style.right = "2vw";
+    nextBtn.style.top = "50%";
+    nextBtn.style.transform = "translateY(-50%)";
+    nextBtn.style.fontSize = "2.5rem";
+    nextBtn.style.background = "none";
+    nextBtn.style.border = "none";
+    nextBtn.style.color = "#fff";
+    nextBtn.style.cursor = "pointer";
+    nextBtn.setAttribute("aria-label", "Immagine successiva");
+
+    prevBtn.addEventListener("click", () => showImage(currentIndex - 1));
+    nextBtn.addEventListener("click", () => showImage(currentIndex + 1));
+
+    // Navigazione tastiera
+    const keyHandler = (e) => {
+        if (e.key === "ArrowLeft") showImage(currentIndex - 1);
+        if (e.key === "ArrowRight") showImage(currentIndex + 1);
+        if (e.key === "Escape") {
+            document.body.removeChild(overlay);
+            document.body.style.overflow = "";
+            document.removeEventListener("keydown", keyHandler);
+        }
+    };
+    document.addEventListener("keydown", keyHandler);
+
+    // Navigazione swipe
+    let startX = null;
+    img.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+    });
+    img.addEventListener("touchend", (e) => {
+        if (startX === null) return;
+        let endX = e.changedTouches[0].clientX;
+        if (endX - startX > 50) showImage(currentIndex - 1);
+        else if (startX - endX > 50) showImage(currentIndex + 1);
+        startX = null;
+    });
+
+    // Blocca scroll sotto
+    document.body.style.overflow = "hidden";
+
+    // Composizione overlay
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(prevBtn);
+    overlay.appendChild(nextBtn);
+
+    // Click fuori dall'immagine chiude overlay
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+            document.body.style.overflow = "";
+            document.removeEventListener("keydown", keyHandler);
+        }
+    });
+
+    document.body.appendChild(overlay);
+    showImage(currentIndex);
+};
+
+// Aggiungi listener alle immagini della galleria
+document.addEventListener("DOMContentLoaded", () => {
+    const getArrayFoto = () => {
+        // Recupera arrayFoto dal prodotto attuale
+        // Si assume che loadProductInfo abbia già caricato le immagini
+        let imgs = document.querySelectorAll(".lateralPreviews img, .primaryImage");
+        let arr = [];
+        imgs.forEach(img => {
+            arr.push({
+                url: img.dataset.src || img.src,
+                alt: img.alt || ""
+            });
+        });
+        return arr;
+    };
+
+    // Listener su immagini laterali
+    document.querySelectorAll(".lateralPreviews img").forEach((img, idx) => {
+        img.style.cursor = "pointer";
+        img.addEventListener("click", () => {
+            openGalleryFullscreen(getArrayFoto(), idx + 1);
+        });
+    });
+
+    // Listener su immagine principale
+    let primary = document.querySelector(".primaryImage");
+    if (primary) {
+        primary.style.cursor = "pointer";
+        primary.addEventListener("click", () => {
+            openGalleryFullscreen(getArrayFoto(), 0);
+        });
+    }
+
+    // Gestione click su immagini già presenti nell'overlay fullscreen
+    document.body.addEventListener("click", function (e) {
+        // Se clicco su un'immagine della galleria già in fullscreen, non fare nulla (già gestito)
+        // Se clicco su una qualsiasi immagine della galleria (anche se già aperta), riapri la galleria su quell'immagine
+        // (utile se la galleria viene chiusa e riaperta velocemente)
+        const overlay = document.querySelector(".gallery-fullscreen-overlay");
+        if (overlay) return; // Se già aperto, non fare nulla
+        // Cerca se il target è una delle immagini della galleria
+        const imgs = Array.from(document.querySelectorAll(".lateralPreviews img, .primaryImage"));
+        const idx = imgs.findIndex(img => img === e.target);
+        if (idx !== -1) {
+            openGalleryFullscreen(getArrayFoto(), idx);
+        }
+    }, true);
+});
+
 const handleImageMobile=(arrayFoto)=>{
     let currentIndex = 0;
     const primaryImage = document.querySelector(".primaryImage");
