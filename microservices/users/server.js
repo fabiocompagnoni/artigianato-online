@@ -271,12 +271,12 @@ app.get('/artisans/:page', async (req, res) => {
 
         const ARTISAN_ROLE_ID = await getRoleID('artisan', pool);
 
-        const query = 'SELECT "ID", name, surname, id_profile_picture, slug FROM users WHERE id_role = $1';
+        const query = 'SELECT "ID", name, surname, id_profile_picture, slug, bio FROM users WHERE id_role = $1';
         const pages_res = await pool.query(query, [ARTISAN_ROLE_ID]);
         const num_artisans = pages_res.rowCount;
         const pages = Math.ceil(num_artisans / PER_PAGE);
 
-        let sql_res = await pool.query(query + ` LIMIT ${PER_PAGE} OFFSET $2`, [ARTISAN_ROLE_ID, (pages - 1) * PER_PAGE]);
+        let sql_res = await pool.query(query + ' LIMIT $2 OFFSET $3', [ARTISAN_ROLE_ID, PER_PAGE, (page - 1) * PER_PAGE]);
 
         const artisans = [];
         for(const row of sql_res.rows) {
@@ -284,6 +284,7 @@ app.get('/artisans/:page', async (req, res) => {
             artisans.push({
                 name: row.name,
                 surname: row.surname,
+                bio:row.bio,
                 photoProfile: row.id_profile_picture ? 'https://localhost:3000/images/' + row.id_profile_picture : null,
                 link: `/artigiani/${row.slug}`,
                 reviews_total: artisan_reviews.reviews_total,
