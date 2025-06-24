@@ -1,0 +1,62 @@
+.navbar-custom {
+    border-bottom: 1px solid #e0e0e0; /* Linea sottile come nell'immagine */
+    background-color: #fff; /* Sfondo bianco */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.navbar-center-text {
+    flex-grow: 1; /* Permette al testo di occupare lo spazio disponibile */
+    text-align: center;
+    font-size: 1.25rem; /* Dimensione del font per il saluto */
+    font-weight: 500; /* Leggermente più grassetto */
+    color: #333; /* Colore del testo */
+}
+
+/* Stili per il logo */
+.navbar-brand img {
+    height: 35px; /* Altezza del logo */
+    margin-right: 0.5rem;
+}
+.navbar-brand .logo-text {
+    font-size: 0.9rem; /* Dimensione del testo "Artigianato Online" */
+    color: #6c757d; /* Colore del testo del logo */
+    font-weight: 600;
+}
+
+/* Stili per le icone a destra */
+.navbar-icons .nav-link {
+    padding: 0 0.75rem; /* Spazio tra le icone */
+}
+
+/* Stili per il dropdown utente */
+.dropdown-toggle::after {
+    margin-left: 0.25em; /* Spazio tra nome e freccia */
+    vertical-align: middle; /* Allinea la freccia */
+}
+.profile-picture {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.5rem;
+}
+
+/* Regolazione per schermi piccoli: nasconde il testo centrale */
+@media (max-width: 767.98px) { /* breakpoint md di Bootstrap */
+    .navbar-center-text {
+        display: none; /* Nasconde il saluto su schermi piccoli */
+    }
+    .navbar-nav {
+        width: 100%; /* Occupa tutta la larghezza */
+        justify-content: flex-end; /* Allinea a destra gli elementi del menu su mobile */
+    }
+        .navbar-brand {
+        margin-right: auto; /* Sposta il logo a sinistra su mobile */
+    }
+}
+
+.navbar .logo{
+    height:3rem;
+    width:auto;
+}

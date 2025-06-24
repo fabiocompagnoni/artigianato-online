@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area riservata - Amministratore &middot; Artigianato Online</title>
+    <meta name="description" content="Area riservata per i clienti di Artigianato Online. Qui potrai vedere i tuoi ordini, gestirli e modificare tutto ciò che riguarda il tuo account" id="descrizione"/>
+    <meta name="keywords" content=""/>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/src/css/root.css"/>
+    <link rel="stylesheet" href="/src/css/dashboard/admin.css"/>
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-light navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/src/img/logo_orizzontale.png" alt="Logo Artigianato Online" class="logo">
+            </a>
+
+            <span class="navbar-center-text">Bentornato, Amministratore</span>
+
+            <div class="d-flex align-items-center navbar-nav navbar-icons">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" role="button">
+                        <i class="bi bi-bell fs-5"></i> </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" role="button">
+                        <i class="bi bi-gear fs-5"></i> </a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="" alt="Foto Profilo" class="profile-picture" id="profilePicture">
+                        <span class="nomeAdmin">Nome Amministratore</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="#">Il mio profilo</a></li>
+                        <li><a class="dropdown-item" href="#">Impostazioni</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Esci</a></li>
+                    </ul>
+                </li>
+            </div>
+        </div>
+    </nav>
+    <div class="mainCont mt-2">
+        <div class="container-xl">
+            <div class="d-flex flex-row align-items-center justify-content-start gap-2">
+                <h1>Ticket</h1>
+                <select id="selectStatus" class="form-select rounded-4"></select>
+                <select id="selectType" class="form-select rounded-4">
+                    <option id="all">Ordini/prodotti</option>
+                    <option id="ordini">Ordini</option>
+                    <option id="prodotti">Prodotti</option>
+                </select>
+            </div>
+            <div class="ticketContainer" id="ticketContainer">
+                <div class="ticket placeholder"></div>
+                <div class="ticket placeholder"></div>
+                <div class="ticket placeholder"></div>
+                <div class="ticket placeholder"></div>
+            </div>
+            <div class="paginationCont" id="pagination"></div>
+        </div>
+    </div>
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
