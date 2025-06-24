@@ -8,10 +8,12 @@ export const addToCart=async (idProd, quantity)=>{
         }]),
         credentials: 'include'
     });
-    if(!res.ok){
-        popupCart("Errore nell'aggiunta del prodotto al carrello");
-    }else{
+    if(res.status==401||res.status==403){
+        popupCart("Per continuare con l'acquisto devi prima effettuare l'accesso");
+    }else if(res.status==200){
         popupCart();
+    }else{
+        popupCart("Errore nell'aggiunta del prodotto al carrello");
     }
 }
 
